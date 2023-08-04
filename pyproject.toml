@@ -1,0 +1,80 @@
+[tool.poetry]
+name = "weba"
+version = "0.0.1"
+description = ""
+authors = ["CJ Lazell <cjlazell@gmail.com>"]
+license = "MIT"
+readme = "README.md"
+packages = [{include = "weba"}]
+
+
+[tool.poetry.dependencies]
+python = ">=3.10, <3.12"
+fastapi = "^0.100.1"
+pytailwindcss = "^0.2.0"
+dominate = "^2.8.0"
+uvicorn = {extras = ["standard"], version = "^0.23.2"}
+pydantic = "^2.1.1"
+pydantic-settings = "^2.0.2"
+python-dotenv = "^1.0.0"
+
+[tool.poetry.group.test.dependencies]
+pytest = "^7.4.0"
+pytest-cov = "^4.1.0"
+pytest-playwright = "^0.3.3"
+pytest-xdist = "^3.3.1"
+pytest-asyncio = "^0.21.1"
+
+[tool.poetry.group.lint.dependencies]
+ruff = "^0.0.261"
+ruff-lsp = "^0.0.24"
+pyright = "^1.1.303"
+python-lsp-server = "^1.7.2"
+python-lsp-ruff = "^1.4.0"
+python-lsp-black = "^1.2.1"
+python-lsp-isort = "^0.1"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
+
+[tool.ruff]
+select = [
+    "E",  # pycodestyle errors
+    "W",  # pycodestyle warnings
+    "F",  # pyflakes
+    "N",  # pep8-naming
+    "I",  # isort
+    "C",  # flake8-comprehensions
+    "B",  # flake8-bugbear
+    "S",  # flake8-bandit
+    "PT", # flake8-pytest-style
+    "TCH",# flake8-type-checking
+    "ARG", # flake8-unused-arguments
+]
+
+line-length = 120
+
+[tool.ruff.flake8-type-checking]
+strict = true
+
+[tool.black]
+line-length = 120
+
+[tool.ruff.per-file-ignores]
+"*_test.py" = ["S101"]
+"*test_*.py"  = ["S101"]
+
+[tool.ruff.pep8-naming]
+classmethod-decorators = ["pydantic.validator", "pydantic.root_validator", "pydantic.model_validator"]
+
+[tool.ruff.isort]
+known-third-party = ["fastapi", "pydantic", "starlette", "prisma", "termcolor", "honeybadger", "nicegui", "validators", "starlette_babel", "pytz", "pydash", "aiocache", "starlette_securecookies", "cryptography", "bcrypt", "itsdangerous", "cloudpickle", "pyftpdlib"]
+
+[tool.ruff.flake8-bugbear]
+extend-immutable-calls = ["fastapi.Depends", "fastapi.params.Depends", "fastapi.Query", "fastapi.params.Query"]
+
+[tool.pyright]
+include = ["weba", "tests"]
+typeCheckingMode = "strict"
+extraPaths = ["__pypackages__/3.10/lib", ".venv/lib/3.10/site-packages", ".venv/lib/python3.10/site-packages", "__pypackages__/3.11/lib", ".venv/lib/3.11/site-packages", ".venv/lib/python3.11/site-packages"]

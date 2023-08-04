@@ -1,0 +1,17 @@
+# hidden files
+.*
+!.*rc
+!.*rc.js
+!.*ignore
+!.*config
+!.*lint.json
+!.env
+!.gitattributes
+!.github
+!.tool-versions
+!.keep
+!.bandit
+!.devcontainer
+!.vscode/launch.json
+!.vscode/settings.json
+!.dockerignore
