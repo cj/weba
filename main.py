@@ -1,0 +1,3 @@
+import weba
+
+weba.run()
