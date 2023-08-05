@@ -1,8 +1,7 @@
 import os
 from pathlib import Path
-from typing import Any, List, Optional
+from typing import Any, List
 
-import uvicorn
 from dominate.dom_tag import Callable
 from dotenv import load_dotenv
 from pydantic_settings import BaseSettings, SettingsConfigDict

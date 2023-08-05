@@ -1,5 +1,6 @@
+from .app import app
 from .settings import settings
-from .weba import app, async_run, run
+from .weba import async_run, run
 
 __all__ = [
     "app",

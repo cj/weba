@@ -1,10 +1,8 @@
 import uvicorn
-from fastapi import FastAPI
 from fastapi.responses import HTMLResponse
 
+from weba import app
 from weba.utils import find_open_port
-
-app = FastAPI()
 
 
 @app.get("/", response_class=HTMLResponse)
