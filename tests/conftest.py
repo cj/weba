@@ -1,0 +1,3 @@
+import icecream
+
+icecream.install()
