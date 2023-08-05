@@ -40,6 +40,8 @@ class Settings(BaseSettings):
         if os.path.exists(os.path.join(project_root_path, "pages"))
         else os.path.join(project_root_path, "app/pages")
     )
+    exclude_paths: List[str] = []
+    include_paths: List[str] = []
 
 
 settings = Settings()
