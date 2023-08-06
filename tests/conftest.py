@@ -1,10 +1,12 @@
+from collections.abc import Generator
+
 import icecream
+import pytest
+from playwright.sync_api import Page
 
 from tests.server import Server
 
 icecream.install()
-
-server = Server()
 
 
 def pytest_configure(config):  # type: ignore  # noqa: ARG001
@@ -20,7 +22,6 @@ def pytest_sessionstart(session):  # type: ignore  # noqa: ARG001
     Called after the Session object has been created and
     before performing collection and entering the run test loop.
     """
-    server.start()
 
 
 def pytest_sessionfinish(session, exitstatus):  # type: ignore  # noqa: ARG001
@@ -28,10 +29,16 @@ def pytest_sessionfinish(session, exitstatus):  # type: ignore  # noqa: ARG001
     Called after whole test run finished, right before
     returning the exit status to the system.
     """
-    server.stop()
 
 
 def pytest_unconfigure(config):  # type: ignore  # noqa: ARG001
     """
     called before test process is exited.
     """
+
+
+@pytest.fixture(name="server")
+def server_fixture(page: Page) -> Generator[Server, None, None]:
+    server = Server(page)
+    yield server  # noqa: PT022
+    server.stop()

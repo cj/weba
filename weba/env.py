@@ -44,4 +44,4 @@ class Settings(BaseSettings):
     include_paths: List[str] = []
 
 
-settings = Settings()
+env = Settings()

@@ -9,7 +9,7 @@ class DocumentOverride(object):
     head: t.head
 
 
-WEBADocument = type("WEBADocument", (dominate.document, DocumentOverride), {})
+WebaDocument = type("WebaDocument", (dominate.document, DocumentOverride), {})
 
 
 def get_document(
@@ -18,7 +18,7 @@ def get_document(
     *args: Any,
     **kwargs: Any,
 ):
-    doc = cast(WEBADocument, dominate.document(title, doctype, *args, **kwargs))
+    doc = cast(WebaDocument, dominate.document(title, doctype, *args, **kwargs))
 
     with doc.head:
         t.meta(charset="utf-8")
