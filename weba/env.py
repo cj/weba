@@ -29,6 +29,7 @@ class Settings(BaseSettings):
     )
 
     port: int = 3334
+    host: str = "127.0.0.1"
     env: str = "dev"
     live_reload: bool = False
     modules: List[Any] = []

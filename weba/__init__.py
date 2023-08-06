@@ -1,3 +1,5 @@
+from fastapi import Depends
+
 from . import tags
 from .app import app
 from .document import WebaDocument
@@ -22,4 +24,5 @@ __all__ = [
     "ui",
     "html_tag",
     "tags",
+    "Depends",
 ]
