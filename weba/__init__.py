@@ -7,6 +7,7 @@ from .ui import html_tag, ui
 from .weba import async_run, run, uvicorn_server
 
 document = weba_document
+Document = WebaDocument
 
 __all__ = [
     "app",
@@ -15,6 +16,7 @@ __all__ = [
     "async_run",
     "env",
     "WebaDocument",
+    "Document",
     "weba_document",
     "document",
     "ui",
