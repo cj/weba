@@ -2,12 +2,12 @@ from fastapi import Depends
 from playwright.sync_api import expect
 
 from tests.server import Server
-from weba import WebaDocument, document, ui
+from weba import Document, document, ui
 
 
 def test_run_root(server: Server):
     @server.app.get("/")
-    async def index(doc: WebaDocument = Depends(document)):
+    async def index(doc: Document = Depends(document)):
         with doc.body:
             ui.h1("weba")
         return doc.render()
