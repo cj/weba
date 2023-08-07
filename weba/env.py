@@ -36,6 +36,15 @@ class Settings(BaseSettings):
     add_module: Callable[..., Any] = modules.append
     project_root_path: Path = Path(__file__).parent.parent
     weba_path: str = os.path.join(project_root_path, ".weba")
+    static_dir: str = os.path.join(weba_path, "static")
+    ignored_folders: List[str] = [
+        ".git",
+        ".venv",
+        "venv",
+        "node_modules",
+        "__pycache__",
+        ".pytest_cache",
+    ]
     pages_dir: str = (
         os.path.join(project_root_path, "pages")
         if os.path.exists(os.path.join(project_root_path, "pages"))

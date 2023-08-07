@@ -1,10 +1,10 @@
 from typing import List, Optional, Pattern
 
 from starlette.requests import Request
-from starlette.types import ASGIApp, Receive, Scope, Send
+from starlette.types import ASGIApp, Message, Receive, Scope, Send
 
-from weba.document import WebaDocument, get_document
-
+from .build import build
+from .document import WebaDocument, get_document
 from .env import env
 
 
@@ -16,6 +16,9 @@ class WebaMiddleware:
     app: ASGIApp
     exclude_paths: List[str]
     include_paths: List[str]
+    scope: Scope
+    receive: Receive
+    send: Send
 
     def __init__(
         self,
@@ -28,6 +31,13 @@ class WebaMiddleware:
         self.include_paths = env.include_paths.extend(include_paths or []) or []
 
     async def __call__(self, scope: Scope, receive: Receive, send: Send):
+        self.scope = scope
+        self.receive = receive
+        self.send = send
+
+        if scope["type"] != "http":
+            return await self.app(scope, receive, self.handle_lifespan)
+
         # if exclude_paths is not empty we use not any() to check if the path is in the exclude_paths
         # and skip it, otherwise we check if the path is in the include_paths and skip it if it is not
         if not any(
@@ -44,3 +54,9 @@ class WebaMiddleware:
             scope["weba_document"] = get_document()
 
         await self.app(scope, receive, send)
+
+    async def handle_lifespan(self, message: Message):
+        if message["type"] == "lifespan.startup.complete":
+            await build.run()
+
+        await self.send(message)
