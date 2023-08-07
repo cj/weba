@@ -1,12 +1,8 @@
-from collections.abc import Generator
-
 import icecream
-import pytest
-from playwright.sync_api import Page
-
-from tests.server import Server
 
 icecream.install()
+
+pytest_plugins = ["weba.test"]
 
 
 def pytest_configure(config):  # type: ignore  # noqa: ARG001
@@ -35,10 +31,3 @@ def pytest_unconfigure(config):  # type: ignore  # noqa: ARG001
     """
     called before test process is exited.
     """
-
-
-@pytest.fixture(name="server")
-def server_fixture(page: Page) -> Generator[Server, None, None]:
-    server = Server(page)
-    yield server  # noqa: PT022
-    server.stop()

@@ -1,19 +1,23 @@
 import os
 import threading
 import time
+from collections.abc import Generator
 from typing import Optional
 
+import pytest
 import uvicorn
 from fastapi.responses import HTMLResponse
-from playwright.sync_api import Page
+from playwright.sync_api import Page, expect
 
 from weba import uvicorn_server
 from weba.app import load_app
 from weba.document import get_document
 from weba.utils import find_open_port
 
+expect = expect
 
-class Server:
+
+class Weba:
     SCREENSHOT_DIR = os.path.join(os.path.dirname(os.path.realpath(__file__)), "screenshots")
 
     server_thread: Optional[threading.Thread]
@@ -28,23 +32,26 @@ class Server:
         self.doc = get_document()
         self.app = load_app()
 
+    # on missing methods try calling self.app
+    def __getattr__(self, name: str):
+        return getattr(self.app, name)
+
     def start_server(self) -> None:
         """Start the webserver in a separate thread. This is the equivalent of `ui.run()` in a normal script."""
         self.port = find_open_port()
         self.base_url = f"http://localhost:{self.port}"
 
-        app = self.app
-
-        @app.get("/", response_class=HTMLResponse)
+        @self.app.get("/", response_class=HTMLResponse)
         async def index():
             return self.doc.render()
 
         self.server_thread = threading.Thread(
-            target=self.run,
+            target=self.run_server,
         )
+
         self.server_thread.start()
 
-    def run(self):
+    def run_server(self):
         self.uvicorn_server = uvicorn_server(
             port=self.port,
             log_level="error",
@@ -52,7 +59,11 @@ class Server:
         )
         self.uvicorn_server.run()
 
-    def start(self, path: str = "/", timeout: float = 3.0) -> None:
+    def run(
+        self,
+        path: str = "/",
+        timeout: float = 3.0,
+    ) -> None:
         """Try to open the page until the server is ready or we time out.
 
         If the server is not yet running, start it.
@@ -82,3 +93,10 @@ class Server:
 
         if self.server_thread:
             self.uvicorn_server.should_exit = True
+
+
+@pytest.fixture(name="weba")
+def weba_fixture(page: Page) -> Generator[Weba, None, None]:
+    weba = Weba(page)
+    yield weba
+    weba.stop()

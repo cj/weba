@@ -11,6 +11,15 @@ from .weba import async_run, run, uvicorn_server
 document = weba_document
 Document = WebaDocument
 
+get = app.get
+post = app.post
+put = app.put
+delete = app.delete
+patch = app.patch
+options = app.options
+head = app.head
+trace = app.trace
+
 __all__ = [
     "app",
     "uvicorn_server",
@@ -25,4 +34,12 @@ __all__ = [
     "html_tag",
     "tags",
     "Depends",
+    "get",
+    "post",
+    "put",
+    "delete",
+    "patch",
+    "options",
+    "head",
+    "trace",
 ]

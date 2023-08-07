@@ -77,7 +77,7 @@ classmethod-decorators = ["pydantic.validator", "pydantic.root_validator", "pyda
 known-third-party = ["fastapi", "pydantic", "starlette", "prisma", "termcolor", "honeybadger", "nicegui", "validators", "starlette_babel", "pytz", "pydash", "aiocache", "starlette_securecookies", "cryptography", "bcrypt", "itsdangerous", "cloudpickle", "pyftpdlib"]
 
 [tool.ruff.flake8-bugbear]
-extend-immutable-calls = ["fastapi.Depends", "fastapi.params.Depends", "fastapi.Query", "fastapi.params.Query", "weba.Depends"]
+extend-immutable-calls = ["fastapi.Depends", "fastapi.params.Depends", "fastapi.Query", "fastapi.params.Query", "weba.Depends", "weba.test.Depends"]
 
 [tool.pyright]
 include = ["weba", "tests"]

@@ -1,13 +1,12 @@
-from fastapi import Depends
+import weba
+from weba import Depends, Document, document, ui
 
-from weba import Document, app, document, run, ui
 
-
-@app.get("/")
+@weba.get("/")
 async def index(doc: Document = Depends(document)):
     with doc.body:
         ui.h1("Hello weba!")
     return doc.render()
 
 
-run()
+weba.run()

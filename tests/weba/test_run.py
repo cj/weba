@@ -1,26 +1,23 @@
-from fastapi import Depends
-from playwright.sync_api import expect
-
-from tests.server import Server
-from weba import Document, document, ui
+from weba import Depends, Document, document, ui
+from weba.test import Weba, expect
 
 
-def test_run_root(server: Server):
-    @server.app.get("/")
+def test_run_root(weba: Weba):
+    @weba.get("/")
     async def index(doc: Document = Depends(document)):
         with doc.body:
             ui.h1("weba")
         return doc.render()
 
-    server.start()
+    weba.run()
 
-    expect(server.page.locator("//body")).to_contain_text("weba")
+    expect(weba.page.locator("//body")).to_contain_text("weba")
 
 
-def test_run_root_two(server: Server):
-    with server.doc.body:
+def test_run_root_two(weba: Weba):
+    with weba.doc.body:
         ui.h1("weba 2")
 
-    server.start()
+    weba.run()
 
-    expect(server.page.locator("//body")).to_contain_text("weba 2")
+    expect(weba.page.locator("//body")).to_contain_text("weba 2")
