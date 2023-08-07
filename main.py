@@ -1,12 +1,9 @@
-import weba
-from weba import Depends, Document, document, ui
+from weba import doc, run, ui
 
+doc["lang"] = "en"
+doc.title = "Weba Example"
 
-@weba.get("/")
-async def index(doc: Document = Depends(document)):
-    with doc.body:
-        ui.h1("Hello weba!")
-    return doc.render()
+with doc.body:
+    ui.h1("Hello, world!")
 
-
-weba.run()
+run()

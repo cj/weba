@@ -1,7 +1,7 @@
 from fastapi import Depends
 
 from . import tags
-from .app import app
+from .app import app, doc
 from .document import WebaDocument
 from .env import env
 from .middleware import weba_document
@@ -42,4 +42,5 @@ __all__ = [
     "options",
     "head",
     "trace",
+    "doc",
 ]

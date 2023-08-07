@@ -57,6 +57,8 @@ select = [
     "TCH",# flake8-type-checking
     "ARG", # flake8-unused-arguments
 ]
+# In a real project, you should not ignore these:
+# ignore = ["F403", "F405"] # this ignores `import *` errors
 
 line-length = 120
 
