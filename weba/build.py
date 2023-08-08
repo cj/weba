@@ -1,8 +1,11 @@
 import asyncio
 import os
+from time import time
+from typing import Optional, cast
 
 import aiofiles
 from aiofiles import os as aiofiles_io
+from dirhash import dirhash  # type: ignore
 from icecream import inspect
 
 from .env import env
@@ -10,6 +13,8 @@ from .env import env
 
 class Build:
     has_project_tailwind_config: bool
+    """ Static directory hash is used to bust the cache. """
+    static_dir_hash: Optional[str]
 
     def __init__(self):
         project_tailwind_config = os.path.join(
@@ -18,6 +23,7 @@ class Build:
         )
 
         self.has_project_tailwind_config = os.path.exists(project_tailwind_config)
+        self.static_dir_hash = None
 
     async def run(self):
         """
@@ -28,6 +34,11 @@ class Build:
         await self.create_tailwind_config()
         await self.create_tailwind_css_file()
         await self.run_tailwindcss()
+
+        if not env.live_reload and not env.is_test():
+            self.static_dir_hash = self._static_dir_hash()
+        else:
+            self.static_dir_hash = time().__str__()
 
     async def create_weba_hidden_directory(self):
         """
@@ -61,13 +72,14 @@ class Build:
         return inspect.cleandoc(
             f"""
             /** @type {{import('tailwindcss').Config}} */
-            const defaultTheme = require('tailwindcss/defaultTheme')
+            /** const defaultTheme = require('tailwindcss/defaultTheme') **/
 
             module.exports = {{
               content: [
-                '../!({ignored_folders})/**/*.py',
-                '../!({ignored_folders})/**/*._hs',
+                '../**/*.{{py,_hs}}',
+                '../!({ignored_folders})/**/*.{{py,_hs}}',
               ],
+              /**
               theme: {{
                 extend: {{
                   fontFamily: {{
@@ -75,11 +87,9 @@ class Build:
                   }},
                 }},
               }},
+              **/
               plugins: [
-                require('@tailwindcss/typography'),
-                // require('@tailwindcss/forms'),
-                require('@tailwindcss/aspect-ratio'),
-                require('@tailwindcss/container-queries'),
+                {", ".join([f"require('@tailwindcss/{plugin}')" for plugin in env.tw_plugins])}
               ],
             }}
             """
@@ -112,6 +122,14 @@ class Build:
         )
 
         await process.wait()
+
+    @staticmethod
+    def _static_dir_hash() -> str:
+        """
+        Get the static hash.
+        """
+
+        return cast(str, dirhash(env.static_dir, "sha1"))
 
 
 build = Build()
