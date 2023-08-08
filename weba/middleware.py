@@ -1,6 +1,8 @@
+import os
 from typing import List, Optional, Pattern
 
 from starlette.requests import Request
+from starlette.staticfiles import StaticFiles
 from starlette.types import ASGIApp, Message, Receive, Scope, Send
 
 from .build import build
@@ -16,6 +18,7 @@ class WebaMiddleware:
     app: ASGIApp
     exclude_paths: List[str]
     include_paths: List[str]
+    staticfiles: StaticFiles
     scope: Scope
     receive: Receive
     send: Send
@@ -26,9 +29,12 @@ class WebaMiddleware:
         exlcude_paths: Optional[List[str]] = None,
         include_paths: Optional[List[str]] = None,
     ) -> None:
+        staticfiles_class = NoCacheStaticFiles if env.live_reload else StaticFiles
+
         self.app = app
         self.exclude_paths = env.exclude_paths.extend(exlcude_paths or []) or []
         self.include_paths = env.include_paths.extend(include_paths or []) or []
+        self.staticfiles = staticfiles_class(directory=env.static_dir, check_dir=False)
 
     async def __call__(self, scope: Scope, receive: Receive, send: Send):
         self.scope = scope
@@ -37,6 +43,11 @@ class WebaMiddleware:
 
         if scope["type"] != "http":
             return await self.app(scope, receive, self.handle_lifespan)
+
+        if scope["path"].startswith(env.static_url):
+            # Remove the "/static" prefix before forwarding the request
+            scope["path"] = scope["path"].replace(env.static_url, "")
+            return await self.staticfiles(scope, receive, send)
 
         # if exclude_paths is not empty we use not any() to check if the path is in the exclude_paths
         # and skip it, otherwise we check if the path is in the include_paths and skip it if it is not
@@ -56,7 +67,23 @@ class WebaMiddleware:
         await self.app(scope, receive, send)
 
     async def handle_lifespan(self, message: Message):
-        if message["type"] == "lifespan.startup.complete":
-            await build.run()
+        match message["type"]:
+            case "lifespan.startup.complete":
+                if env.live_reload or not os.path.exists(env.weba_path):
+                    await build.run()
+            case _:
+                pass
 
         await self.send(message)
+
+
+class NoCacheStaticFiles(StaticFiles):
+    async def __call__(self, scope: Scope, receive: Receive, send: Send):
+        async def no_cache_send(message: Message):
+            if message.get("type") == "http.response.start":
+                headers = message.get("headers", [])
+                headers.append((b"cache-control", b"no-store"))
+                message["headers"] = headers
+            await send(message)
+
+        await super().__call__(scope, receive, no_cache_send)

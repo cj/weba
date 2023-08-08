@@ -27,6 +27,7 @@ pytest-cov = "^4.1.0"
 pytest-playwright = "^0.3.3"
 pytest-xdist = "^3.3.1"
 pytest-asyncio = "^0.21.1"
+pytest-env = "^0.8.2"
 
 [tool.poetry.group.lint.dependencies]
 ruff = "^0.0.261"

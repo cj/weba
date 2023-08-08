@@ -1370,6 +1370,23 @@ pytest = ">=4.6"
 testing = ["fields", "hunter", "process-tests", "pytest-xdist", "six", "virtualenv"]
 
 [[package]]
+name = "pytest-env"
+version = "0.8.2"
+description = "py.test plugin that allows you to add environment variables."
+optional = false
+python-versions = ">=3.7"
+files = [
+    {file = "pytest_env-0.8.2-py3-none-any.whl", hash = "sha256:5e533273f4d9e6a41c3a3120e0c7944aae5674fa773b329f00a5eb1f23c53a38"},
+    {file = "pytest_env-0.8.2.tar.gz", hash = "sha256:baed9b3b6bae77bd75b9238e0ed1ee6903a42806ae9d6aeffb8754cd5584d4ff"},
+]
+
+[package.dependencies]
+pytest = ">=7.3.1"
+
+[package.extras]
+test = ["coverage (>=7.2.7)", "pytest-mock (>=3.10)"]
+
+[[package]]
 name = "pytest-playwright"
 version = "0.3.3"
 description = "A pytest wrapper with fixtures for Playwright to automate web browsers"
@@ -2125,4 +2142,4 @@ multidict = ">=4.0"
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.10, <3.12"
-content-hash = "566fbe479ebdd4a81ad1f28b201a67d45083b0cb9ae0fd6b8e15495a1d80b146"
+content-hash = "76c4b5cda9b8e852821a073315f5e76e75db099032e221256accd67c70a82497"

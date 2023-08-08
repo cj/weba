@@ -1,4 +1,11 @@
+import asyncio
+import os
+
 import icecream
+
+from weba.build import build
+
+os.environ["WEBA_ENV"] = "test"
 
 icecream.install()
 
@@ -11,6 +18,7 @@ def pytest_configure(config):  # type: ignore  # noqa: ARG001
     This hook is called for every plugin and initial conftest
     file after command line options have been parsed.
     """
+    asyncio.run(build.run())
 
 
 def pytest_sessionstart(session):  # type: ignore  # noqa: ARG001

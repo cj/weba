@@ -37,12 +37,14 @@ class Settings(BaseSettings):
     project_root_path: Path = Path(__file__).parent.parent
     weba_path: str = os.path.join(project_root_path, ".weba")
     static_dir: str = os.path.join(weba_path, "static")
+    static_url: str = "/weba/static"
     ignored_folders: List[str] = [
         ".git",
         ".venv",
         "venv",
         "node_modules",
         "__pycache__",
+        weba_path,
         ".pytest_cache",
     ]
     pages_dir: str = (
