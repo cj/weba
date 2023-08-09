@@ -40,7 +40,14 @@ class Settings(BaseSettings):
     static_dir: str = os.path.join(weba_path, "static")
     static_url: str = "/weba/static"
     tw_plugins: List[str] = ["typography", "aspect-ratio", "container-queries"]
-    css_files: List[str] = ["https://cdn.jsdelivr.net/npm/daisyui@3.5.1/dist/full.css"]
+    tw_css_files: List[str] = ["https://cdn.jsdelivr.net/npm/daisyui@3.5.1/dist/full.css"]
+    """
+    These css files will be included in the tailwind build process.
+    Wrapped in @layer components {}, so that tailwind will purge unused css classes.
+    In live_reload mode, these files in their own file, this results in larger files but quicker compile times.
+    """
+    css_files: List[str] = []
+    js_files: List[str] = []
     htmx_version: str = "1.9.4"
     htmx_extentions: List[str] = ["head-support", "ws-connect" if live_reload else ""]
     htmx_boost: bool = True

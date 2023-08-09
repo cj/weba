@@ -11,7 +11,10 @@ class WebaDocument(dominate.document):
     body: t.body
     head: t.head
 
-    _rendered_default_head: bool = False
+    def __init__(self, title: str = "Weba", doctype: str = "<!DOCTYPE html>", *args: Any, **kwargs: Any):
+        self._weba_head_rendered = False
+
+        super().__init__(*args, title=title, doctype=doctype, **kwargs)  # type: ignore
 
     def render(self, indent: str = "  ", pretty: bool = True, xhtml: bool = False):
         self._render_default_head()
@@ -19,7 +22,7 @@ class WebaDocument(dominate.document):
         return super().render(indent, pretty, xhtml)
 
     def _render_default_head(self) -> None:
-        if self._rendered_default_head:
+        if self._weba_head_rendered:
             return
 
         with self.head:
@@ -27,10 +30,10 @@ class WebaDocument(dominate.document):
             t.meta(name="viewport", content="width=device-width, initial-scale=1")
             t.link(
                 rel="stylesheet",
-                href=f"{env.static_url}/styles.css?sha={build.static_dir_hash}",
+                href=f"{env.static_url}/styles.css?v={build.static_dir_hash}",
                 type="text/css",
             )
-            self._rendered_default_head = True
+            self._weba_head_rendered = True
 
 
 def get_document(
