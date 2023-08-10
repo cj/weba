@@ -2,13 +2,13 @@
 
 [[package]]
 name = "aiofiles"
-version = "23.1.0"
+version = "23.2.1"
 description = "File support for asyncio."
 optional = false
-python-versions = ">=3.7,<4.0"
+python-versions = ">=3.7"
 files = [
-    {file = "aiofiles-23.1.0-py3-none-any.whl", hash = "sha256:9312414ae06472eb6f1d163f555e466a23aed1c8f60c30cccf7121dba2e53eb2"},
-    {file = "aiofiles-23.1.0.tar.gz", hash = "sha256:edd247df9a19e0db16534d4baaf536d6609a43e1de5401d7a4c1c148753a1635"},
+    {file = "aiofiles-23.2.1-py3-none-any.whl", hash = "sha256:19297512c647d4b27a2cf7c34caa7e405c0d60b5560618a29a9fe027b18b0107"},
+    {file = "aiofiles-23.2.1.tar.gz", hash = "sha256:84ec2218d8419404abcb9f0c02df3f34c6e0a68ed41072acfb1cef5cbc29051a"},
 ]
 
 [[package]]
@@ -475,24 +475,6 @@ tomli = {version = "*", optional = true, markers = "python_full_version <= \"3.1
 
 [package.extras]
 toml = ["tomli"]
-
-[[package]]
-name = "dirhash"
-version = "0.2.1"
-description = "Python module and CLI for hashing of file system directories."
-optional = false
-python-versions = "*"
-files = []
-develop = false
-
-[package.dependencies]
-scantree = ">=0.0.1"
-
-[package.source]
-type = "git"
-url = "https://github.com/cj/dirhash-python.git"
-reference = "master"
-resolved_reference = "dfd4c264a89184212c371e5006f98dee69dea5e8"
 
 [[package]]
 name = "docstring-to-markdown"
@@ -1287,13 +1269,13 @@ plugins = ["importlib-metadata"]
 
 [[package]]
 name = "pyright"
-version = "1.1.320"
+version = "1.1.321"
 description = "Command line wrapper for pyright"
 optional = false
 python-versions = ">=3.7"
 files = [
-    {file = "pyright-1.1.320-py3-none-any.whl", hash = "sha256:cdf739f7827374575cefb134311457d08c189793c3da3097c023debec9acaedb"},
-    {file = "pyright-1.1.320.tar.gz", hash = "sha256:94223e3b82d0b4c99c5125bab4d628ec749ce0b5b2ae0471fd4921dd4eff460d"},
+    {file = "pyright-1.1.321-py3-none-any.whl", hash = "sha256:bc8ca2001b9f19b1cf75eb5ace71d833f9266b3981a5d88dac3b9bbcff8d9281"},
+    {file = "pyright-1.1.321.tar.gz", hash = "sha256:f62d54fac611138a407bb302103700eeb37a147ce1a6e915148be9ca5961572a"},
 ]
 
 [package.dependencies]
@@ -1693,21 +1675,6 @@ typing-extensions = "*"
 
 [package.extras]
 dev = ["black (==22.12.0)", "mypy (==0.991)", "python-lsp-jsonrpc (==1.0.0)"]
-
-[[package]]
-name = "scantree"
-version = "0.0.1"
-description = "Flexible recursive directory iterator: scandir meets glob(\"**\", recursive=True)"
-optional = false
-python-versions = "*"
-files = [
-    {file = "scantree-0.0.1.tar.gz", hash = "sha256:2a8b163de0e4b2f9e4f37f8caf3f0b265172bbf174111e1bebc7955581895b39"},
-]
-
-[package.dependencies]
-attrs = ">=18.0.0"
-pathspec = ">=0.5.9"
-six = ">=1.12.0"
 
 [[package]]
 name = "setuptools"
@@ -2175,4 +2142,4 @@ multidict = ">=4.0"
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.10, <3.12"
-content-hash = "f8f6b994e762792eb57404215cf6337e46c6aaac019e01adbdb88ea56947534e"
+content-hash = "76c4b5cda9b8e852821a073315f5e76e75db099032e221256accd67c70a82497"

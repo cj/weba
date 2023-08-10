@@ -1,47 +1,59 @@
 import asyncio
+import hashlib
 import os
 from time import time
-from typing import Optional, cast
+from typing import Annotated, Dict, Optional, Text
 
 import aiofiles
 from aiofiles import os as aiofiles_io
-from dirhash import dirhash  # type: ignore
 from icecream import inspect
 
 from .env import env
 
 
-def create_static_dir_hash() -> str:
+def get_file_hash(file_path: Text) -> Text:
     """
-    Get the static hash.
-    """
+    Get the hash of a file.
 
-    return cast(str, dirhash(env.static_dir, "sha1"))
+    If live reload is enabled, the hash will be the current time.
+    """
+    if env.live_reload:
+        return str(time()).replace(".", "")
+
+    # NOTE: This is only used to stop the browser from caching the file
+    hash_md5 = hashlib.md5()  # noqa: S324
+    with open(file_path, "rb") as f:
+        for chunk in iter(lambda: f.read(4096), b""):
+            hash_md5.update(chunk)
+
+    return hash_md5.hexdigest()
 
 
 class Build:
     _has_project_tailwind_config: bool
-    _static_dir_hash: Optional[str]
     """ Static directory hash is used to bust the cache. """
     _project_tailwind_config = os.path.join(
         env.project_root_path,
         "tailwind.config.js",
     )
+    _file_hashes: Optional[Dict[Annotated[str, "file name"], str]]
 
     def __init__(self):
         self._has_project_tailwind_config = os.path.exists(self._project_tailwind_config)
-        self._static_dir_hash = None
+        self._file_hashes = None
 
     @property
-    def static_dir_hash(self):
+    def file_hashes(self) -> Dict[Annotated[str, "file name"], str]:
         """
-        Return the static directory hash.
+        Get the file hashes.
         """
 
-        if not self._static_dir_hash:
-            raise RuntimeError("Static directory hash is not set.")
+        if not self._file_hashes:
+            self._file_hashes = {
+                file_name: get_file_hash(f"{env.static_dir}/{file_name}") for file_name in os.listdir(env.static_dir)
+            }
 
-        return self._static_dir_hash
+        return self._file_hashes
 
     @property
     def tailwind_config(self):
@@ -82,11 +94,6 @@ class Build:
         await self.create_tailwind_config()
         await self.create_tailwind_css_file()
         await self.run_tailwindcss()
-
-        if not env.live_reload and not env.is_test():
-            self._static_dir_hash = create_static_dir_hash()
-        else:
-            self._static_dir_hash = time().__str__()
 
     async def create_tailwind_css_file(self):
         """

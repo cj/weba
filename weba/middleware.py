@@ -45,8 +45,8 @@ class WebaMiddleware:
             return await self.app(scope, receive, self.handle_lifespan)
 
         if scope["path"].startswith(env.static_url):
-            # Remove the "/static" prefix before forwarding the request
-            scope["path"] = scope["path"].replace(env.static_url, "")
+            scope["path"] = self.get_static_file_path(scope["path"])
+
             return await self.staticfiles(scope, receive, send)
 
         # if exclude_paths is not empty we use not any() to check if the path is in the exclude_paths
@@ -75,6 +75,17 @@ class WebaMiddleware:
                 pass
 
         await self.send(message)
+
+    def get_static_file_path(self, path: str) -> str:
+        # Remove the "/static" prefix before forwarding the request
+        path = path.replace(env.static_url, "")
+        # Remove the -<hash> part from <filename>-<hash>.<ext> so it becomes <filename>.<ext>
+        splits = path.rsplit("-")
+
+        if len(splits) > 1:
+            path = f"{splits[0]}.{splits[1].split('.')[-1]}"
+
+        return path
 
 
 class NoCacheStaticFiles(StaticFiles):

@@ -30,7 +30,7 @@ class WebaDocument(dominate.document):
             t.meta(name="viewport", content="width=device-width, initial-scale=1")
             t.link(
                 rel="stylesheet",
-                href=f"{env.static_url}/styles.css?v={build.static_dir_hash}",
+                href=f"{env.static_url}/styles-{build.file_hashes['styles.css']}.css",
                 type="text/css",
             )
             self._weba_head_rendered = True
