@@ -1,6 +1,7 @@
 import asyncio
 import contextlib
 import os
+import re
 from typing import List, Optional, Pattern
 
 from starlette.requests import Request
@@ -97,18 +98,8 @@ class WebaMiddleware:
     def get_static_file_path(self, path: str) -> str:
         # Remove the "/static" prefix before forwarding the request
         path = path.replace(env.static_url, "")
-        # Remove the -<hash> part from <filename>-<hash>.<ext> so it becomes <filename>.<ext>
-        splits = path.rsplit("-")
 
-        if len(splits) > 1:
-            # remove the last split which is the hash.ext
-            hash_ext = splits.pop()
-            # join the splits together by -
-            path = "-".join(splits)
-            # add the ext back to the path
-            path = f"{path}.{hash_ext.split('.')[-1]}"
-
-        return path
+        return re.sub(r"\-[\d\w]{16,}(?=\.\w+$)", "", path)
 
 
 class NoCacheStaticFiles(StaticFiles):

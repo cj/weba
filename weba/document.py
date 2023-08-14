@@ -10,10 +10,13 @@ from .env import env
 def load_script_tags() -> None:
     # Loop over the build.file_hashes dict, with filename and hash as key and value
     # order the file name that contains htmx.org first
-    files = sorted(build.file_hashes.items(), key=lambda x: "htmx.org" in x[0], reverse=True)
+    files = sorted(build.files.items(), key=lambda x: "htmx.org" in x[0], reverse=True)
     for file_name, file_hash in files:
-        split = file_name.rsplit(".", 1)
-        file_url = f"{env.static_url}/{split[0]}-{file_hash}.{split[1]}"
+        if file_hash == "":
+            file_url = f"{env.static_url}/{file_name}"
+        else:
+            split = file_name.rsplit(".", 1)
+            file_url = f"{env.static_url}/{split[0]}-{file_hash}.{split[1]}"
         # If the file is a js file
         if file_url.endswith(".css"):
             # Create a script tag with the file name and hash as key and value

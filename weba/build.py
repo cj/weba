@@ -48,12 +48,19 @@ def get_string_hash(string: Text) -> Text:
 
 
 def extract_name_version(url: str) -> str:
-    pattern = r".*/(?P<name>.+)@(?P<version>\d+(\.\d+){0,2})/.*\.(?P<ext>\w+)"
+    pattern = r".*\/(?P<name>.+)@(?P<version>\d+(\.\d+){0,3})\/.*\.(?P<ext>\w+)"
 
-    if match := re.match(pattern, url):
-        return f"{match['name']}-{match['version']}.{match['ext']}"
-    else:
+    if not (match := re.match(pattern, url)):
         return url.split("/")[-1]
+
+    if match["name"] == "htmx.org":
+        htmx_pattern = r".*\/(?:.+)@(?P<version>\d+(\.\d+){0,3})\/.+\/(?P<name>[\w-]*)\.(?P<ext>\w+)"
+        if htmx_match := re.match(htmx_pattern, url):
+            return f"{htmx_match['name']}-{htmx_match['version']}.{htmx_match['ext']}"
+        else:
+            return url.split("/")[-1]
+
+    return f"{match['name']}-{match['version']}.{match['ext']}"
 
 
 class Build:
@@ -63,7 +70,7 @@ class Build:
         env.project_root_path,
         "tailwind.config.js",
     )
-    _file_hashes: Optional[Dict[Annotated[str, "file name"], str]]
+    _files: Optional[Dict[Annotated[str, "file name"], str]]
     _tw_css_files: Optional[Text]
     _css_files: Optional[Text]
     _js_files: Optional[Text]
@@ -71,21 +78,24 @@ class Build:
 
     def __init__(self):
         self._has_project_tailwind_config = os.path.exists(self._project_tailwind_config)
-        self._file_hashes = None
+        self._files = None
         self._cache_dir = os.path.join(env.weba_path, "cache")
 
     @property
-    def file_hashes(self) -> Dict[Annotated[str, "file name"], str]:
+    def files(self) -> Dict[Annotated[str, "file name"], str]:
         """
         Get the file hashes.
         """
 
-        if not self._file_hashes:
-            self._file_hashes = {
-                file_name: get_file_hash(f"{env.static_dir}/{file_name}") for file_name in os.listdir(env.static_dir)
+        if not self._files:
+            self._files = {
+                file_name: ""
+                if re.match(r".*(-[\d\.]{2,})\.\w+$", file_name)
+                else get_file_hash(f"{env.static_dir}/{file_name}")
+                for file_name in os.listdir(env.static_dir)
             }
 
-        return self._file_hashes
+        return self._files
 
     @property
     def tailwind_config(self):
@@ -172,7 +182,7 @@ class Build:
     async def create_hs_extension_files(self):
         return await self.create_files(
             # TODO: Add @{env.htmx_version} and fix getting the filename and version
-            [f"https://unpkg.com/htmx.org/dist/ext/{file}.js" for file in env.htmx_extentions],
+            [f"https://unpkg.com/htmx.org@{env.htmx_version}/dist/ext/{file}.js" for file in env.htmx_extentions],
         )
 
     async def create_tailwind_css_file(self):
@@ -207,6 +217,9 @@ class Build:
         """
         Create the hidden directory for weba.
         """
+
+        if os.path.exists(env.static_dir):
+            shutil.rmtree(env.static_dir)
 
         paths = [
             env.weba_path,
