@@ -1,3 +1,5 @@
+import asyncio
+import contextlib
 import os
 from typing import List, Optional, Pattern
 
@@ -29,17 +31,18 @@ class WebaMiddleware:
         exlcude_paths: Optional[List[str]] = None,
         include_paths: Optional[List[str]] = None,
     ) -> None:
-        staticfiles_class = NoCacheStaticFiles if env.live_reload else StaticFiles
-
         self.app = app
         self.exclude_paths = env.exclude_paths.extend(exlcude_paths or []) or []
         self.include_paths = env.include_paths.extend(include_paths or []) or []
-        self.staticfiles = staticfiles_class(directory=env.static_dir, check_dir=False)
+        self.staticfiles = StaticFiles(directory=env.static_dir, check_dir=False)
 
     async def __call__(self, scope: Scope, receive: Receive, send: Send):
         self.scope = scope
         self.receive = receive
         self.send = send
+
+        if scope["type"] == "websocket" and scope["path"] == env.live_reload_url:
+            return await self.handle_websocket()
 
         if scope["type"] != "http":
             return await self.app(scope, receive, self.handle_lifespan)
@@ -76,6 +79,21 @@ class WebaMiddleware:
 
         await self.send(message)
 
+    async def handle_websocket(self):
+        while True:
+            event = await self.receive()
+            if event["type"] == "websocket.connect":
+                await self.send({"type": "websocket.accept"})
+            elif event["type"] == "websocket.receive":
+                if event["text"] is not None:
+                    with contextlib.suppress(Exception):
+                        try:
+                            await asyncio.sleep(1)
+                        except RuntimeError:
+                            break
+            elif event["type"] == "websocket.disconnect":
+                break
+
     def get_static_file_path(self, path: str) -> str:
         # Remove the "/static" prefix before forwarding the request
         path = path.replace(env.static_url, "")
@@ -83,7 +101,12 @@ class WebaMiddleware:
         splits = path.rsplit("-")
 
         if len(splits) > 1:
-            path = f"{splits[0]}.{splits[1].split('.')[-1]}"
+            # remove the last split which is the hash.ext
+            hash_ext = splits.pop()
+            # join the splits together by -
+            path = "-".join(splits)
+            # add the ext back to the path
+            path = f"{path}.{hash_ext.split('.')[-1]}"
 
         return path
 

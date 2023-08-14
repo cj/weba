@@ -4,13 +4,14 @@ from typing import Any, List
 
 from dominate.dom_tag import Callable
 from dotenv import load_dotenv
+from pydantic import model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 load_dotenv()
 
 
 def env_file() -> tuple[str, ...]:
-    match os.environ.get("WEBA_ENV", "dev"):
+    match os.getenv("WEBA_ENV", "dev"):
         case "production" | "prod" | "prd":
             return (".env", ".env.local", ".env.prd", ".env.prod", ".env.production")
         case "staging" | "stg":
@@ -37,7 +38,7 @@ class Settings(BaseSettings):
     add_module: Callable[..., Any] = modules.append
     project_root_path: Path = Path(__file__).parent.parent
     weba_path: str = os.path.join(project_root_path, ".weba")
-    static_dir: str = os.path.join(weba_path, "static")
+    static_dir: str = os.path.join(project_root_path, ".weba", "static")
     static_url: str = "/weba/static"
     tw_plugins: List[str] = ["typography", "aspect-ratio", "container-queries"]
     tw_css_files: List[str] = ["https://cdn.jsdelivr.net/npm/daisyui@3.5.1/dist/full.css"]
@@ -49,7 +50,7 @@ class Settings(BaseSettings):
     css_files: List[str] = []
     js_files: List[str] = []
     htmx_version: str = "1.9.4"
-    htmx_extentions: List[str] = ["head-support", "ws-connect" if live_reload else ""]
+    htmx_extentions: List[str] = ["head-support"]
     htmx_boost: bool = True
     ignored_folders: List[str] = [
         ".git",
@@ -70,6 +71,14 @@ class Settings(BaseSettings):
     )
     exclude_paths: List[str] = []
     include_paths: List[str] = []
+
+    @model_validator(mode="after")
+    @classmethod
+    def _(cls, settings: Any):
+        if settings.live_reload:
+            settings.htmx_extentions.append("ws")
+
+        return settings
 
     def is_test(self) -> bool:
         return self.env in ("test", "testing", "tst")

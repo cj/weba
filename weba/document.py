@@ -7,6 +7,26 @@ from .build import build
 from .env import env
 
 
+def load_script_tags() -> None:
+    # Loop over the build.file_hashes dict, with filename and hash as key and value
+    # order the file name that contains htmx.org first
+    files = sorted(build.file_hashes.items(), key=lambda x: "htmx.org" in x[0], reverse=True)
+    for file_name, file_hash in files:
+        split = file_name.rsplit(".", 1)
+        file_url = f"{env.static_url}/{split[0]}-{file_hash}.{split[1]}"
+        # If the file is a js file
+        if file_url.endswith(".css"):
+            # Create a script tag with the file name and hash as key and value
+            t.link(
+                rel="stylesheet",
+                href=file_url,
+                type="text/css",
+            )
+        elif file_url.endswith(".js"):
+            # Create a script tag with the file name and hash as key and value
+            t.script(src=file_url, type="text/javascript")
+
+
 class WebaDocument(dominate.document):
     body: t.body
     head: t.head
@@ -28,11 +48,7 @@ class WebaDocument(dominate.document):
         with self.head:
             t.meta(charset="utf-8")
             t.meta(name="viewport", content="width=device-width, initial-scale=1")
-            t.link(
-                rel="stylesheet",
-                href=f"{env.static_url}/styles-{build.file_hashes['styles.css']}.css",
-                type="text/css",
-            )
+            load_script_tags()
             self._weba_head_rendered = True
 
 
@@ -42,6 +58,8 @@ def get_document(
     **kwargs: Any,
 ):
     doc = WebaDocument(*args, doctype=doctype, **kwargs)
+
+    doc.body["hx-ext"] = ", ".join(env.htmx_extentions)
 
     if env.htmx_boost:
         doc.body["hx-boost"] = "true"
