@@ -103,23 +103,12 @@ class Build:
 
         return inspect.cleandoc(
             f"""
-            /** @type {{import('tailwindcss').Config}} */
-            /** const defaultTheme = require('tailwindcss/defaultTheme') **/
-
             module.exports = {{
               content: [
                 '../**/*.{{py,_hs}}',
                 '../!({ignored_folders})/**/*.{{py,_hs}}',
+                '!(__pycache__).{{py,_hs}}',
               ],
-              /**
-              theme: {{
-                extend: {{
-                  fontFamily: {{
-                    sans: ['Inter var', ...defaultTheme.fontFamily.sans],
-                  }},
-                }},
-              }},
-              **/
               plugins: [
                 {", ".join([f"require('@tailwindcss/{plugin}')" for plugin in env.tw_plugins])}
               ],
