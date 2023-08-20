@@ -40,7 +40,8 @@ class Settings(BaseSettings):
     weba_path: str = os.path.join(project_root_path, ".weba")
     static_dir: str = os.path.join(project_root_path, ".weba", "static")
     static_url: str = "/weba/static"
-    tw_plugins: List[str] = ["typography", "aspect-ratio", "container-queries"]
+    tw_version: str = "3.3.3"
+    tw_plugins: List[str] = ["typography", "aspect-ratio"]
     tw_css_files: List[str] = ["https://cdn.jsdelivr.net/npm/daisyui@3.5.1/dist/full.css"]
     """
     These css files will be included in the tailwind build process.

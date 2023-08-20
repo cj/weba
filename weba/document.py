@@ -25,7 +25,7 @@ def load_script_tags() -> None:
                 href=file_url,
                 type="text/css",
             )
-        elif file_url.endswith(".js"):
+        else:
             # Create a script tag with the file name and hash as key and value
             t.script(src=file_url, type="text/javascript")
 

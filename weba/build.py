@@ -48,6 +48,15 @@ def get_string_hash(string: Text) -> Text:
 
 
 def extract_name_version(url: str) -> str:
+    if url.startswith("https://cdn.tailwindcss.com"):
+        tw_pattern = r"(?P<start>.*\/)(?P<version>\d+(\.\d+){2})(\?plugins=)(?P<end>.*)"
+
+        if tw_match := re.match(tw_pattern, url):
+            plugins = "-".join(tw_match["end"].split(","))
+            return f"tw-{plugins}-{tw_match['version']}"
+        else:
+            return url.split("/")[-1]
+
     pattern = r".*\/(?P<name>.+)@(?P<version>\d+(\.\d+){0,3})\/.*\.(?P<ext>\w+)"
 
     if not (match := re.match(pattern, url)):
@@ -55,6 +64,7 @@ def extract_name_version(url: str) -> str:
 
     if match["name"] == "htmx.org":
         htmx_pattern = r".*\/(?:.+)@(?P<version>\d+(\.\d+){0,3})\/.+\/(?P<name>[\w-]*)\.(?P<ext>\w+)"
+
         if htmx_match := re.match(htmx_pattern, url):
             return f"{htmx_match['name']}-{htmx_match['version']}.{htmx_match['ext']}"
         else:
@@ -122,8 +132,14 @@ class Build:
         """
 
         await self.create_weba_hidden_directory()
-        await self.create_tailwind_config()
-        await self.create_tailwind_css_file()
+
+        if env.live_reload:
+            plugins = ",".join(env.tw_plugins)
+            await self.create_files([f"https://cdn.tailwindcss.com/{env.tw_version}?plugins={plugins}"])
+        else:
+            await self.create_tailwind_config()
+            await self.create_tailwind_css_file()
+
         await asyncio.gather(
             self.create_files(env.tw_css_files),
             self.create_files(env.css_files),
@@ -131,7 +147,9 @@ class Build:
             self.create_hs_extension_files(),
             self.create_files([f"https://unpkg.com/htmx.org@{env.htmx_version}/dist/htmx.js"]),
         )
-        await self.run_tailwindcss()
+
+        if not env.live_reload:
+            await self.run_tailwindcss()
 
     async def create_files(self, files: List[Text]):
         """
