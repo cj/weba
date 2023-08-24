@@ -1,12 +1,33 @@
+from dominate.dom_tag import Callable
 from fastapi import FastAPI
 from fastapi.responses import HTMLResponse
 
 from weba.document import get_document
 from weba.middleware import WebaMiddleware
+from weba.utils import weba_encoder_decorator
+
+
+class WebaFastAPI(FastAPI):
+    def __init__(self, *args, **kwargs):  # type: ignore
+        super().__init__(*args, **kwargs)
+
+        for method in ["get", "post", "put", "delete", "patch", "options"]:
+            self.add_custom_method(method)
+
+    def add_custom_method(self, method_name: str):
+        fastapi_method = getattr(FastAPI, method_name)
+
+        def decorator(*args, **kwargs):  # type: ignore
+            def wrapper(func: Callable):  # type: ignore
+                return fastapi_method(self, *args, **kwargs)(weba_encoder_decorator(func))  # type: ignore
+
+            return wrapper  # type: ignore
+
+        setattr(self, method_name, decorator)
 
 
 def load_app() -> FastAPI:
-    app = FastAPI(default_response_class=HTMLResponse)
+    app = WebaFastAPI(default_response_class=HTMLResponse)
 
     app.add_middleware(
         WebaMiddleware,

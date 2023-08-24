@@ -7,7 +7,8 @@ def test_run_root(weba: Weba):
     async def index(doc: Document = Depends(document)):
         with doc.body:
             ui.h1("weba")
-        return doc.render()
+
+        return doc
 
     weba.run()
 

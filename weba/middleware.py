@@ -68,7 +68,28 @@ class WebaMiddleware:
         ):
             scope["weba_document"] = get_document()
 
-        await self.app(scope, receive, send)
+        await self.app(scope, receive, self.handle_response)
+
+    async def handle_response(self, message: Message):
+        # if message["type"] == "http.response.start":
+        #     status_code = message["status"]
+        #     headers = message.get("headers", [])
+        #     headers.append((b"cache-control", b"no-store"))
+        #     message["headers"] = headers
+
+        #     if status_code == 200:
+        #         headers.append((b"content-type", b"text/html; charset=utf-8"))
+        #         message["headers"] = headers
+
+        if message.get("type") == "http.response.body":
+            body = message.get("body", b"")
+
+            # if isinstance(self.scope["weba_document"], WebaDocument):
+            #     breakpoint()
+
+            message["body"] = body
+
+        await self.send(message)
 
     async def handle_lifespan(self, message: Message):
         match message["type"]:

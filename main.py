@@ -6,12 +6,13 @@ doc.title = "Weba Example"
 
 @app.post("/handle_click")
 def handle_click():
-    return ui.p("Clicked!").render()
+    return ui.p("Clicked!")
 
 
 with doc.body:
     with ui.div(cls="container mx-auto prose"):
         ui.h1("Hello, world!")
+
         ui.p("Not Clicked")
 
         ui.button(
