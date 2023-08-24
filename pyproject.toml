@@ -10,17 +10,18 @@ packages = [{include = "weba"}]
 
 [tool.poetry.dependencies]
 python = ">=3.10, <3.12"
-fastapi = "^0.100.1"
-pytailwindcss = "^0.2.0"
-dominate = "^2.8.0"
-uvicorn = {extras = ["standard"], version = "^0.23.2"}
-pydantic = "^2.1.1"
-pydantic-settings = "^2.0.2"
-python-dotenv = "^1.0.0"
-psutil = "^5.9.5"
-aiofiles = "^23.1.0"
-aiohttp = "^3.8.5"
-jsmin = "^3.0.1"
+fastapi = ">=0.100.0"
+pytailwindcss = ">=0.2.0"
+dominate = ">=2"
+uvicorn = {extras = ["standard"], version = ">=0.20"}
+pydantic = ">=2"
+pydantic-settings = ">=2"
+python-dotenv = ">=1.0.0"
+psutil = ">=5"
+aiofiles = ">=23"
+aiohttp = ">=3"
+jsmin = ">=3"
+starlette-cramjam = ">=0.3.0"
 
 [tool.poetry.group.test.dependencies]
 pytest = "^7.4.0"

@@ -1,6 +1,5 @@
 import asyncio
 import contextlib
-import os
 import re
 from typing import List, Optional, Pattern
 

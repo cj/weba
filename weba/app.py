@@ -1,10 +1,9 @@
-from functools import wraps
 from typing import Any, ParamSpec, TypeVar
 
 from dominate.dom_tag import Callable
 from fastapi import FastAPI
-from fastapi.middleware.gzip import GZipMiddleware
 from fastapi.responses import HTMLResponse
+from starlette_cramjam.middleware import CompressionMiddleware
 
 from weba.document import get_document
 from weba.middleware import WebaMiddleware
@@ -46,10 +45,7 @@ def load_app() -> WebaFastAPI:
         WebaMiddleware,
     )
 
-    app.add_middleware(
-        GZipMiddleware,
-        minimum_size=1000,
-    )
+    app.add_middleware(CompressionMiddleware)
 
     return app
 
