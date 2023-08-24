@@ -3,6 +3,7 @@ from typing import Any, ParamSpec, TypeVar
 
 from dominate.dom_tag import Callable
 from fastapi import FastAPI
+from fastapi.middleware.gzip import GZipMiddleware
 from fastapi.responses import HTMLResponse
 
 from weba.document import get_document
@@ -43,6 +44,11 @@ def load_app() -> WebaFastAPI:
 
     app.add_middleware(
         WebaMiddleware,
+    )
+
+    app.add_middleware(
+        GZipMiddleware,
+        minimum_size=1000,
     )
 
     return app

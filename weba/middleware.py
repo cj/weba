@@ -94,7 +94,7 @@ class WebaMiddleware:
     async def handle_lifespan(self, message: Message):
         match message["type"]:
             case "lifespan.startup.complete":
-                if env.live_reload or not os.path.exists(env.weba_path):
+                if not env.is_test:
                     await build.run()
             case _:
                 pass

@@ -51,7 +51,7 @@ class Settings(BaseSettings):
     css_files: List[str] = []
     js_files: List[str] = []
     htmx_version: str = "1.9.4"
-    htmx_extentions: List[str] = ["head-support"]
+    htmx_extentions: List[str] = ["head-support", "json-enc"]
     htmx_boost: bool = True
     ignored_folders: List[str] = [
         ".git",
@@ -81,15 +81,19 @@ class Settings(BaseSettings):
 
         return settings
 
+    @property
     def is_test(self) -> bool:
         return self.env in ("test", "testing", "tst")
 
+    @property
     def is_dev(self) -> bool:
         return self.env in ("dev", "development", "dev")
 
+    @property
     def is_stg(self) -> bool:
         return self.env in ("staging", "stg")
 
+    @property
     def is_prod(self) -> bool:
         return self.env in ("production", "prod", "prd")
 

@@ -4,7 +4,7 @@ import os
 import re
 import shutil
 from time import time
-from typing import Annotated, Dict, List, Optional, Text
+from typing import Annotated, Any, Dict, List, Optional, Text
 
 import aiofiles
 import aiohttp
@@ -132,39 +132,45 @@ class Build:
         """
 
         await self.create_weba_hidden_directory()
+        await self.create_tailwind_config()
+
+        files: Any = []
 
         if env.live_reload:
             plugins = ",".join(env.tw_plugins)
-            await self.create_files([f"https://cdn.tailwindcss.com/{env.tw_version}?plugins={plugins}"])
-        else:
-            await self.create_tailwind_config()
-            await self.create_tailwind_css_file()
 
-        await asyncio.gather(
-            self.create_files(env.tw_css_files),
-            self.create_files(env.css_files),
-            self.create_files(env.js_files),
-            self.create_hs_extension_files(),
-            self.create_files([f"https://unpkg.com/htmx.org@{env.htmx_version}/dist/htmx.js"]),
-        )
+            files += [
+                self.create_files([f"https://cdn.tailwindcss.com/{env.tw_version}?plugins={plugins}"]),
+                self.create_files(env.tw_css_files),
+                self.create_files(env.css_files),
+                self.create_files(env.js_files),
+                self.create_hs_extension_files(),
+                self.create_files([f"https://unpkg.com/htmx.org@{env.htmx_version}/dist/htmx.js"]),
+            ]
+        else:
+            files += [self.create_tailwind_css_file(), self.create_scripts_files()]
+
+        await asyncio.gather(*files)
 
         if not env.live_reload:
             await self.run_tailwindcss()
 
-    async def create_files(self, files: List[Text]):
+    async def create_files(self, files: List[Text], return_as_text: bool = False) -> str:
         """
         Create the files.
         """
 
         if not files:
-            return
+            return ""
+
+        file_content = ""
 
         for file in files:
             if file.startswith("http"):
                 # Download the file, check if it has <name>@x.x.x (version number), and use that for the filename
                 file_path = os.path.join(self._cache_dir, extract_name_version(file))
 
-                if os.path.exists(file_path):
+                if not return_as_text and os.path.exists(file_path):
                     # copy the file from the cache to the static directory, overwriting the old file
                     shutil.copy(file_path, env.static_dir)
                     continue
@@ -172,25 +178,57 @@ class Build:
                 async with aiohttp.ClientSession() as session:
                     async with session.get(file) as resp:
                         if resp.status != 200:
-                            raise Exception(f"Could not download file {file}")
+                            raise Exception(f"Could not download file {file}")  # sourcery skip: raise-specific-error
 
                         content = await resp.text()
                         # https://cdn.jsdelivr.net/npm/<name>@<version>/dist/full.css
                         # match the name and version from the url, to make the filename <name>-<version>.css
                         async with aiofiles.open(file_path, "w") as f:
                             await f.write(content)
-                            shutil.copy(file_path, env.static_dir)
+
+                            if return_as_text:
+                                file_content += f"{content};"
+                            else:
+                                shutil.copy(file_path, env.static_dir)
             else:
                 file_name = file.split("/")[-1]
                 async with aiofiles.open(os.path.join(env.static_dir, file_name), "w") as f:
                     async with aiofiles.open(file, "r") as f2:
-                        await f.write(await f2.read())
+                        content = await f2.read()
+                        if return_as_text:
+                            file_content += f"{content};"
+                        else:
+                            await f.write(content)
 
-    async def create_hs_extension_files(self):
+        return file_content
+
+    async def create_hs_extension_files(self, return_as_text: bool = False):
         return await self.create_files(
             # TODO: Add @{env.htmx_version} and fix getting the filename and version
             [f"https://unpkg.com/htmx.org@{env.htmx_version}/dist/ext/{file}.js" for file in env.htmx_extentions],
+            return_as_text=return_as_text,
         )
+
+    async def create_scripts_files(self):
+        """
+        Create the scripts.js file.
+        """
+
+        scripts_js_path = os.path.join(env.static_dir, "scripts.js")
+
+        async with aiofiles.open(scripts_js_path, "w") as f:
+            js = await self.create_files(
+                [f"https://unpkg.com/htmx.org@{env.htmx_version}/dist/htmx.js"], return_as_text=True
+            )
+
+            js += ";".join(
+                await asyncio.gather(
+                    self.create_hs_extension_files(return_as_text=True),
+                    self.create_files(env.js_files, return_as_text=True),
+                )
+            )
+
+            await f.write(inspect.cleandoc(js))
 
     async def create_tailwind_css_file(self):
         """
@@ -199,14 +237,24 @@ class Build:
 
         tailwind_css_path = os.path.join(env.weba_path, "tailwind.css")
 
-        if not os.path.exists(tailwind_css_path):
-            async with aiofiles.open(tailwind_css_path, "w") as f:
-                css = """
-                @tailwind base;
-                @tailwind components;
-                @tailwind utilities;
+        async with aiofiles.open(tailwind_css_path, "w") as f:
+            css = """
+            @tailwind base;
+            @tailwind components;
+            @tailwind utilities;
+            """
+            if not env.live_reload:
+                tw_css = await self.create_files(env.tw_css_files, return_as_text=True)
+
+                css += f"""
+                @layer components {{
+                    {tw_css}
+                }}
                 """
-                await f.write(inspect.cleandoc(css))
+                additional_css = await self.create_files(env.css_files, return_as_text=True)
+
+                css += f"{additional_css}"
+            await f.write(inspect.cleandoc(css))
 
     async def run_tailwindcss(self):
         """

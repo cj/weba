@@ -1,4 +1,4 @@
-from typing import Optional
+from typing import Any, Optional
 
 import __main__
 import uvicorn
@@ -37,11 +37,19 @@ def run(
 
         project_root_path = env.project_root_path.as_posix()
 
+        uvicorn_args: Any = {
+            "app": app or "weba.app:app",
+            "port": open_port,
+            "log_level": log_level,
+        }
+
+        if env.live_reload:
+            uvicorn_args |= {
+                "reload": True,
+                "reload_dirs": [project_root_path],
+                "reload_excludes": env.ignored_folders,
+            }
+
         return uvicorn.run(  # type: ignore
-            app or "weba.app:app",
-            port=open_port,
-            log_level=log_level,
-            reload=env.live_reload,
-            reload_dirs=[project_root_path],
-            reload_excludes=env.ignored_folders,
+            **uvicorn_args,
         )
