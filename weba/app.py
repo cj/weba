@@ -1,3 +1,6 @@
+from functools import wraps
+from typing import Any, ParamSpec, TypeVar
+
 from dominate.dom_tag import Callable
 from fastapi import FastAPI
 from fastapi.responses import HTMLResponse
@@ -5,6 +8,9 @@ from fastapi.responses import HTMLResponse
 from weba.document import get_document
 from weba.middleware import WebaMiddleware
 from weba.utils import weba_encoder_decorator
+
+P = ParamSpec("P")
+R = TypeVar("R")
 
 
 class WebaFastAPI(FastAPI):
@@ -25,8 +31,14 @@ class WebaFastAPI(FastAPI):
 
         setattr(self, method_name, decorator)
 
+    def form(self, **kwargs: Any) -> Callable[[Callable[P, R]], Callable[P, R]]:
+        def decorator(func: Callable[P, R]) -> Callable[P, R]:
+            return FastAPI.get(self, f"/{func.__name__}", **kwargs)(weba_encoder_decorator(func))
 
-def load_app() -> FastAPI:
+        return decorator
+
+
+def load_app() -> WebaFastAPI:
     app = WebaFastAPI(default_response_class=HTMLResponse)
 
     app.add_middleware(
