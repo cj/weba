@@ -10,6 +10,7 @@ import aiofiles
 import aiohttp
 from aiofiles import os as aiofiles_io
 from icecream import inspect
+from jsmin import jsmin  # type: ignore
 
 from .env import env
 
@@ -228,7 +229,7 @@ class Build:
                 )
             )
 
-            await f.write(inspect.cleandoc(js))
+            await f.write(jsmin(inspect.cleandoc(js)))
 
     async def create_tailwind_css_file(self):
         """
@@ -261,8 +262,13 @@ class Build:
         Run tailwindcss.
         """
 
+        cmds: List[str] = []
+
+        if not env.live_reload:
+            cmds += ["--minify"]
+
         process = await asyncio.create_subprocess_shell(
-            f"tailwindcss -i {env.weba_path}/tailwind.css -o {env.static_dir}/styles.css",
+            f"tailwindcss {' '.join(cmds)} -i {env.weba_path}/tailwind.css -o {env.static_dir}/styles.css",
             cwd=env.project_root_path if self._has_project_tailwind_config else env.weba_path,
         )
 

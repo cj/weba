@@ -836,6 +836,16 @@ qa = ["flake8 (==3.8.3)", "mypy (==0.782)"]
 testing = ["Django (<3.1)", "attrs", "colorama", "docopt", "pytest (<7.0.0)"]
 
 [[package]]
+name = "jsmin"
+version = "3.0.1"
+description = "JavaScript minifier."
+optional = false
+python-versions = "*"
+files = [
+    {file = "jsmin-3.0.1.tar.gz", hash = "sha256:c0959a121ef94542e807a674142606f7e90214a2b3d1eb17300244bbb5cc2bfc"},
+]
+
+[[package]]
 name = "lsprotocol"
 version = "2023.0.0a2"
 description = "Python implementation of the Language Server Protocol."
@@ -2142,4 +2152,4 @@ multidict = ">=4.0"
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.10, <3.12"
-content-hash = "76c4b5cda9b8e852821a073315f5e76e75db099032e221256accd67c70a82497"
+content-hash = "23c5df6083dfb82c27c9811ce60cd621faa4f2c5a7f58ed9737cb8890f1a7b17"
