@@ -2,9 +2,8 @@ from fastapi import Depends
 
 from . import tags
 from .app import app, doc
-from .document import WebaDocument
+from .document import WebaDocument, weba_document
 from .env import env
-from .middleware import weba_document
 from .ui import html_tag, ui
 from .weba import run, uvicorn_server
 

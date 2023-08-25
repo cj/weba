@@ -3,17 +3,15 @@ import contextlib
 import re
 from typing import List, Optional, Pattern
 
+from fastapi import Response
 from starlette.requests import Request
 from starlette.staticfiles import StaticFiles
 from starlette.types import ASGIApp, Message, Receive, Scope, Send
 
 from .build import build
-from .document import WebaDocument, get_document
+from .document import get_document
 from .env import env
-
-
-def weba_document(request: Request) -> WebaDocument:
-    return request.scope["weba_document"]
+from .utils import load_page, load_status_code_page
 
 
 class WebaMiddleware:
@@ -65,7 +63,7 @@ class WebaMiddleware:
             and include_path.match(scope["path"])
             for include_path in self.include_paths
         ):
-            scope["weba_document"] = get_document()
+            return await self.handle_weba_request(scope, receive, send)
 
         await self.app(scope, receive, self.handle_response)
 
@@ -90,6 +88,30 @@ class WebaMiddleware:
 
         await self.send(message)
 
+    async def handle_weba_request(self, scope: Scope, receive: Receive, send: Send):
+        document = scope["weba_document"] = get_document()
+
+        request = Request(scope, receive)
+
+        response = Response(None, media_type="text/html")
+
+        html: str | None = None
+
+        try:
+            html = await load_page(request.url.path, request=request, response=response, document=document)
+        except Exception as e:
+            print(e)
+
+            html = await load_status_code_page(500, request, response)
+
+        if html:
+            response.body = html.encode()
+            response.headers["content-length"] = str(len(response.body))
+
+            return await response(scope, receive, send)
+
+        return await self.app(scope, receive, self.handle_response)
+
     async def handle_lifespan(self, message: Message):
         match message["type"]:
             case "lifespan.startup.complete":
@@ -103,6 +125,7 @@ class WebaMiddleware:
     async def handle_websocket(self):
         while True:
             event = await self.receive()
+
             if event["type"] == "websocket.connect":
                 await self.send({"type": "websocket.accept"})
             elif event["type"] == "websocket.receive":

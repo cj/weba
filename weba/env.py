@@ -4,7 +4,7 @@ from typing import Any, List
 
 from dominate.dom_tag import Callable
 from dotenv import load_dotenv
-from pydantic import model_validator
+from pydantic import model_validator  # type: ignore
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 load_dotenv()
@@ -42,7 +42,7 @@ class Settings(BaseSettings):
     static_url: str = "/weba/static"
     tw_version: str = "3.3.3"
     tw_plugins: List[str] = ["typography", "aspect-ratio"]
-    tw_css_files: List[str] = ["https://cdn.jsdelivr.net/npm/daisyui@3.5.1/dist/full.css"]
+    tw_css_files: List[str] = ["https://cdn.jsdelivr.net/npm/daisyui@3.6.1/dist/full.css"]
     """
     These css files will be included in the tailwind build process.
     Wrapped in @layer components {}, so that tailwind will purge unused css classes.
@@ -69,6 +69,11 @@ class Settings(BaseSettings):
         os.path.join(project_root_path, "pages")
         if os.path.exists(os.path.join(project_root_path, "pages"))
         else os.path.join(project_root_path, "app/pages")
+    )
+    forms_dir: str = (
+        os.path.join(project_root_path, "forms")
+        if os.path.exists(os.path.join(project_root_path, "forms"))
+        else os.path.join(project_root_path, "app/forms")
     )
     exclude_paths: List[str] = []
     include_paths: List[str] = []

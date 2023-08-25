@@ -1,13 +1,18 @@
 from typing import Any, ParamSpec, TypeVar
 
 from dominate.dom_tag import Callable
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
+from fastapi.exception_handlers import (
+    http_exception_handler,
+)
 from fastapi.responses import HTMLResponse
+from starlette.exceptions import HTTPException as StarletteHTTPException
 from starlette_cramjam.middleware import CompressionMiddleware
 
-from weba.document import get_document
-from weba.middleware import WebaMiddleware
-from weba.utils import weba_encoder_decorator
+from .document import get_document
+from .env import env
+from .middleware import WebaMiddleware
+from .utils import load_status_code_page, weba_encoder_decorator
 
 P = ParamSpec("P")
 R = TypeVar("R")
@@ -47,6 +52,21 @@ def load_app() -> WebaFastAPI:
 
     app.add_middleware(CompressionMiddleware)
 
+    @app.exception_handler(StarletteHTTPException)
+    async def custom_http_exception_handler(
+        request: Request,
+        exc: StarletteHTTPException,
+    ):
+        status_code = exc.status_code
+
+        html = await load_status_code_page(status_code, request)
+
+        if html:
+            # we return 200 if live reload is enabled, otherwise the page will not reload
+            return HTMLResponse(html, status_code=200 if env.live_reload else status_code)
+
+        return await http_exception_handler(request, exc)
+
     return app
 
 
@@ -56,4 +76,5 @@ doc = get_document()
 
 @app.get("/")
 async def index():
+    # raise Exception("test")
     return doc.render()

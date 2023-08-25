@@ -2,6 +2,7 @@ from typing import Any
 
 import dominate
 import dominate.tags as t
+from fastapi import Request
 
 from .build import build
 from .env import env
@@ -53,6 +54,10 @@ class WebaDocument(dominate.document):
             t.meta(name="viewport", content="width=device-width, initial-scale=1")
             load_script_tags()
             self._weba_head_rendered = True
+
+
+def weba_document(request: Request) -> WebaDocument:
+    return request.scope["weba_document"]
 
 
 def get_document(
