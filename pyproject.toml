@@ -22,6 +22,8 @@ aiofiles = ">=23"
 aiohttp = ">=3"
 jsmin = ">=3"
 starlette-cramjam = ">=0.3.0"
+starlette-securecookies = "^1.1.1"
+starlette-csrf = "^3.0.0"
 
 [tool.poetry.group.test.dependencies]
 pytest = "^7.4.0"

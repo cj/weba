@@ -1,16 +1,20 @@
 import asyncio
 import contextlib
+import http
 import re
-from typing import List, Optional, Pattern
+import time
+from typing import List, Optional, Pattern, cast
 
 from fastapi import Response
 from starlette.requests import Request
 from starlette.staticfiles import StaticFiles
 from starlette.types import ASGIApp, Message, Receive, Scope, Send
+from starlette_cramjam.compression import cramjam
 
 from .build import build
 from .document import get_document
 from .env import env
+from .logger import logger
 from .utils import load_page, load_status_code_page
 
 
@@ -100,7 +104,7 @@ class WebaMiddleware:
         try:
             html = await load_page(request.url.path, request=request, response=response, document=document)
         except Exception as e:
-            print(e)
+            env.handle_exception(e)
 
             html = await load_status_code_page(500, request, response)
 
@@ -108,9 +112,12 @@ class WebaMiddleware:
             response.body = html.encode()
             response.headers["content-length"] = str(len(response.body))
 
-            return await response(scope, receive, send)
+            await response(scope, receive, send)
 
-        return await self.app(scope, receive, self.handle_response)
+        if not env.live_reload:
+            return await self.app(scope, receive, self.handle_response)
+        with contextlib.suppress(cramjam.CompressionError):  # type: ignore
+            return await self.app(scope, receive, self.handle_response)
 
     async def handle_lifespan(self, message: Message):
         match message["type"]:
@@ -155,3 +162,23 @@ class NoCacheStaticFiles(StaticFiles):
             await send(message)
 
         await super().__call__(scope, receive, no_cache_send)
+
+
+async def log_request_middleware(request: Request, call_next: ASGIApp) -> Response:
+    """
+    This middleware will log all requests and their processing time.
+    E.g. log:
+    0.0.0.0:1234 - GET /ping 200 OK 1.00ms
+    """
+    logger.debug("middleware: log_request_middleware")
+    url = f"{request.url.path}?{request.query_params}" if request.query_params else request.url.path
+    start_time = time.time()
+    response = cast(Response, await call_next(request))  # type: ignore
+    process_time = (time.time() - start_time) * 1000
+    formatted_process_time = "{0:.2f}".format(process_time)
+    host = getattr(getattr(request, "client", None), "host", None)
+    port = getattr(getattr(request, "client", None), "port", None)
+    with contextlib.suppress(ValueError):
+        http.HTTPStatus(response.status_code).phrase  # noqa: B018
+    logger.info(f'{host}:{port} - "{request.method} {url}" RENDERED {formatted_process_time}ms')
+    return response

@@ -1,13 +1,18 @@
+import logging
 import os
+import traceback as tb
 from pathlib import Path
-from typing import Any, List
+from typing import Any, List, Tuple, Type
 
 from dominate.dom_tag import Callable
 from dotenv import load_dotenv
-from pydantic import model_validator  # type: ignore
-from pydantic_settings import BaseSettings, SettingsConfigDict
+from pydantic import AliasChoices, Field, model_validator  # type: ignore
+from pydantic.fields import FieldInfo
+from pydantic_settings import BaseSettings, EnvSettingsSource, PydanticBaseSettingsSource, SettingsConfigDict
 
 load_dotenv()
+
+uvicorn_logger = logging.getLogger("uvicorn")
 
 
 def env_file() -> tuple[str, ...]:
@@ -22,6 +27,32 @@ def env_file() -> tuple[str, ...]:
             return (".env", ".env.local", ".env.dev", ".env.development")
 
 
+class WebaCustomSource(EnvSettingsSource):
+    def prepare_field_value(
+        self,
+        field_name: str,
+        field: FieldInfo,  # noqa: ARG002
+        value: Any,
+        value_is_complex: bool,  # noqa: ARG002
+    ) -> Any:
+        if not value:
+            return value
+
+        if isinstance(value, str) and field_name in {
+            "css_files",
+            "js_files",
+            "tw_plugins",
+            "tw_css_files",
+            "ignored_folders",
+            "exclude_paths",
+            "include_paths",
+            "modules",
+        }:
+            return [str(v).strip() for v in value.split(",")]
+
+        return value
+
+
 class Settings(BaseSettings):
     model_config = SettingsConfigDict(
         env_prefix="weba_",
@@ -29,20 +60,45 @@ class Settings(BaseSettings):
         extra="ignore",
     )
 
-    port: int = 3334
-    host: str = "127.0.0.1"
+    @classmethod
+    def settings_customise_sources(
+        cls,
+        settings_cls: Type[BaseSettings],
+        init_settings: PydanticBaseSettingsSource,
+        env_settings: PydanticBaseSettingsSource,
+        dotenv_settings: PydanticBaseSettingsSource,
+        file_secret_settings: PydanticBaseSettingsSource,
+    ) -> Tuple[PydanticBaseSettingsSource, ...]:
+        return (
+            init_settings,
+            env_settings,
+            dotenv_settings,
+            file_secret_settings,
+            WebaCustomSource(settings_cls),
+        )
+
+    handle_exception: Callable[..., Any] = lambda _e: [  # noqa: E731
+        uvicorn_logger.error(line) for line in tb.format_exc().splitlines()
+    ]
+    port: int = Field(
+        3334,
+        validation_alias=AliasChoices("weba_port", "port"),
+    )
+    host: str = Field(
+        "127.0.0.1",
+        validation_alias=AliasChoices("weba_host", "host"),
+    )
     env: str = "dev"
     live_reload: bool = False
     live_reload_url: str = "/weba/live-reload"
     modules: List[Any] = []
-    add_module: Callable[..., Any] = modules.append
     project_root_path: Path = Path(__file__).parent.parent
     weba_path: str = os.path.join(project_root_path, ".weba")
     static_dir: str = os.path.join(project_root_path, ".weba", "static")
     static_url: str = "/weba/static"
     tw_version: str = "3.3.3"
     tw_plugins: List[str] = ["typography", "aspect-ratio"]
-    tw_css_files: List[str] = ["https://cdn.jsdelivr.net/npm/daisyui@3.6.1/dist/full.css"]
+    tw_css_files: List[str] = ["https://cdn.jsdelivr.net/npm/daisyui@3.6.2/dist/full.css"]
     """
     These css files will be included in the tailwind build process.
     Wrapped in @layer components {}, so that tailwind will purge unused css classes.
@@ -50,7 +106,7 @@ class Settings(BaseSettings):
     """
     css_files: List[str] = []
     js_files: List[str] = []
-    htmx_version: str = "1.9.4"
+    htmx_version: str = "1.9.5"
     htmx_extentions: List[str] = ["head-support", "json-enc"]
     htmx_boost: bool = True
     ignored_folders: List[str] = [
@@ -82,9 +138,36 @@ class Settings(BaseSettings):
     @classmethod
     def _(cls, settings: Any):
         if settings.live_reload:
-            settings.htmx_extentions.append("ws")
+            settings.add_htmx_extention("ws")
 
         return settings
+
+    def add_htmx_extention(self, *extentions: str):
+        self.htmx_extentions.extend(extentions)
+
+    def add_css_file(self, *files: str):
+        self.css_files.extend(files)
+
+    def add_js_file(self, *files: str):
+        self.js_files.extend(files)
+
+    def add_tw_plugin(self, *plugins: str):
+        self.tw_plugins.extend(plugins)
+
+    def add_tw_css_file(self, *files: str):
+        self.tw_css_files.extend(files)
+
+    def add_ignored_folder(self, *folders: str):
+        self.ignored_folders.extend(folders)
+
+    def add_exclude_path(self, *paths: str):
+        self.exclude_paths.extend(paths)
+
+    def add_include_path(self, *paths: str):
+        self.include_paths.extend(paths)
+
+    def add_module(self, *modules: Any):
+        self.modules.extend(modules)
 
     @property
     def is_test(self) -> bool:
@@ -103,4 +186,4 @@ class Settings(BaseSettings):
         return self.env in ("production", "prod", "prd")
 
 
-env = Settings()
+env = Settings()  # type: ignore

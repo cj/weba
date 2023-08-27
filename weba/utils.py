@@ -23,6 +23,7 @@ def find_open_port(port: int = env.port, max_port: int = 65535):
             check = sock.connect_ex(location)
 
             if check != 0:
+                env.port = port
                 return port
 
             port += 1
