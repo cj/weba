@@ -5,6 +5,7 @@ import uvicorn
 from fastapi import FastAPI
 
 from .app import app as weba_app
+from .app import doc
 from .env import env
 from .utils import find_open_port
 
@@ -32,6 +33,14 @@ def run(
     app: Optional[FastAPI] = None,
     log_level: str = "info",
 ) -> None:
+    if doc.body:
+
+        @weba_app.get("/")
+        async def index_page():
+            # csrf_token = request.cookies.get("csrftoken", None)
+            # doc.body["hx-headers"] = raw(json.dumps({"x-csrftoken": f"{csrf_token}"}))
+            return doc
+
     if not env.live_reload or hasattr(__main__, "__file__"):
         open_port = port or find_open_port()
 

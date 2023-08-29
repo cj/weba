@@ -4,8 +4,9 @@ import os
 import socket
 from functools import wraps
 from importlib import util
-from typing import Any, Dict, Optional, Tuple, TypeVar, cast
+from typing import Any, Dict, List, Optional, Tuple, TypeVar, cast
 
+from cryptography.fernet import Fernet
 from dominate.dom_tag import Callable
 from fastapi import Request, Response
 from fastapi.encoders import jsonable_encoder as _jsonable_encoder
@@ -33,6 +34,9 @@ def find_open_port(port: int = env.port, max_port: int = 65535):
 
 def weba_encoder(obj: Any, *args: Any, **kwargs: Any):
     type_str = f"{type(obj)}"
+
+    if isinstance(obj, List):
+        return ("").join([weba_encoder(item, *args, **kwargs) for item in obj])  # type: ignore
 
     if ("dominate" in type_str or "weba.document" in type_str) and hasattr(obj, "render"):
         return obj.render()
@@ -152,7 +156,7 @@ async def load_page(
     params = (params or {}) | request.query_params._dict  # type: ignore
 
     page = load_page_class(page_path)(
-        document=get_document(),
+        document=get_document(request=request),
         request=request,
         response=response,
         params=params,
@@ -172,3 +176,10 @@ async def load_status_code_page(
         response,
         pages_dir=os.path.join(current_dir_path, "pages"),
     )
+
+
+def generate_keys(n: int) -> List[str]:
+    return [Fernet.generate_key().decode() for _ in range(n)]
+
+
+cookie_secrets = generate_keys(3)

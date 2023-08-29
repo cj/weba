@@ -1,9 +1,7 @@
 import asyncio
 import contextlib
-import http
 import re
-import time
-from typing import List, Optional, Pattern, cast
+from typing import List, Optional, Pattern
 
 from fastapi import Response
 from starlette.requests import Request
@@ -11,11 +9,10 @@ from starlette.staticfiles import StaticFiles
 from starlette.types import ASGIApp, Message, Receive, Scope, Send
 from starlette_cramjam.compression import cramjam
 
-from .build import build
-from .document import get_document
-from .env import env
-from .logger import logger
-from .utils import load_page, load_status_code_page
+from ..build import build
+from ..document import get_document
+from ..env import env
+from ..utils import load_page, load_status_code_page
 
 
 class WebaMiddleware:
@@ -44,7 +41,7 @@ class WebaMiddleware:
         self.send = send
 
         if scope["type"] == "websocket" and scope["path"] == env.live_reload_url:
-            return await self.handle_websocket()
+            return await self.app(scope, receive, self.handle_websocket)
 
         if scope["type"] != "http":
             return await self.app(scope, receive, self.handle_lifespan)
@@ -93,9 +90,9 @@ class WebaMiddleware:
         await self.send(message)
 
     async def handle_weba_request(self, scope: Scope, receive: Receive, send: Send):
-        document = scope["weba_document"] = get_document()
-
         request = Request(scope, receive)
+
+        document = scope["weba_document"] = get_document(request=request)
 
         response = Response(None, media_type="text/html")
 
@@ -112,12 +109,19 @@ class WebaMiddleware:
             response.body = html.encode()
             response.headers["content-length"] = str(len(response.body))
 
-            await response(scope, receive, send)
+            return await response(scope, receive, send)
 
         if not env.live_reload:
-            return await self.app(scope, receive, self.handle_response)
-        with contextlib.suppress(cramjam.CompressionError):  # type: ignore
-            return await self.app(scope, receive, self.handle_response)
+            return await self.app(scope, receive, send)
+        try:
+            return await self.app(scope, receive, send)
+        except (cramjam.CompressionError, RuntimeError) as e:  # type: ignore
+            if (
+                not isinstance(e, RuntimeError)
+                or str(e)
+                != "Expected ASGI message 'websocket.send' or 'websocket.close', but got 'http.response.start'."
+            ):
+                raise
 
     async def handle_lifespan(self, message: Message):
         match message["type"]:
@@ -129,7 +133,10 @@ class WebaMiddleware:
 
         await self.send(message)
 
-    async def handle_websocket(self):
+    async def handle_websocket(self, message: Message):
+        if message.get("type") == "http.response.start":
+            return
+
         while True:
             event = await self.receive()
 
@@ -162,23 +169,3 @@ class NoCacheStaticFiles(StaticFiles):
             await send(message)
 
         await super().__call__(scope, receive, no_cache_send)
-
-
-async def log_request_middleware(request: Request, call_next: ASGIApp) -> Response:
-    """
-    This middleware will log all requests and their processing time.
-    E.g. log:
-    0.0.0.0:1234 - GET /ping 200 OK 1.00ms
-    """
-    logger.debug("middleware: log_request_middleware")
-    url = f"{request.url.path}?{request.query_params}" if request.query_params else request.url.path
-    start_time = time.time()
-    response = cast(Response, await call_next(request))  # type: ignore
-    process_time = (time.time() - start_time) * 1000
-    formatted_process_time = "{0:.2f}".format(process_time)
-    host = getattr(getattr(request, "client", None), "host", None)
-    port = getattr(getattr(request, "client", None), "port", None)
-    with contextlib.suppress(ValueError):
-        http.HTTPStatus(response.status_code).phrase  # noqa: B018
-    logger.info(f'{host}:{port} - "{request.method} {url}" RENDERED {formatted_process_time}ms')
-    return response

@@ -6,12 +6,17 @@ from fastapi.exception_handlers import (
     http_exception_handler,
 )
 from fastapi.responses import HTMLResponse
+from securecookies import SecureCookiesMiddleware
 from starlette.exceptions import HTTPException as StarletteHTTPException
+from starlette.middleware.cors import CORSMiddleware
+
+# from shellous import sh
+from starlette.middleware.sessions import SessionMiddleware
 from starlette_cramjam.middleware import CompressionMiddleware
 
 from .document import get_document
 from .env import env
-from .middleware import WebaMiddleware
+from .middleware import CSRFMiddleware, WebaMiddleware
 from .utils import load_status_code_page, weba_encoder_decorator
 
 P = ParamSpec("P")
@@ -50,7 +55,35 @@ def load_app() -> WebaFastAPI:
         WebaMiddleware,
     )
 
-    app.add_middleware(CompressionMiddleware)
+    app.add_middleware(
+        CompressionMiddleware,
+    )
+
+    app.add_middleware(
+        CSRFMiddleware,
+    )
+
+    app.add_middleware(
+        SessionMiddleware,
+        secret_key=env.session_secret_key,
+        https_only=env.is_prod,
+    )
+
+    app.add_middleware(
+        SecureCookiesMiddleware,
+        secrets=env.cookie_secrets,
+        cookie_httponly=True,
+        cookie_secure=env.is_prod,
+        included_cookies=env.cookie_include_list,
+    )
+
+    app.add_middleware(
+        CORSMiddleware,
+        allow_origins=["*"],
+        allow_credentials=True,
+        allow_methods=["*"],
+        allow_headers=["*"],
+    )
 
     @app.exception_handler(StarletteHTTPException)
     async def custom_http_exception_handler(
@@ -72,9 +105,3 @@ def load_app() -> WebaFastAPI:
 
 app = load_app()
 doc = get_document()
-
-
-@app.get("/")
-async def index():
-    # raise Exception("test")
-    return doc.render()

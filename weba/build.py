@@ -13,6 +13,7 @@ from icecream import inspect
 from jsmin import jsmin  # type: ignore
 
 from .env import env
+from .utils import generate_keys  # type: ignore
 
 
 def get_file_hash(file_path: Text) -> Text:
@@ -134,6 +135,7 @@ class Build:
 
         await self.create_weba_hidden_directory()
         await self.create_tailwind_config()
+        await self.create_secrets()
 
         files: Any = []
 
@@ -202,6 +204,32 @@ class Build:
                             await f.write(content)
 
         return file_content
+
+    async def create_secrets(self):
+        if env.is_prod:
+            return
+
+        secrets_path = os.path.join(env.weba_path, ".secrets")
+
+        # remove file if exists
+        if os.path.exists(secrets_path):
+            return
+
+        env.cookie_secrets = generate_keys(3)
+        session_secret_key: str = generate_keys(1)[0]
+        env.session_secret_key = session_secret_key
+        cookie_secrets = ",".join(env.cookie_secrets)
+
+        # make the .secrets file
+        async with aiofiles.open(secrets_path, "w") as f:
+            await f.write(
+                inspect.cleandoc(
+                    f"""
+                    WEBA_COOKIE_SECRETS={cookie_secrets}
+                    WEBA_SESSION_SECRET_KEY={session_secret_key}
+                    """
+                )
+            )
 
     async def create_hs_extension_files(self, return_as_text: bool = False):
         return await self.create_files(

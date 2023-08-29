@@ -8,7 +8,12 @@ from dominate.dom_tag import Callable
 from dotenv import load_dotenv
 from pydantic import AliasChoices, Field, model_validator  # type: ignore
 from pydantic.fields import FieldInfo
-from pydantic_settings import BaseSettings, EnvSettingsSource, PydanticBaseSettingsSource, SettingsConfigDict
+from pydantic_settings import (
+    BaseSettings,
+    DotEnvSettingsSource,
+    PydanticBaseSettingsSource,
+    SettingsConfigDict,
+)
 
 load_dotenv()
 
@@ -16,18 +21,26 @@ uvicorn_logger = logging.getLogger("uvicorn")
 
 
 def env_file() -> tuple[str, ...]:
-    match os.getenv("WEBA_ENV", "dev"):
+    envs = ()
+    env = os.getenv("WEBA_ENV", "dev")
+
+    match env:
         case "production" | "prod" | "prd":
-            return (".env", ".env.local", ".env.prd", ".env.prod", ".env.production")
+            envs = (".env", ".env.local", ".env.prd", ".env.prod", ".env.production")
         case "staging" | "stg":
-            return (".env", ".env.local", ".env.stg", ".env.staging")
+            envs = (".env", ".env.local", ".env.stg", ".env.staging")
         case "testing" | "test" | "tst":
-            return (".env", ".env.local", ".env.tst", ".env.test", ".env.testing")
+            envs = (".env", ".env.local", ".env.tst", ".env.test", ".env.testing")
         case _:
-            return (".env", ".env.local", ".env.dev", ".env.development")
+            envs = (".env", ".env.local", ".env.dev", ".env.development")
+
+    if env not in ("production", "prod", "prd"):
+        envs = (".weba/.secrets",) + envs
+
+    return envs
 
 
-class WebaCustomSource(EnvSettingsSource):
+class WebaCustomSource(DotEnvSettingsSource):
     def prepare_field_value(
         self,
         field_name: str,
@@ -47,6 +60,8 @@ class WebaCustomSource(EnvSettingsSource):
             "exclude_paths",
             "include_paths",
             "modules",
+            "cookie_secrets",
+            "cookie_include_list",
         }:
             return [str(v).strip() for v in value.split(",")]
 
@@ -58,6 +73,7 @@ class Settings(BaseSettings):
         env_prefix="weba_",
         env_file=env_file(),
         extra="ignore",
+        env_file_encoding="utf-8",
     )
 
     @classmethod
@@ -66,20 +82,22 @@ class Settings(BaseSettings):
         settings_cls: Type[BaseSettings],
         init_settings: PydanticBaseSettingsSource,
         env_settings: PydanticBaseSettingsSource,
-        dotenv_settings: PydanticBaseSettingsSource,
+        dotenv_settings: PydanticBaseSettingsSource,  # noqa: ARG003
         file_secret_settings: PydanticBaseSettingsSource,
     ) -> Tuple[PydanticBaseSettingsSource, ...]:
         return (
             init_settings,
             env_settings,
-            dotenv_settings,
-            file_secret_settings,
             WebaCustomSource(settings_cls),
+            file_secret_settings,
         )
 
     handle_exception: Callable[..., Any] = lambda _e: [  # noqa: E731
         uvicorn_logger.error(line) for line in tb.format_exc().splitlines()
     ]
+    cookie_secrets: List[Any] = []
+    cookie_include_list: List[Any] = ["session", "csrftoken"]
+    session_secret_key: str = ""
     port: int = Field(
         3334,
         validation_alias=AliasChoices("weba_port", "port"),
@@ -91,6 +109,7 @@ class Settings(BaseSettings):
     env: str = "dev"
     live_reload: bool = False
     live_reload_url: str = "/weba/live-reload"
+    cache_url: str = "memory://"
     modules: List[Any] = []
     project_root_path: Path = Path(__file__).parent.parent
     weba_path: str = os.path.join(project_root_path, ".weba")

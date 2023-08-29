@@ -23,7 +23,8 @@ aiohttp = ">=3"
 jsmin = ">=3"
 starlette-cramjam = ">=0.3.0"
 starlette-securecookies = "^1.1.1"
-starlette-csrf = "^3.0.0"
+cryptography = "^41.0.3"
+aiocache = ">=0.12"
 
 [tool.poetry.group.test.dependencies]
 pytest = "^7.4.0"
@@ -32,6 +33,7 @@ pytest-playwright = "^0.3.3"
 pytest-xdist = "^3.3.1"
 pytest-asyncio = "^0.21.1"
 pytest-env = "^0.8.2"
+aiocache = {extras = ["redis"], version = ">=0.12"}
 
 [tool.poetry.group.lint.dependencies]
 ruff = "^0.0.261"
