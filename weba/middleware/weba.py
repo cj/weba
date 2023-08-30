@@ -33,7 +33,7 @@ class WebaMiddleware:
         self.app = app
         self.exclude_paths = env.exclude_paths.extend(exlcude_paths or []) or []
         self.include_paths = env.include_paths.extend(include_paths or []) or []
-        self.staticfiles = StaticFiles(directory=env.static_dir, check_dir=False)
+        self.staticfiles = StaticFiles(directory=env.weba_public_dir, check_dir=False)
 
     async def __call__(self, scope: Scope, receive: Receive, send: Send):
         self.scope = scope
@@ -46,7 +46,7 @@ class WebaMiddleware:
         if scope["type"] != "http":
             return await self.app(scope, receive, self.handle_lifespan)
 
-        if scope["path"].startswith(env.static_url):
+        if scope["path"].startswith(env.weba_public_url):
             scope["path"] = self.get_static_file_path(scope["path"])
 
             return await self.staticfiles(scope, receive, send)
@@ -154,7 +154,7 @@ class WebaMiddleware:
 
     def get_static_file_path(self, path: str) -> str:
         # Remove the "/static" prefix before forwarding the request
-        path = path.replace(env.static_url, "")
+        path = path.replace(env.weba_public_url, "")
 
         return re.sub(r"\-[\d\w]{16,}(?=\.\w+$)", "", path)
 

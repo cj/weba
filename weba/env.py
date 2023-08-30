@@ -113,8 +113,8 @@ class Settings(BaseSettings):
     modules: List[Any] = []
     project_root_path: Path = Path(__file__).parent.parent
     weba_path: str = os.path.join(project_root_path, ".weba")
-    static_dir: str = os.path.join(project_root_path, ".weba", "static")
-    static_url: str = "/weba/static"
+    weba_public_dir: str = os.path.join(project_root_path, ".weba", "public")
+    weba_public_url: str = "/weba"
     tw_version: str = "3.3.3"
     tw_plugins: List[str] = ["typography", "aspect-ratio"]
     tw_css_files: List[str] = ["https://cdn.jsdelivr.net/npm/daisyui@3.6.2/dist/full.css"]

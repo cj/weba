@@ -1,10 +1,7 @@
 from typing import Any, ParamSpec, TypeVar
 
 from dominate.dom_tag import Callable
-from fastapi import FastAPI, Request
-from fastapi.exception_handlers import (
-    http_exception_handler,
-)
+from fastapi import FastAPI
 from fastapi.responses import HTMLResponse
 from securecookies import SecureCookiesMiddleware
 from starlette.exceptions import HTTPException as StarletteHTTPException
@@ -14,10 +11,15 @@ from starlette.middleware.cors import CORSMiddleware
 from starlette.middleware.sessions import SessionMiddleware
 from starlette_cramjam.middleware import CompressionMiddleware
 
+from weba.middleware.exceptions import (
+    weba_http_exception_handler,
+    weba_unhandled_exception_handler,
+)
+
 from .document import get_document
 from .env import env
 from .middleware import CSRFMiddleware, WebaMiddleware
-from .utils import load_status_code_page, weba_encoder_decorator
+from .utils import weba_encoder_decorator
 
 P = ParamSpec("P")
 R = TypeVar("R")
@@ -85,20 +87,15 @@ def load_app() -> WebaFastAPI:
         allow_headers=["*"],
     )
 
-    @app.exception_handler(StarletteHTTPException)
-    async def custom_http_exception_handler(
-        request: Request,
-        exc: StarletteHTTPException,
-    ):
-        status_code = exc.status_code
+    app.add_exception_handler(  # type: ignore
+        StarletteHTTPException,
+        weba_http_exception_handler,
+    )
 
-        html = await load_status_code_page(status_code, request)
-
-        if html:
-            # we return 200 if live reload is enabled, otherwise the page will not reload
-            return HTMLResponse(html, status_code=200 if env.live_reload else status_code)
-
-        return await http_exception_handler(request, exc)
+    app.add_exception_handler(  # type: ignore
+        Exception,
+        weba_unhandled_exception_handler,
+    )
 
     return app
 

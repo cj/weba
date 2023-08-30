@@ -18,16 +18,17 @@ def load_script_tags() -> None:
 
     # Loop over the build.file_hashes dict, with filename and hash as key and value
     # order the file name that contains htmx.org first
-    files = sorted(build.files.items(), key=lambda x: "htmx.org" in x[0], reverse=True)
+    files = sorted(build.files.items(), key=lambda x: "htmx-" in x[0])
+    files.reverse()
 
     tags: Any = []
 
     for file_name, file_hash in files:
         if file_hash == "":
-            file_url = f"{env.static_url}/{file_name}"
+            file_url = f"{env.weba_public_url}/{file_name}"
         else:
             split = file_name.rsplit(".", 1)
-            file_url = f"{env.static_url}/{split[0]}-{file_hash}.{split[1]}"
+            file_url = f"{env.weba_public_url}/{split[0]}-{file_hash}.{split[1]}"
 
         # If the file is a js file
         if file_url.endswith(".css"):
@@ -88,6 +89,8 @@ def get_document(
 
     doc.body["hx-ext"] = ", ".join(env.htmx_extentions)
 
+    doc.body["class"] = "min-h-screen overflow-auto"
+
     if request:
         request.session.setdefault("store", {})
         csrf_token = request.session.get("csrf_token", "")
@@ -98,6 +101,9 @@ def get_document(
 
     if env.live_reload:
         doc.body["ws-connect"] = env.live_reload_url
-        doc.body["hx-on"] = "htmx:wsClose: htmx.ajax('GET', window.location.href, null, {history: 'replace'});"
+        # FIXME: currently htmx boost does not update the body tag
+        # https://github.com/bigskysoftware/htmx/issues/1384
+        # doc.body["hx-on"] = "htmx:wsClose: htmx.ajax('GET', window.location.href, null, {history: 'replace'});"
+        doc.body["hx-on"] = "htmx:wsClose: window.location.reload();"
 
     return doc

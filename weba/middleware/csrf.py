@@ -1,9 +1,13 @@
 import uuid
 
 from fastapi import Request
-from securecookies.middleware import InvalidToken, SecureCookiesMiddleware
+from securecookies.middleware import SecureCookiesMiddleware
 from starlette.middleware.base import BaseHTTPMiddleware, RequestResponseEndpoint
 from starlette.responses import PlainTextResponse
+
+
+class CSRFTokenError(Exception):
+    pass
 
 
 class CSRFMiddleware(BaseHTTPMiddleware):
@@ -42,7 +46,7 @@ class CSRFMiddleware(BaseHTTPMiddleware):
                 csrf_session_id, csrf_host, csrf_user_agent = decoded_csrf_token.split("||")
                 if session_id != csrf_session_id or host != csrf_host or user_agent != csrf_user_agent:
                     return PlainTextResponse("Invalid CSRF Token", status_code=403)
-            except InvalidToken:
+            except CSRFTokenError:
                 return PlainTextResponse("Invalid CSRF Token", status_code=403)
 
         return await call_next(request)

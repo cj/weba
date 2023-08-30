@@ -103,8 +103,8 @@ class Build:
             self._files = {
                 file_name: ""
                 if re.match(r".*(-[\d\.]{2,})\.\w+$", file_name)
-                else get_file_hash(f"{env.static_dir}/{file_name}")
-                for file_name in os.listdir(env.static_dir)
+                else get_file_hash(f"{env.weba_public_dir}/{file_name}")
+                for file_name in os.listdir(env.weba_public_dir)
             }
 
         return self._files
@@ -175,7 +175,7 @@ class Build:
 
                 if not return_as_text and os.path.exists(file_path):
                     # copy the file from the cache to the static directory, overwriting the old file
-                    shutil.copy(file_path, env.static_dir)
+                    shutil.copy(file_path, env.weba_public_dir)
                     continue
 
                 async with aiohttp.ClientSession() as session:
@@ -192,10 +192,10 @@ class Build:
                             if return_as_text:
                                 file_content += f"{content};"
                             else:
-                                shutil.copy(file_path, env.static_dir)
+                                shutil.copy(file_path, env.weba_public_dir)
             else:
                 file_name = file.split("/")[-1]
-                async with aiofiles.open(os.path.join(env.static_dir, file_name), "w") as f:
+                async with aiofiles.open(os.path.join(env.weba_public_dir, file_name), "w") as f:
                     async with aiofiles.open(file, "r") as f2:
                         content = await f2.read()
                         if return_as_text:
@@ -243,7 +243,7 @@ class Build:
         Create the scripts.js file.
         """
 
-        scripts_js_path = os.path.join(env.static_dir, "scripts.js")
+        scripts_js_path = os.path.join(env.weba_public_dir, "scripts.js")
 
         async with aiofiles.open(scripts_js_path, "w") as f:
             js = await self.create_files(
@@ -296,7 +296,7 @@ class Build:
             cmds += ["--minify"]
 
         process = await asyncio.create_subprocess_shell(
-            f"tailwindcss {' '.join(cmds)} -i {env.weba_path}/tailwind.css -o {env.static_dir}/styles.css",
+            f"tailwindcss {' '.join(cmds)} -i {env.weba_path}/tailwind.css -o {env.weba_public_dir}/styles.css",
             cwd=env.project_root_path if self._has_project_tailwind_config else env.weba_path,
         )
 
@@ -307,12 +307,12 @@ class Build:
         Create the hidden directory for weba.
         """
 
-        if os.path.exists(env.static_dir):
-            shutil.rmtree(env.static_dir)
+        if os.path.exists(env.weba_public_dir):
+            shutil.rmtree(env.weba_public_dir)
 
         paths = [
             env.weba_path,
-            env.static_dir,
+            env.weba_public_dir,
             self._cache_dir,
         ]
 
