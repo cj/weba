@@ -1,42 +1,46 @@
 import inspect
-from typing import Any, Callable, Coroutine, Dict, Optional
+from typing import Any, AsyncContextManager, Callable, ContextManager, Coroutine, Dict, Optional
 
 from fastapi import Request, Response
 
 from .document import WebaDocument
+from .env import env
 
 WebaPageException = Exception
+
+
+LayoutType = type(ContextManager) | type(AsyncContextManager)
 
 
 class BasePage:
     content: Optional[Callable[..., Any] | Callable[..., Coroutine[Any, Any, Any]]]
 
+    title: str = "Weba"
+
+    layout: Optional[LayoutType] = None
+
     def __init__(
         self,
-        title: str = "Weba",
+        title: Optional[str] = None,
         document: Optional[WebaDocument] = None,
         request: Optional[Request] = None,
         response: Optional[Response] = None,
         params: Optional[Dict[str, Any]] = None,
     ) -> None:
+        title = title or self.title
         self._document = document or WebaDocument(title=title)
+        self.document.title = title
+
         self._request = request
         self._response = response
         self._params = params or {}
+        self._session_store = self.request.session.setdefault("store", {})
 
     async def render(self) -> str:
-        content = self.content
-
-        if not content:
-            raise WebaPageException("content is not set")
-
         with self.doc.body:
-            if inspect.iscoroutinefunction(content):
-                await content()
-            else:
-                content()
+            await self._render_content
 
-        return self.doc.render()
+        return self.doc.render(pretty=env.pretty_html)
 
     @property
     def document(self) -> WebaDocument:
@@ -45,6 +49,10 @@ class BasePage:
     @property
     def doc(self) -> WebaDocument:
         return self.document
+
+    @property
+    def session_store(self) -> Dict[str, Any]:
+        return self._session_store
 
     @property
     def request(self) -> Request:
@@ -63,3 +71,26 @@ class BasePage:
     @property
     def params(self) -> Dict[str, Any]:
         return self._params
+
+    @property
+    async def _content(self) -> Optional[Callable[..., Any] | Callable[..., Coroutine[Any, Any, Any]]]:
+        if not self.content:
+            raise WebaPageException("content is not set")
+
+        if inspect.iscoroutinefunction(self.content):
+            await self.content()
+        else:
+            self.content()
+
+    @property
+    async def _render_content(self) -> None:
+        if hasattr(self, "layout") and self.layout:
+            # check if layout is asynccontextmanager or contextmanager
+            if inspect.isasyncgenfunction(self.layout):
+                async with self.layout():
+                    await self._content
+            else:
+                with self.layout():
+                    await self._content
+        else:
+            await self._content

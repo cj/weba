@@ -2,11 +2,11 @@ import logging
 import os
 import traceback as tb
 from pathlib import Path
-from typing import Any, List, Tuple, Type
+from typing import Annotated, Any, List, Optional, Tuple, Type
 
 from dominate.dom_tag import Callable
 from dotenv import load_dotenv
-from pydantic import AliasChoices, Field, model_validator  # type: ignore
+from pydantic import AfterValidator, AliasChoices, Field, model_validator  # type: ignore
 from pydantic.fields import FieldInfo
 from pydantic_settings import (
     BaseSettings,
@@ -107,6 +107,7 @@ class Settings(BaseSettings):
         validation_alias=AliasChoices("weba_host", "host"),
     )
     env: str = "dev"
+    pretty_html: bool = False
     live_reload: bool = False
     live_reload_url: str = "/weba/live-reload"
     cache_url: str = "memory://"
@@ -158,6 +159,9 @@ class Settings(BaseSettings):
     def _(cls, settings: Any):
         if settings.live_reload:
             settings.add_htmx_extention("ws")
+
+        if not os.getenv("WEBA_PRETTY_HTML"):
+            settings.pretty_html = not settings.is_prod
 
         return settings
 

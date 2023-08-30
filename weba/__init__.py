@@ -2,6 +2,7 @@ from fastapi import Depends, Request, Response
 
 from . import tags
 from .app import app, doc
+from .base_page import BasePage, WebaPageException
 from .cache import Cache, cache
 from .document import WebaDocument, weba_document
 from .env import env
@@ -46,4 +47,6 @@ __all__ = [
     "Response",
     "Cache",
     "cache",
+    "BasePage",
+    "WebaPageException",
 ]

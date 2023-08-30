@@ -1,7 +1,9 @@
+from example.layouts import BaseLayout
 from weba import ui
-from weba.base_page import BasePage
 
 
-class HelloPage(BasePage):
+class HelloPage(BaseLayout):
+    title = "Hello, Weba!"
+
     def content(self):
         ui.div("Hello, world!")

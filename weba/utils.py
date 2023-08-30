@@ -39,7 +39,7 @@ def weba_encoder(obj: Any, *args: Any, **kwargs: Any):
         return ("").join([weba_encoder(item, *args, **kwargs) for item in obj])  # type: ignore
 
     if ("dominate" in type_str or "weba.document" in type_str) and hasattr(obj, "render"):
-        return obj.render()
+        return obj.render(pretty=env.pretty_html)
 
     # Fall back to the original jsonable_encoder for other types
     return _jsonable_encoder(obj, *args, **kwargs)
@@ -180,6 +180,3 @@ async def load_status_code_page(
 
 def generate_keys(n: int) -> List[str]:
     return [Fernet.generate_key().decode() for _ in range(n)]
-
-
-cookie_secrets = generate_keys(3)
