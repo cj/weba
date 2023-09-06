@@ -118,7 +118,7 @@ class Settings(BaseSettings):
     weba_public_url: str = "/weba"
     tw_version: str = "3.3.3"
     tw_plugins: List[str] = ["typography", "aspect-ratio"]
-    tw_css_files: List[str] = ["https://cdn.jsdelivr.net/npm/daisyui@3.6.4/dist/full.css"]
+    tw_css_files: List[str] = ["https://cdn.jsdelivr.net/npm/daisyui@3.7.3/dist/full.css"]
     """
     These css files will be included in the tailwind build process.
     Wrapped in @layer components {}, so that tailwind will purge unused css classes.
