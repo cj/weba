@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "weba"
-version = "0.0.2"
+version = "0.0.4"
 description = "Build web applications using FastAPI, Htmx and Tailwind"
 authors = ["CJ Lazell <cjlazell@gmail.com>"]
 license = "MIT"
@@ -25,6 +25,7 @@ starlette-cramjam = ">=0.3.0"
 starlette-securecookies = "^1.1.1"
 cryptography = "^41.0.3"
 aiocache = ">=0.12"
+itsdangerous = ">=2.0.0"
 
 [tool.poetry.group.test.dependencies]
 pytest = "^7.4.0"

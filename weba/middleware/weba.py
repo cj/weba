@@ -128,10 +128,9 @@ class WebaMiddleware:
             case "lifespan.startup.complete":
                 if not env.is_test:
                     await build.run()
+                    await self.send(message)
             case _:
                 pass
-
-        await self.send(message)
 
     async def handle_websocket(self, message: Message):
         if message.get("type") == "http.response.start":

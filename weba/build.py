@@ -1,5 +1,6 @@
 import asyncio
 import hashlib
+import inspect
 import os
 import re
 import shutil
@@ -9,7 +10,6 @@ from typing import Annotated, Any, Dict, List, Optional, Text
 import aiofiles
 import aiohttp
 from aiofiles import os as aiofiles_io
-from icecream import inspect
 from jsmin import jsmin  # type: ignore
 
 from .env import env

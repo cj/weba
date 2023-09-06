@@ -112,7 +112,7 @@ class Settings(BaseSettings):
     live_reload_url: str = "/weba/live-reload"
     cache_url: str = "memory://"
     modules: List[Any] = []
-    project_root_path: Path = Path(__file__).parent.parent
+    project_root_path: Path = Path.cwd()
     weba_path: str = os.path.join(project_root_path, ".weba")
     weba_public_dir: str = os.path.join(project_root_path, ".weba", "public")
     weba_public_url: str = "/weba"

@@ -1,3 +1,4 @@
+import asyncio
 from typing import Any, ParamSpec, TypeVar
 
 from dominate.dom_tag import Callable
@@ -16,6 +17,7 @@ from weba.middleware.exceptions import (
     weba_unhandled_exception_handler,
 )
 
+from .build import build
 from .document import get_document
 from .env import env
 from .middleware import CSRFMiddleware, WebaMiddleware
@@ -51,6 +53,10 @@ class WebaFastAPI(FastAPI):
 
 
 def load_app() -> WebaFastAPI:
+    if not env.cookie_secrets:
+        asyncio.run(build.create_weba_hidden_directory())
+        asyncio.run(build.create_secrets())
+
     app = WebaFastAPI(default_response_class=HTMLResponse)
 
     app.add_middleware(
