@@ -53,11 +53,12 @@ def extract_name_version(url: str) -> str:
     if url.startswith("https://cdn.tailwindcss.com"):
         tw_pattern = r"(?P<start>.*\/)(?P<version>\d+(\.\d+){2})(\?plugins=)(?P<end>.*)"
 
-        if tw_match := re.match(tw_pattern, url):
-            plugins = "-".join(tw_match["end"].split(","))
-            return f"tw-{plugins}-{tw_match['version']}"
-        else:
+        if not (tw_match := re.match(tw_pattern, url)):
             return url.split("/")[-1]
+
+        plugins = "-".join(tw_match["end"].split(","))
+
+        return f"1-tw-{plugins}-{tw_match['version']}"
 
     pattern = r".*\/(?P<name>.+)@(?P<version>\d+(\.\d+){0,3})\/.*\.(?P<ext>\w+)"
 
@@ -67,12 +68,20 @@ def extract_name_version(url: str) -> str:
     if match["name"] == "htmx.org":
         htmx_pattern = r".*\/(?:.+)@(?P<version>\d+(\.\d+){0,3})\/.+\/(?P<name>[\w-]*)\.(?P<ext>\w+)"
 
-        if htmx_match := re.match(htmx_pattern, url):
-            return f"{htmx_match['name']}-{htmx_match['version']}.{htmx_match['ext']}"
-        else:
+        if not (htmx_match := re.match(htmx_pattern, url)):
             return url.split("/")[-1]
 
-    return f"{match['name']}-{match['version']}.{match['ext']}"
+        name = htmx_match["name"]
+        version = "1" if name == "htmx" else "2"
+
+        return f"{version}-{name}-{htmx_match['version']}.{htmx_match['ext']}"
+
+    filename = f"{match['name']}-{match['version']}.{match['ext']}"
+
+    if filename.startswith("daisyui-"):
+        filename = f"2-{filename}"
+
+    return filename
 
 
 class Build:
@@ -116,8 +125,15 @@ class Build:
         return inspect.cleandoc(
             f"""
             module.exports = {{
+              darkMode: ['class', '[data-theme="dark"]'],
+              safelist: [
+                  'min-h-screen',
+                  'overflow-auto',
+              ],
               content: [
                 '../**/*.{{py,_hs}}',
+                '../**/{{pages,components,layouts}}/*.{{py,_hs}}',
+                '{{pages,components,layouts}}/*.{{py,_hs}}',
                 '../!({ignored_folders})/**/*.{{py,_hs}}',
                 '!(__pycache__).{{py,_hs}}',
               ],
@@ -143,12 +159,12 @@ class Build:
             plugins = ",".join(env.tw_plugins)
 
             files += [
+                self.create_files([f"https://unpkg.com/htmx.org@{env.htmx_version}/dist/htmx.js"]),
                 self.create_files([f"https://cdn.tailwindcss.com/{env.tw_version}?plugins={plugins}"]),
                 self.create_files(env.tw_css_files),
                 self.create_files(env.css_files),
                 self.create_files(env.js_files),
                 self.create_hs_extension_files(),
-                self.create_files([f"https://unpkg.com/htmx.org@{env.htmx_version}/dist/htmx.js"]),
             ]
         else:
             files += [self.create_tailwind_css_file(), self.create_scripts_files()]
@@ -195,13 +211,18 @@ class Build:
                                 shutil.copy(file_path, env.weba_public_dir)
             else:
                 file_name = file.split("/")[-1]
-                async with aiofiles.open(os.path.join(env.weba_public_dir, file_name), "w") as f:
+                public_file_path = os.path.join(env.weba_public_dir, file_name)
+
+                async with aiofiles.open(public_file_path, "w") as f:
                     async with aiofiles.open(file, "r") as f2:
                         content = await f2.read()
                         if return_as_text:
                             file_content += f"{content};"
                         else:
                             await f.write(content)
+
+                if return_as_text:
+                    os.remove(public_file_path)
 
         return file_content
 
@@ -283,6 +304,18 @@ class Build:
                 additional_css = await self.create_files(env.css_files, return_as_text=True)
 
                 css += f"{additional_css}"
+
+                # This is so tailwindcss can find the classes
+                for folder in ["pages", "components"]:
+                    folder_path = os.path.join(os.path.dirname(__file__), folder)
+                    if os.path.exists(folder_path):
+                        weba_folder_path = os.path.join(env.weba_path, folder)
+                        # remove the folder if it exists
+                        if os.path.exists(weba_folder_path):
+                            shutil.rmtree(weba_folder_path)
+                        # copy the folder, but not __pycache__ folders
+                        shutil.copytree(folder_path, weba_folder_path, ignore=shutil.ignore_patterns("__pycache__"))
+
             await f.write(inspect.cleandoc(css))
 
     async def run_tailwindcss(self):

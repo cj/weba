@@ -16,10 +16,7 @@ def load_script_tags() -> None:
 
     from .build import build
 
-    # Loop over the build.file_hashes dict, with filename and hash as key and value
-    # order the file name that contains htmx.org first
-    files = sorted(build.files.items(), key=lambda x: "htmx-" in x[0])
-    files.reverse()
+    files = sorted(build.files.items())
 
     tags: Any = []
 

@@ -9,7 +9,6 @@ from starlette.staticfiles import StaticFiles
 from starlette.types import ASGIApp, Message, Receive, Scope, Send
 from starlette_cramjam.compression import cramjam
 
-from ..build import build
 from ..document import get_document
 from ..env import env
 from ..utils import load_page, load_status_code_page
@@ -96,6 +95,10 @@ class WebaMiddleware:
 
         response = Response(None, media_type="text/html")
 
+        response.headers["Accept-CH"] = "Sec-CH-Prefers-Color-Scheme"
+        response.headers["Vary"] = "Sec-CH-Prefers-Color-Scheme"
+        response.headers["Critical-CH"] = "Sec-CH-Prefers-Color-Scheme"
+
         html: str | None = None
 
         try:
@@ -124,6 +127,8 @@ class WebaMiddleware:
                 raise
 
     async def handle_lifespan(self, message: Message):
+        from ..build import build
+
         match message["type"]:
             case "lifespan.startup.complete":
                 if not env.is_test:

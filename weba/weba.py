@@ -23,6 +23,7 @@ def uvicorn_server(
         app or weba_app,
         port=open_port,
         log_level=log_level,
+        lifespan="on",
     )
 
     return uvicorn.Server(config=config)
@@ -50,6 +51,7 @@ def run(
             "app": app or "weba.app:app",
             "port": open_port,
             "log_level": log_level,
+            "lifespan": "on",
         }
 
         if env.live_reload:
