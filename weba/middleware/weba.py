@@ -160,7 +160,7 @@ class WebaMiddleware:
         # Remove the "/static" prefix before forwarding the request
         path = path.replace(env.weba_public_url, "")
 
-        return re.sub(r"\-[\d\w]{16,}(?=\.\w+$)", "", path)
+        return re.sub(r"\-[\d\w]{15,}(?=\.\w+$)", "", path)
 
 
 class NoCacheStaticFiles(StaticFiles):
