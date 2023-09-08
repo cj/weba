@@ -1,10 +1,9 @@
 import traceback as tb
 
-from weba import env, ui
-from weba.base_page import BasePage
+from weba import Page, env, ui
 
 
-class InternalServerErrorPage(BasePage):
+class InternalServerErrorPage(Page):
     def content(self):
         with ui.div(cls="container mx-auto py-20 h-screen flex flex-col"):
             with ui.div(cls="h-full flex flex-col justify-center items-center align-middle"):

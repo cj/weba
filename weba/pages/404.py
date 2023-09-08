@@ -1,7 +1,6 @@
 from contextlib import contextmanager
 
-from weba import ui
-from weba.base_page import BasePage
+from weba import Page, ui
 from weba.components import browser_component
 
 
@@ -11,7 +10,7 @@ def container():
         yield
 
 
-class NotFoundPage(BasePage):
+class NotFoundPage(Page):
     def content(self):
         url = self.request.url._url  # type: ignore
 

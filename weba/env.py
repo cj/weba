@@ -141,6 +141,11 @@ class Settings(BaseSettings):
         ".weba",
         "weba",
     ]
+    public_dir: str = (
+        os.path.join(project_root_path, "public")
+        if os.path.exists(os.path.join(project_root_path, "public"))
+        else os.path.join(project_root_path, "app/public")
+    )
     pages_dir: str = (
         os.path.join(project_root_path, "pages")
         if os.path.exists(os.path.join(project_root_path, "pages"))

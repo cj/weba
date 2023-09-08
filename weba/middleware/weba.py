@@ -41,7 +41,7 @@ class WebaMiddleware:
         self.send = send
 
         if scope["type"] == "websocket" and scope["path"] == env.live_reload_url:
-            return await self.app(scope, receive, self.handle_websocket)
+            return await self.handle_websocket(scope)
 
         if scope["type"] != "http":
             return await self.app(scope, receive, self.handle_lifespan)

@@ -1,10 +1,11 @@
 import asyncio
+import contextlib
 import inspect
 import os
 import socket
 from functools import wraps
 from importlib import util
-from typing import Any, Dict, List, Optional, Tuple, TypeVar, cast
+from typing import Any, Coroutine, Dict, List, Optional, Tuple, TypeVar, cast
 
 from cryptography.fernet import Fernet
 from dominate.dom_tag import Callable
@@ -113,7 +114,7 @@ def load_page_class(file_path: str) -> Any:
     page_module = util.module_from_spec(spec)
     spec.loader.exec_module(page_module)
     classes = [cls_name for cls_name, cls_obj in inspect.getmembers(page_module) if inspect.isclass(cls_obj)]
-    page_class = [cls for cls in classes if cls.endswith("Page") and cls != "BasePage"].pop()
+    page_class = [cls for cls in classes if cls.endswith("Page") and cls != "Page"].pop()
     return getattr(page_module, page_class)
 
 
@@ -180,3 +181,20 @@ async def load_status_code_page(
 
 def generate_keys(n: int) -> List[str]:
     return [Fernet.generate_key().decode() for _ in range(n)]
+
+
+def is_asynccontextmanager(func: Callable[..., Any] | Callable[..., Coroutine[Any, Any, Any]]):
+    """Check if the given function/method is decorated with asynccontextmanager."""
+    # Try to get the coroutine object without actually running the function
+    coroutine = func()
+
+    try:
+        return isinstance(coroutine, contextlib.AbstractAsyncContextManager)
+    finally:
+        if hasattr(coroutine, "close"):
+            coroutine.close()  # close the coroutine since we won't await it
+
+
+def read_public_file(file_path: str) -> str:
+    with open(f"{env.public_dir}/{file_path}", "r") as file:
+        return file.read()

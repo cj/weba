@@ -3,8 +3,9 @@ from typing import Any, AsyncContextManager, Callable, ContextManager, Coroutine
 
 from fastapi import Request, Response
 
-from .document import WebaDocument
-from .env import env
+from ..document import WebaDocument
+from ..env import env
+from ..utils import is_asynccontextmanager
 
 WebaPageException = Exception
 
@@ -12,7 +13,7 @@ WebaPageException = Exception
 LayoutType = type(ContextManager) | type(AsyncContextManager)
 
 
-class BasePage:
+class Page:
     content: Optional[Callable[..., Any] | Callable[..., Coroutine[Any, Any, Any]]]
 
     title: str = "Weba"
@@ -85,8 +86,7 @@ class BasePage:
     @property
     async def _render_content(self) -> None:
         if hasattr(self, "layout") and self.layout:
-            # check if layout is asynccontextmanager or contextmanager
-            if inspect.isasyncgenfunction(self.layout):
+            if is_asynccontextmanager(self.layout):
                 async with self.layout():
                     await self._content
             else:

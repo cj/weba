@@ -1,8 +1,17 @@
 from dominate.tags import dom_tag
+from dominate.util import text
 
 from .dominate_overrides import clean_attribute
 
 dom_tag.clean_attribute = clean_attribute
+
+
+def raw(s: str):
+    """
+    Inserts a raw string into the DOM. Unsafe. Alias for text(x, escape=False)
+    """
+    return text(s, escape=False)
+
 
 from dominate.tags import (  # noqa: E402
     a,
@@ -243,4 +252,5 @@ __all__ = [
     "var",
     "video",
     "wbr",
+    "raw",
 ]
