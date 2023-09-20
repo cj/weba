@@ -2,6 +2,7 @@ from typing import Any, Optional
 
 import dominate
 import dominate.tags as t
+from dominate.util import raw  # type: ignore
 from fastapi import Request
 
 from .env import env
@@ -40,6 +41,27 @@ def load_script_tags() -> None:
         else:
             # Create a script tag with the file name and hash as key and value
             tags.append(t.script(src=file_url, type="text/javascript"))
+
+    # FIXME: currently htmx boost does not update the body tag
+    # https://github.com/bigskysoftware/htmx/issues/1384
+    tags.append(
+        t.script(
+            raw(
+                """
+                    document.addEventListener("DOMContentLoaded", function() {
+                        document.body.addEventListener('htmx:afterSwap', function(evt) {
+                            const parser = new DOMParser();
+                            const parsedResponse = parser.parseFromString(evt.detail.xhr.response, "text/html");
+                            const bodyAttributes = parsedResponse.getElementsByTagName('body')[0].attributes;
+                            for (const attribute of bodyAttributes) {
+                                evt.detail.target.setAttribute(attribute.name, attribute.value);
+                            }
+                        });
+                    });
+                 """
+            )
+        )
+    )
 
     SCRIPT_TAGS.extend(tags)
 
@@ -98,9 +120,7 @@ def get_document(
 
     if env.live_reload:
         doc.body["ws-connect"] = env.live_reload_url
-        # FIXME: currently htmx boost does not update the body tag
-        # https://github.com/bigskysoftware/htmx/issues/1384
-        # doc.body["hx-on"] = "htmx:wsClose: htmx.ajax('GET', window.location.href, null, {history: 'replace'});"
-        doc.body["hx-on"] = "htmx:wsClose: window.location.reload();"
+        doc.body["hx-on"] = "htmx:wsClose: htmx.ajax('GET', window.location.href, null, {history: 'replace'});"
+        # doc.body["hx-on"] = "htmx:wsClose: window.location.reload();"
 
     return doc
