@@ -2,6 +2,7 @@ import asyncio
 import contextlib
 import inspect
 import os
+import re
 import socket
 from functools import wraps
 from importlib import util
@@ -129,15 +130,17 @@ def merge_class(class_str: str, kwargs: Dict[str, Any]) -> str:
             + kwargs.pop("className", "")
         )
 
-    return class_str
+    return class_str.strip()
 
 
 def merge_hs(hs_str: str, kwargs: Dict[str, Any]) -> str:
     """Merges different hs kwargs into one string."""
     if "data-hs" in kwargs or "_" in kwargs or "_hs" in kwargs or "hyperscript" in kwargs:
-        hs_str += " " + kwargs.pop("hs") + kwargs.pop("_") + kwargs.pop("_hs") + kwargs.pop("hyperscript")
+        hs_str += (
+            " " + kwargs.pop("hs", "") + kwargs.pop("_", "") + kwargs.pop("_hs", "") + kwargs.pop("hyperscript", "")
+        )
 
-    return hs_str
+    return hs_str.strip()
 
 
 async def load_page(
@@ -198,3 +201,33 @@ def is_asynccontextmanager(func: Callable[..., Any] | Callable[..., Coroutine[An
 def read_public_file(file_path: str) -> str:
     with open(f"{env.public_dir}/{file_path}", "r") as file:
         return file.read()
+
+
+svg_pattern = r"<svg[^>]*>(.*?)<\/svg>"
+
+
+def read_svg(file: Optional[str] = None, svg: Optional[str] = None) -> Tuple[str, str | None]:
+    if file:
+        svg = read_public_file(file)
+
+    if not svg:
+        raise ValueError("file or svg must be set")
+
+    view_box_split = svg.split("viewBox=")
+
+    view_box = view_box_split[1].split('"')[1] if len(view_box_split) > 1 else None
+
+    svg = re.sub(svg_pattern, r"\1", svg, flags=re.DOTALL)
+
+    return (svg, view_box)
+
+
+def read_public_svg(file: str) -> Tuple[str, str | None]:
+    return read_svg(svg=read_public_file(file))
+
+
+def get_static_file_path(path: str) -> str:
+    # Remove the "/static" prefix before forwarding the request
+    path = path.replace(env.weba_public_url, "")
+
+    return re.sub(r"\-[\d\w]{15,}(?=\.\w+$)", "", path)

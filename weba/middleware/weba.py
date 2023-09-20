@@ -1,6 +1,5 @@
 import asyncio
 import contextlib
-import re
 from typing import List, Optional, Pattern
 
 from fastapi import Response
@@ -11,7 +10,7 @@ from starlette_cramjam.compression import cramjam
 
 from ..document import get_document
 from ..env import env
-from ..utils import load_page, load_status_code_page
+from ..utils import get_static_file_path, load_page, load_status_code_page
 
 
 class WebaMiddleware:
@@ -46,9 +45,16 @@ class WebaMiddleware:
             return await self.app(scope, receive, self.handle_lifespan)
 
         if scope["path"].startswith(env.weba_public_url):
-            scope["path"] = self.get_static_file_path(scope["path"])
+            try:
+                scope["path"] = get_static_file_path(scope["path"])
 
-            return await self.staticfiles(scope, receive, send)
+                return await self.staticfiles(scope, receive, send)
+            except Exception as e:
+                env.handle_exception(e)
+
+                scope["path"] = get_static_file_path(scope["path"])
+
+                return await self.app(scope, receive, send)
 
         # if exclude_paths is not empty we use not any() to check if the path is in the exclude_paths
         # and skip it, otherwise we check if the path is in the include_paths and skip it if it is not
@@ -155,12 +161,6 @@ class WebaMiddleware:
                             break
             elif event["type"] == "websocket.disconnect":
                 break
-
-    def get_static_file_path(self, path: str) -> str:
-        # Remove the "/static" prefix before forwarding the request
-        path = path.replace(env.weba_public_url, "")
-
-        return re.sub(r"\-[\d\w]{15,}(?=\.\w+$)", "", path)
 
 
 class NoCacheStaticFiles(StaticFiles):

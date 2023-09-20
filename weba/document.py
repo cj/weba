@@ -86,7 +86,7 @@ def get_document(
 
     doc.body["hx-ext"] = ", ".join(env.htmx_extentions)
 
-    doc.body["class"] = "min-h-screen overflow-auto"
+    doc.body["class"] = "min-h-screen overflow-x-hidden overflow-y-auto overscroll-y-none flex flex-col"
 
     if request:
         request.session.setdefault("store", {})

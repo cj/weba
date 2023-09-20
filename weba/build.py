@@ -156,12 +156,13 @@ class Build:
         files: Any = []
 
         if env.live_reload:
-            plugins = ",".join(env.tw_plugins)
+            # plugins = ",".join(env.tw_plugins)
 
             files += [
                 self.create_files([f"https://unpkg.com/htmx.org@{env.htmx_version}/dist/htmx.js"]),
-                self.create_files([f"https://cdn.tailwindcss.com/{env.tw_version}?plugins={plugins}"]),
-                self.create_files(env.tw_css_files),
+                self.create_tailwind_css_file(),
+                # self.create_files([f"https://cdn.tailwindcss.com/{env.tw_version}?plugins={plugins}"]),
+                # self.create_files(env.tw_css_files),
                 self.create_files(env.css_files),
                 self.create_files(env.js_files),
                 self.create_hs_extension_files(),
@@ -171,8 +172,8 @@ class Build:
 
         await asyncio.gather(*files)
 
-        if not env.live_reload:
-            await self.run_tailwindcss()
+        # if not env.live_reload:
+        await self.run_tailwindcss()
 
     async def create_files(self, files: List[Text], return_as_text: bool = False) -> str:
         """
@@ -293,14 +294,16 @@ class Build:
             @tailwind components;
             @tailwind utilities;
             """
-            if not env.live_reload:
-                tw_css = await self.create_files(env.tw_css_files, return_as_text=True)
 
-                css += f"""
-                @layer components {{
-                    {tw_css}
-                }}
-                """
+            tw_css = await self.create_files(env.tw_css_files, return_as_text=True)
+
+            css += f"""
+            @layer components {{
+                {tw_css}
+            }}
+            """
+
+            if not env.live_reload:
                 additional_css = await self.create_files(env.css_files, return_as_text=True)
 
                 css += f"{additional_css}"

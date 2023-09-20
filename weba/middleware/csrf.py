@@ -33,14 +33,14 @@ class CSRFMiddleware(BaseHTTPMiddleware):
         session_id = request.session.setdefault("uuid", uuid.uuid4().hex)
         session_user_agent = request.session.setdefault("user_agent", user_agent)
 
-        if user_agent != session_user_agent:
-            return PlainTextResponse("Invalid Session", status_code=403)
-
         if request.method in ("GET", "HEAD", "OPTIONS", "TRACE"):
             csrf_token = self._secure_middleware.encrypt(f"{session_id}||{host}||{user_agent}")
 
             request.session["csrf_token"] = csrf_token
         else:
+            if user_agent != session_user_agent:
+                return PlainTextResponse("Invalid Session", status_code=403)
+
             try:
                 decoded_csrf_token = self._secure_middleware.decrypt(request.headers.get("x-csrf-token", ""))
                 csrf_session_id, csrf_host, csrf_user_agent = decoded_csrf_token.split("||")

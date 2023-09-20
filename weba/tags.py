@@ -1,3 +1,4 @@
+from dominate.svg import svg
 from dominate.tags import dom_tag
 from dominate.util import text
 
@@ -253,4 +254,5 @@ __all__ = [
     "video",
     "wbr",
     "raw",
+    "svg",
 ]
