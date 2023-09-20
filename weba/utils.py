@@ -54,8 +54,10 @@ def weba_encoder_decorator(func: T) -> T:
     @wraps(func)
     async def wrapper(*args: Any, **kwargs: Any):
         result = func(*args, **kwargs)
+
         if asyncio.iscoroutine(result):
             result = await result
+
         return weba_encoder(result)
 
     return wrapper  # type: ignore
@@ -67,6 +69,9 @@ def find_page(path: Any, pages_dir: Optional[str] = env.pages_dir) -> Tuple[str 
     path = f"{path}"
     found_path = None
     params: Dict[str, str] = {}
+
+    if path == "/":
+        path = "/index"
 
     """Find page file based on url."""
     for root, dirs, files in os.walk(pages_dir, topdown=True):
@@ -90,6 +95,7 @@ def find_page(path: Any, pages_dir: Optional[str] = env.pages_dir) -> Tuple[str 
         # matches /admin/orders/2342424
         # matches /pages/admin/orders/__id__.py
         end_path = "/".join(path.split("/")[:-1])
+
         if not bool(dirs) and end_path == root:
             file = [f for f in files if f.startswith("__") and f != "__init__.py"]
             file = file[0] if bool(file) else "index.py"
