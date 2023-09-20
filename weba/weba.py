@@ -14,14 +14,17 @@ uvicorn_running = False
 
 def uvicorn_server(
     port: Optional[int],
+    host: Optional[str],
     app: Optional[FastAPI] = None,
     log_level: str = "info",
 ) -> uvicorn.Server:
     open_port = port or find_open_port()
+    host = host or env.host
 
     config = uvicorn.Config(
         app or weba_app,
         port=open_port,
+        host=host,
         log_level=log_level,
         lifespan="on",
     )
@@ -32,6 +35,7 @@ def uvicorn_server(
 def run(
     port: Optional[int] = None,
     app: Optional[FastAPI] = None,
+    host: Optional[str] = None,
     log_level: str = "info",
 ) -> None:
     if doc.body:
@@ -44,12 +48,14 @@ def run(
 
     if not env.live_reload or hasattr(__main__, "__file__"):
         open_port = port or find_open_port()
+        host = host or env.host
 
         project_root_path = env.project_root_path.as_posix()
 
         uvicorn_args: Any = {
             "app": app or "weba.app:app",
             "port": open_port,
+            "host": host,
             "log_level": log_level,
             "lifespan": "on",
         }
