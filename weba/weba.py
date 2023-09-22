@@ -14,7 +14,7 @@ uvicorn_running = False
 
 def uvicorn_server(
     port: Optional[int],
-    host: Optional[str],
+    host: Optional[str] = None,
     app: Optional[FastAPI] = None,
     log_level: str = "info",
 ) -> uvicorn.Server:
