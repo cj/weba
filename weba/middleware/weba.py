@@ -45,15 +45,12 @@ class WebaMiddleware:
             return await self.app(scope, receive, self.handle_lifespan)
 
         if scope["path"].startswith(env.weba_public_url):
-            try:
-                scope["path"] = get_static_file_path(scope["path"])
+            scope["path"] = get_static_file_path(scope["path"])
 
+            try:
                 return await self.staticfiles(scope, receive, send)
             except Exception as e:
                 env.handle_exception(e)
-
-                scope["path"] = get_static_file_path(scope["path"])
-
                 return await self.app(scope, receive, send)
 
         # if exclude_paths is not empty we use not any() to check if the path is in the exclude_paths
