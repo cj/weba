@@ -148,6 +148,7 @@ class Settings(BaseSettings):
     htmx_version: str = "1.9.6"
     htmx_extentions: List[str] = ["head-support", "json-enc"]
     htmx_boost: bool = True
+    htmx_config: dict[str, Any] = {}
     ignored_folders: List[str] = [
         ".git",
         ".github",

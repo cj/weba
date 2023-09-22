@@ -1,3 +1,4 @@
+import json
 from typing import Any, Optional
 
 import dominate
@@ -89,6 +90,7 @@ class WebaDocument(dominate.document):
         with self.head:
             t.meta(charset="utf-8")
             t.meta(name="viewport", content="width=device-width, initial-scale=1")
+            t.meta(name="htmx-config", content=f"{json.dumps(env.htmx_config)}")
 
         self.head.add(load_script_tags())  # type: ignore
         self._weba_head_rendered = True
