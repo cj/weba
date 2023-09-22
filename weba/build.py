@@ -13,6 +13,8 @@ from aiofiles import os as aiofiles_io
 from jsmin import jsmin  # type: ignore
 
 from .env import env
+
+# from .packages import download_packages
 from .utils import generate_keys  # type: ignore
 
 
@@ -152,6 +154,8 @@ class Build:
         await self.create_weba_hidden_directory()
         await self.create_tailwind_config()
         await self.create_secrets()
+        # NOTE: Some day :)
+        # await download_packages()
 
         files: Any = []
 
@@ -332,7 +336,7 @@ class Build:
             cmds += ["--minify"]
 
         process = await asyncio.create_subprocess_shell(
-            f"tailwindcss {' '.join(cmds)} -i {env.weba_path}/tailwind.css -o {env.weba_public_dir}/styles.css",
+            f"{env.tw_cmd} {' '.join(cmds)} -i {env.weba_path}/tailwind.css -o {env.weba_public_dir}/styles.css",
             cwd=env.project_root_path if self._has_project_tailwind_config else env.weba_path,
         )
 

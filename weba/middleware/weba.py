@@ -136,7 +136,8 @@ class WebaMiddleware:
             case "lifespan.startup.complete":
                 if not env.is_test:
                     await build.run()
-                    await self.send(message)
+
+                await self.send(message)
             case _:
                 pass
 

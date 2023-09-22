@@ -116,10 +116,27 @@ class Settings(BaseSettings):
     weba_path: str = os.path.join(project_root_path, ".weba")
     weba_public_dir: str = os.path.join(project_root_path, ".weba", "public")
     weba_public_url: str = "/weba"
+    # NOTE: Maybe use this down the line
+    # packages_cdn: str = "https://cdn.jsdelivr.net/npm/"
+    # packages: List[Any] = [
+    #     {
+    #         "name": "@tailwindcss/typography",
+    #         "version": "0.5.10",
+    #     },
+    #     {
+    #         "name": "@tailwindcss/aspect-ratio",
+    #         "version": "0.4.2",
+    #     },
+    #     {
+    #         "name": "daisyui",
+    #         "version": "3.7.7",
+    #     },
+    # ]
+    tw_cmd: str = "tailwindcss"
     tw_version: str = "3.3.3"
-    tw_plugins: List[str] = ["typography", "aspect-ratio"]
+    tw_plugins: List[str] = ["typography", "aspect-ratio", "forms"]
     tw_css_files: List[str] = [
-        "https://cdn.jsdelivr.net/npm/daisyui@3.7.6/dist/full.css",
+        # "https://cdn.jsdelivr.net/npm/daisyui@3.7.7/dist/full.css",
     ]
     """
     These css files will be included in the tailwind build process.
@@ -128,7 +145,7 @@ class Settings(BaseSettings):
     """
     css_files: List[str] = []
     js_files: List[str] = []
-    htmx_version: str = "1.9.5"
+    htmx_version: str = "1.9.6"
     htmx_extentions: List[str] = ["head-support", "json-enc"]
     htmx_boost: bool = True
     ignored_folders: List[str] = [
@@ -198,6 +215,9 @@ class Settings(BaseSettings):
 
     def add_module(self, *modules: Any):
         self.modules.extend(modules)
+
+    def add_package(self, *packages: Any):
+        self.packages.extend(packages)
 
     @property
     def is_test(self) -> bool:

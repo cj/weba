@@ -1,4 +1,4 @@
-from fastapi import HTTPException, Request
+from fastapi import Request
 from fastapi.exception_handlers import (
     http_exception_handler,
 )
