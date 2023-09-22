@@ -216,8 +216,8 @@ class Settings(BaseSettings):
     def add_module(self, *modules: Any):
         self.modules.extend(modules)
 
-    def add_package(self, *packages: Any):
-        self.packages.extend(packages)
+    # def add_package(self, *packages: Any):
+    #     self.packages.extend(packages)
 
     @property
     def is_test(self) -> bool:
