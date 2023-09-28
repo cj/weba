@@ -39,6 +39,8 @@ def load_script_tags() -> None:
                     type="text/css",
                 )
             )
+        elif file_url.endswith("._hs"):
+            tags.append(t.script(src=file_url, type="text/hyperscript"))
         else:
             # Create a script tag with the file name and hash as key and value
             tags.append(t.script(src=file_url, type="text/javascript"))
@@ -122,7 +124,8 @@ def get_document(
 
     if env.live_reload:
         doc.body["ws-connect"] = env.live_reload_url
-        doc.body["hx-on"] = "htmx:wsClose: htmx.ajax('GET', window.location.href, null, {history: 'replace'});"
-        # doc.body["hx-on"] = "htmx:wsClose: window.location.reload();"
+        # TODO: Fix the build process to stop it loading assets multiple times
+        # doc.body["hx-on"] = "htmx:wsClose: htmx.ajax('GET', window.location.href, null, {history: 'replace'});"
+        doc.body["hx-on"] = "htmx:wsClose: window.location.reload();"
 
     return doc

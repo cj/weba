@@ -35,12 +35,15 @@ def find_open_port(port: int = env.port, max_port: int = 65535):
 
 
 def weba_encoder(obj: Any, *args: Any, **kwargs: Any):
-    type_str = f"{type(obj)}"
+    # type_str = f"{type(obj)}"
 
     if isinstance(obj, List):
         return ("").join([weba_encoder(item, *args, **kwargs) for item in obj])  # type: ignore
 
-    if ("dominate" in type_str or "weba.document" in type_str) and hasattr(obj, "render"):
+    # if (
+    #     "dominate" in type_str or "weba.document" in type_str or "ui." in type_str or isinstance(obj, Component)
+    # ) and hasattr(obj, "render"):
+    if hasattr(obj, "render"):
         return obj.render(pretty=env.pretty_html)
 
     # Fall back to the original jsonable_encoder for other types
@@ -127,15 +130,18 @@ def load_page_class(file_path: str) -> Any:
 
 def merge_class(class_str: str, kwargs: Dict[str, Any]) -> str:
     """Merges different class kwargs into one string."""
-    if "cls" in kwargs or "class_" in kwargs or "_class" in kwargs or "className" in kwargs:
+    if "cls" in kwargs or "class_" in kwargs or "class" in kwargs or "_class" in kwargs or "className" in kwargs:
         class_str += (
             " "
             + kwargs.pop("cls", "")
+            + kwargs.pop("class", "")
             + kwargs.pop("class_", "")
             + kwargs.pop("_class", "")
             + kwargs.pop("className", "")
         )
 
+    # make sure there is only one space
+    class_str = re.sub(r"\s+", " ", class_str)
     return class_str.strip()
 
 

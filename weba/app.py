@@ -53,7 +53,7 @@ class WebaFastAPI(FastAPI):
 
 
 def load_app() -> WebaFastAPI:
-    if not env.cookie_secrets:
+    if not env.cookie_secrets and not env.is_prod:
         asyncio.run(build.create_weba_hidden_directory())
         asyncio.run(build.create_secrets())
 

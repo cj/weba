@@ -5,6 +5,6 @@ module.exports = {
     '!(__pycache__).{py,_hs}',
   ],
   plugins: [
-    require('@tailwindcss/typography'), require('@tailwindcss/aspect-ratio'), require('@tailwindcss/container-queries'),
+    require('@tailwindcss/typography'), require('@tailwindcss/aspect-ratio'),
   ],
 }
