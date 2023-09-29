@@ -1,5 +1,10 @@
 import inspect
-from typing import Any, Callable, Coroutine, ParamSpec, TypeVar
+from functools import cached_property
+from typing import Any, Callable, Coroutine, ParamSpec, TypeVar, Union
+
+from fastapi import Request, Response
+
+from .page import Page
 
 P = ParamSpec("P")
 R = TypeVar("R")
@@ -49,3 +54,15 @@ class Component(object, metaclass=NewInitCaller):
                 return self.content(*self._args, **self._kwargs).__await__()
             else:
                 return self.content().__await__()
+
+    @cached_property
+    def _parent(self) -> Union["Page", "Component", None]:
+        return next((arg for arg in self._args if isinstance(arg, (Component, Page))), None)
+
+    @property
+    def request(self) -> Request | None:
+        return self._kwargs.get("request") or (self._parent.request if self._parent else None)
+
+    @property
+    def response(self) -> Response | None:
+        return self._kwargs.get("response") or (self._parent.response if self._parent else None)
