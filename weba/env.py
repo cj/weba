@@ -145,6 +145,7 @@ class Settings(BaseSettings):
     """
     css_files: List[str] = []
     js_files: List[str] = []
+    hs_files: List[str] = []
     htmx_version: str = "1.9.6"
     htmx_extentions: List[str] = ["head-support", "json-enc"]
     htmx_boost: bool = True
@@ -198,6 +199,9 @@ class Settings(BaseSettings):
 
     def add_js_file(self, *files: str):
         self.js_files.extend(files)
+
+    def add_hs_file(self, *files: str):
+        self.hs_files.extend(files)
 
     def add_tw_plugin(self, *plugins: str):
         self.tw_plugins.extend(plugins)

@@ -243,3 +243,9 @@ def get_static_file_path(path: str) -> str:
     path = path.replace(env.weba_public_url, "")
 
     return re.sub(r"\-[\d\w]{15,}(?=\.\w+$)", "", path)
+
+
+def minimize_behavior(unminimized_behavior: str) -> str:
+    lines = unminimized_behavior.split("\n")
+    minimized_lines = [line.strip() for line in lines if line.strip()]
+    return " ".join(minimized_lines)

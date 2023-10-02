@@ -15,7 +15,7 @@ from jsmin import jsmin  # type: ignore
 from .env import env
 
 # from .packages import download_packages
-from .utils import generate_keys  # type: ignore
+from .utils import generate_keys, minimize_behavior  # type: ignore
 
 
 def get_file_hash(file_path: Text) -> Text:
@@ -169,10 +169,15 @@ class Build:
                 # self.create_files(env.tw_css_files),
                 self.create_files(env.css_files),
                 self.create_files(env.js_files),
-                self.create_hs_extension_files(),
+                self.create_files(env.hs_files),
+                self.create_htmx_extension_files(),
             ]
         else:
-            files += [self.create_tailwind_css_file(), self.create_scripts_files()]
+            files += [
+                self.create_tailwind_css_file(),
+                self.create_scripts_files(),
+                self.create_hyperscript_files(),
+            ]
 
         await asyncio.gather(*files)
 
@@ -211,7 +216,7 @@ class Build:
                             await f.write(content)
 
                             if return_as_text:
-                                file_content += f"{content};"
+                                file_content += f"{content}{'' if file.endswith('._hs') else ';'}"
                             else:
                                 shutil.copy(file_path, env.weba_public_dir)
             else:
@@ -222,7 +227,7 @@ class Build:
                     async with aiofiles.open(file, "r") as f2:
                         content = await f2.read()
                         if return_as_text:
-                            file_content += f"{content};"
+                            file_content += f"{content}{'' if file.endswith('._hs') else ';'}"
                         else:
                             await f.write(content)
 
@@ -257,7 +262,7 @@ class Build:
                 )
             )
 
-    async def create_hs_extension_files(self, return_as_text: bool = False):
+    async def create_htmx_extension_files(self, return_as_text: bool = False):
         return await self.create_files(
             # TODO: Add @{env.htmx_version} and fix getting the filename and version
             [f"https://unpkg.com/htmx.org@{env.htmx_version}/dist/ext/{file}.js" for file in env.htmx_extentions],
@@ -278,12 +283,24 @@ class Build:
 
             js += ";".join(
                 await asyncio.gather(
-                    self.create_hs_extension_files(return_as_text=True),
+                    self.create_htmx_extension_files(return_as_text=True),
                     self.create_files(env.js_files, return_as_text=True),
                 )
             )
 
             await f.write(jsmin(inspect.cleandoc(js)))
+
+    async def create_hyperscript_files(self):
+        """
+        Create the hyperscript._hs file.
+        """
+
+        hyperscript_js_path = os.path.join(env.weba_public_dir, "hyperscript._hs")
+
+        async with aiofiles.open(hyperscript_js_path, "w") as f:
+            modules_contents = await self.create_files(env.hs_files, return_as_text=True)
+
+            await f.write(minimize_behavior(modules_contents))
 
     async def create_tailwind_css_file(self):
         """
