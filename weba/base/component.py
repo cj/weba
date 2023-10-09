@@ -1,10 +1,7 @@
 import inspect
-from functools import cached_property
-from typing import Any, Callable, Coroutine, ParamSpec, TypeVar, Union
+from typing import Any, Callable, Coroutine, ParamSpec, TypeVar, Dict
 
-from fastapi import Request, Response
-
-from .page import Page
+from .methods import Methods
 
 P = ParamSpec("P")
 R = TypeVar("R")
@@ -14,8 +11,12 @@ class NewInitCaller(type):
     def __call__(cls_, *args: Any, **kwargs: Any):  # type: ignore  # noqa: N804
         # sourcery skip: instance-method-first-arg-name
         """Called when you call MyNewClass()"""
-        obj = type.__call__(cls_, *args, **kwargs)
-        obj.__init__(*args, **kwargs)
+        obj = type.__call__(cls_)
+        obj._args = args or ()
+        obj._kwargs = kwargs or {}
+
+        if len(inspect.signature(obj.__init__).parameters) > 0:
+            obj.__init__(*args, **kwargs)
 
         if hasattr(obj, "_content") and not inspect.iscoroutinefunction(obj._content):
             if len(inspect.signature(obj._content).parameters) > 0:
@@ -32,13 +33,14 @@ class NewInitCaller(type):
         return obj
 
 
-class Component(object, metaclass=NewInitCaller):
+class Component(Methods, object, metaclass=NewInitCaller):
     content: Callable[..., Any] | Callable[..., Coroutine[Any, Any, Any]]
     _content: Callable[..., Any] | Callable[..., Coroutine[Any, Any, Any]]
+    _args: tuple[Any, ...]
+    _kwargs: Dict[str, Any]
 
-    def __init__(self, *args: Any, **kwargs: Any):
-        self._args = args
-        self._kwargs = kwargs
+    def __init__(self, *args: Any, **kwargs: Any) -> None:
+        pass
 
     def __await__(self) -> Any:
         if hasattr(self, "_content") and inspect.iscoroutinefunction(self._content):
@@ -54,15 +56,4 @@ class Component(object, metaclass=NewInitCaller):
                 return self.content(*self._args, **self._kwargs).__await__()
             else:
                 return self.content().__await__()
-
-    @cached_property
-    def _parent(self) -> Union["Page", "Component", None]:
-        return next((arg for arg in self._args if isinstance(arg, (Component, Page))), None)
-
-    @property
-    def request(self) -> Request | None:
-        return self._kwargs.get("request") or (self._parent.request if self._parent else None)
-
-    @property
-    def response(self) -> Response | None:
-        return self._kwargs.get("response") or (self._parent.response if self._parent else None)
+                return self.content().__await__()

@@ -2,10 +2,10 @@ from fastapi import Depends, Request, Response
 
 from . import tags
 from .app import app, doc
-from .base import Component, Page, WebaPageException
+from .base import Component, Methods, Page, WebaPageException
 from .cache import Cache, cache
 from .document import WebaDocument, weba_document
-from .env import env
+from .env import Settings, env
 from .ui import html_tag, ui
 from .weba import run, uvicorn_server
 
@@ -50,4 +50,6 @@ __all__ = [
     "Page",
     "WebaPageException",
     "Component",
+    "Settings",
+    "Methods",
 ]
