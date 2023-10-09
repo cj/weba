@@ -2,6 +2,7 @@ import inspect
 from typing import Any, AsyncContextManager, Callable, ContextManager, Coroutine, Dict, Optional
 
 from fastapi import Request, Response
+from starlette.background import BackgroundTasks
 
 from ..document import WebaDocument
 from ..env import env
@@ -27,6 +28,7 @@ class Page:
         request: Optional[Request] = None,
         response: Optional[Response] = None,
         params: Optional[Dict[str, Any]] = None,
+        background_tasks: Optional[BackgroundTasks] = None,
     ) -> None:
         title = title or self.title
         self._document = document or WebaDocument(title=title)
@@ -36,6 +38,7 @@ class Page:
         self._response = response
         self._params = params or {}
         self._session_store = self.request.session.setdefault("store", {})
+        self._background_tasks = background_tasks
 
     async def render(self) -> str:
         with self.doc.body:
@@ -68,6 +71,13 @@ class Page:
             raise WebaPageException("response is not set")
 
         return self._response
+
+    @property
+    def background_tasks(self) -> BackgroundTasks:
+        if not self._background_tasks:
+            raise WebaPageException("background_tasks is not set")
+
+        return self._background_tasks
 
     @property
     def params(self) -> Dict[str, Any]:

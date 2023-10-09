@@ -12,6 +12,7 @@ from cryptography.fernet import Fernet
 from dominate.dom_tag import Callable
 from fastapi import Request, Response
 from fastapi.encoders import jsonable_encoder as _jsonable_encoder
+from starlette.background import BackgroundTasks
 
 from .document import WebaDocument, get_document
 from .env import env
@@ -161,6 +162,7 @@ async def load_page(
     response: Optional[Response] = None,
     document: Optional[WebaDocument] = None,
     pages_dir: str | None = None,
+    background_tasks: Optional[BackgroundTasks] = None,
 ) -> str | None:
     page_path, params = find_page(path, pages_dir=pages_dir)
 
@@ -176,6 +178,7 @@ async def load_page(
         request=request,
         response=response,
         params=params,
+        background_tasks=background_tasks,
     )
 
     return await page.render()

@@ -3,6 +3,7 @@ import contextlib
 from typing import List, Optional, Pattern
 
 from fastapi import Response
+from starlette.background import BackgroundTasks
 from starlette.requests import Request
 from starlette.staticfiles import StaticFiles
 from starlette.types import ASGIApp, Message, Receive, Scope, Send
@@ -93,11 +94,13 @@ class WebaMiddleware:
 
     async def handle_weba_request(self, scope: Scope, receive: Receive, send: Send):
         request = Request(scope, receive)
+        background_tasks = scope["background"] = BackgroundTasks()
 
         document = scope["weba_document"] = get_document(request=request)
 
         response = Response(None, media_type="text/html")
 
+        response.background = background_tasks
         response.headers["Accept-CH"] = "Sec-CH-Prefers-Color-Scheme"
         response.headers["Vary"] = "Sec-CH-Prefers-Color-Scheme"
         response.headers["Critical-CH"] = "Sec-CH-Prefers-Color-Scheme"
@@ -105,7 +108,13 @@ class WebaMiddleware:
         html: str | None = None
 
         try:
-            html = await load_page(request.url.path, request=request, response=response, document=document)
+            html = await load_page(
+                request.url.path,
+                request=request,
+                response=response,
+                document=document,
+                background_tasks=background_tasks,
+            )
         except Exception as e:
             env.handle_exception(e)
 
