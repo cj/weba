@@ -1,5 +1,5 @@
 import inspect
-from typing import Any, Callable, Coroutine, ParamSpec, TypeVar, Dict
+from typing import Any, Callable, Coroutine, Dict, ParamSpec, TypeVar
 
 from .methods import Methods
 
@@ -55,5 +55,4 @@ class Component(Methods, object, metaclass=NewInitCaller):
             if len(inspect.signature(self.content).parameters) > 0:
                 return self.content(*self._args, **self._kwargs).__await__()
             else:
-                return self.content().__await__()
                 return self.content().__await__()
