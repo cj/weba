@@ -2,7 +2,7 @@ import asyncio
 import contextlib
 from typing import List, Optional, Pattern
 
-from fastapi import Response
+from fastapi import HTTPException, Response
 from starlette.background import BackgroundTasks
 from starlette.requests import Request
 from starlette.staticfiles import StaticFiles
@@ -12,6 +12,18 @@ from starlette_cramjam.compression import cramjam
 from ..document import get_document
 from ..env import env
 from ..utils import get_static_file_path, load_page, load_status_code_page
+
+
+class WebaHTTPRedirectException(HTTPException):
+    def __init__(
+        self,
+        status_code: int,
+        detail: Optional[str] = None,
+        headers: dict[str, str] | None = None,
+        background: BackgroundTasks | None = None,
+    ) -> None:
+        super().__init__(status_code=status_code, detail=detail, headers=headers)
+        self.background = background
 
 
 class WebaMiddleware:
@@ -115,6 +127,14 @@ class WebaMiddleware:
                 document=document,
                 background_tasks=background_tasks,
             )
+        except WebaHTTPRedirectException as e:
+            location = e.headers["Location"]  # type: ignore
+            response.status_code = e.status_code
+            response.headers["Location"] = location  # type: ignore
+            response.headers["HX-Location"] = location  # type: ignore
+            response.background = e.background
+
+            return await response(scope, receive, send)
         except Exception as e:
             env.handle_exception(e)
 
