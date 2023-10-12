@@ -5,6 +5,7 @@ import dominate
 import dominate.tags as t
 from dominate.util import raw  # type: ignore
 from fastapi import Request
+from starlette.background import BackgroundTasks
 
 from .env import env
 
@@ -121,6 +122,7 @@ def get_document(
 
     if env.htmx_boost:
         doc.body["hx-boost"] = "true"
+        doc.body["hx-history"] = "false"
 
     if env.live_reload:
         doc.body["ws-connect"] = env.live_reload_url

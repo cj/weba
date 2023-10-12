@@ -48,13 +48,13 @@ class Methods:
     @property
     def background_tasks(self) -> BackgroundTasks:
         background_tasks = self._kwargs.get("background_tasks") or (
-            self._parent.background_tasks if self._parent else None
+            self._parent.background_tasks if self._parent else self.response.background
         )
 
         if not background_tasks:
             raise WebaMethodsException("No background_tasks found")
 
-        return background_tasks
+        return background_tasks  # type: ignore
 
     @property
     def session_store(self) -> Dict[str, Any]:
