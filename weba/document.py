@@ -5,7 +5,6 @@ import dominate
 import dominate.tags as t
 from dominate.util import raw  # type: ignore
 from fastapi import Request
-from starlette.background import BackgroundTasks
 
 from .env import env
 
