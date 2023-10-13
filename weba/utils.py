@@ -17,7 +17,9 @@ from starlette.background import BackgroundTasks
 from .document import WebaDocument, get_document
 from .env import env
 
-current_dir_path = os.path.dirname(os.path.abspath(__file__))
+current_dir_path = (
+    env.pages_dir if os.path.isdir(env.pages_dir) else os.path.join(os.path.dirname(os.path.abspath(__file__)), "pages")
+)
 
 
 def find_open_port(port: int = env.port, max_port: int = 65535):
@@ -94,6 +96,8 @@ def find_page(path: Any, pages_dir: Optional[str] = env.pages_dir) -> Tuple[str 
         # matches /pages/login.py
         if f"{path[1:]}.py" in files:
             found_path = f"{pages_dir}/{path[1:]}.py"
+        elif f"{path}.py" in files:
+            found_path = f"{pages_dir}/{path}.py"
 
         # remove the last /whatever from path
         # matches /admin/orders/2342424
@@ -166,6 +170,9 @@ async def load_page(
     pages_dir: str | None = None,
     background_tasks: Optional[BackgroundTasks] = None,
 ) -> str | None:
+    if not background_tasks:
+        background_tasks = BackgroundTasks()
+
     page_path, params = find_page(path, pages_dir=pages_dir)
 
     if not page_path:
@@ -191,11 +198,11 @@ async def load_status_code_page(
     request: Request,
     response: Optional[Response] = None,
 ) -> str | None:
-    return await load_page(status_code, request, response) or await load_page(
+    return await load_page(
         status_code,
         request,
         response,
-        pages_dir=os.path.join(current_dir_path, "pages"),
+        pages_dir=current_dir_path,
     )
 
 

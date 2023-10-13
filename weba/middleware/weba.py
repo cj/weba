@@ -1,5 +1,6 @@
 import asyncio
 import contextlib
+from pathlib import Path
 from typing import List, Optional, Pattern
 
 from fastapi import HTTPException, Response
@@ -12,6 +13,14 @@ from starlette_cramjam.compression import cramjam
 from ..document import get_document
 from ..env import env
 from ..utils import get_static_file_path, load_page, load_status_code_page
+
+# get a list of all the static files in the public directory f"{env.project_root_path}/app/public"
+# and add them to the exclude_paths
+public_dir = Path(env.public_dir)
+
+# Extend exclude_paths with string representations of all files in public_dir,
+# with the public_dir path removed from them, and ensuring they start with '/'
+public_files = [f"/{str(file.relative_to(public_dir))}" for file in public_dir.rglob("*") if file.is_file()]
 
 
 class WebaHTTPRedirectException(HTTPException):
@@ -42,9 +51,10 @@ class WebaMiddleware:
         include_paths: Optional[List[str]] = None,
     ) -> None:
         self.app = app
-        self.exclude_paths = env.exclude_paths.extend(exlcude_paths or []) or []
-        self.include_paths = env.include_paths.extend(include_paths or []) or []
+        self.exclude_paths = env.exclude_paths + (exlcude_paths or [])
+        self.include_paths = env.include_paths + (include_paths or [])
         self.staticfiles = StaticFiles(directory=env.weba_public_dir, check_dir=False)
+        self.public_staticfiles = StaticFiles(directory=env.public_dir, check_dir=False)
 
     async def __call__(self, scope: Scope, receive: Receive, send: Send):
         self.scope = scope
@@ -65,6 +75,9 @@ class WebaMiddleware:
             except Exception as e:
                 env.handle_exception(e)
                 return await self.app(scope, receive, send)
+
+        if any(scope["path"] == public_file for public_file in public_files):
+            return await self.public_staticfiles(scope, receive, send)
 
         # if exclude_paths is not empty we use not any() to check if the path is in the exclude_paths
         # and skip it, otherwise we check if the path is in the include_paths and skip it if it is not
