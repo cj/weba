@@ -80,7 +80,7 @@ def load_app() -> WebaFastAPI:
     app.add_middleware(
         SecureCookiesMiddleware,
         secrets=env.cookie_secrets,
-        cookie_httponly=True,
+        cookie_httponly=env.is_prod,
         cookie_secure=env.is_prod,
         included_cookies=env.cookie_include_list,
     )

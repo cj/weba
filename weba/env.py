@@ -96,7 +96,7 @@ class Settings(BaseSettings):
         uvicorn_logger.error(line) for line in tb.format_exc().splitlines()
     ]
     cookie_secrets: List[Any] = []
-    cookie_include_list: List[Any] = ["session", "csrftoken"]
+    cookie_include_list: List[Any] = ["session", "csrftoken", "store"]
     session_secret_key: str = ""
     port: int = Field(
         3334,

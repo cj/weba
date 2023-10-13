@@ -126,7 +126,9 @@ def load_page_class(file_path: str) -> Any:
     spec.loader.exec_module(page_module)
     classes = [cls_name for cls_name, cls_obj in inspect.getmembers(page_module) if inspect.isclass(cls_obj)]
     page_class = [cls for cls in classes if cls.endswith("Page") and cls != "Page"].pop()
-    return getattr(page_module, page_class)
+    page = getattr(page_module, page_class)
+    page._file_path = file_path
+    return page
 
 
 def merge_class(class_str: str, kwargs: Dict[str, Any]) -> str:
