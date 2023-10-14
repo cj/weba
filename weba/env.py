@@ -1,3 +1,4 @@
+import json
 import logging
 import os
 import traceback as tb
@@ -6,7 +7,7 @@ from typing import Any, List, Tuple, Type
 
 from dominate.dom_tag import Callable
 from dotenv import load_dotenv
-from pydantic import AliasChoices, Field, model_validator  # type: ignore
+from pydantic import AliasChoices, Field, model_validator, validator  # type: ignore
 from pydantic.fields import FieldInfo
 from pydantic_settings import (
     BaseSettings,
@@ -30,42 +31,11 @@ def env_file() -> tuple[str, ...]:
         case "staging" | "stg":
             envs = (".env", ".env.local", ".env.stg", ".env.staging")
         case "testing" | "test" | "tst":
-            envs = (".env", ".env.local", ".env.tst", ".env.test", ".env.testing")
+            envs = (".weba/.secrets", ".env", ".env.local", ".env.tst", ".env.test", ".env.testing")
         case _:
-            envs = (".env", ".env.local", ".env.dev", ".env.development")
-
-    if env not in ("production", "prod", "prd"):
-        envs = (".weba/.secrets",) + envs
+            envs = (".weba/.secrets", ".env", ".env.local", ".env.dev", ".env.development")
 
     return envs
-
-
-class WebaCustomSource(DotEnvSettingsSource):
-    def prepare_field_value(
-        self,
-        field_name: str,
-        field: FieldInfo,  # noqa: ARG002
-        value: Any,
-        value_is_complex: bool,  # noqa: ARG002
-    ) -> Any:
-        if not value:
-            return value
-
-        if isinstance(value, str) and field_name in {
-            "css_files",
-            "js_files",
-            "tw_plugins",
-            "tw_css_files",
-            "ignored_folders",
-            "exclude_paths",
-            "include_paths",
-            "modules",
-            "cookie_secrets",
-            "cookie_include_list",
-        }:
-            return [str(v).strip() for v in value.split(",")]
-
-        return value
 
 
 class Settings(BaseSettings):
@@ -76,28 +46,13 @@ class Settings(BaseSettings):
         env_file_encoding="utf-8",
     )
 
-    @classmethod
-    def settings_customise_sources(
-        cls,
-        settings_cls: Type[BaseSettings],
-        init_settings: PydanticBaseSettingsSource,
-        env_settings: PydanticBaseSettingsSource,
-        dotenv_settings: PydanticBaseSettingsSource,  # noqa: ARG003
-        file_secret_settings: PydanticBaseSettingsSource,
-    ) -> Tuple[PydanticBaseSettingsSource, ...]:
-        return (
-            init_settings,
-            env_settings,
-            WebaCustomSource(settings_cls),
-            file_secret_settings,
-        )
-
     handle_exception: Callable[..., Any] = lambda _e: [  # noqa: E731
         uvicorn_logger.error(line) for line in tb.format_exc().splitlines()
     ]
-    cookie_secrets: List[Any] = []
-    cookie_include_list: List[Any] = ["session", "csrftoken", "store"]
+    # BUG: List[Any] not working, throws an error
+    cookie_secrets: List[str] = []
     session_secret_key: str = ""
+    cookie_include_list: List[str] = ["session", "csrftoken", "store"]
     port: int = Field(
         3334,
         validation_alias=AliasChoices("weba_port", "port"),
