@@ -12,7 +12,7 @@ import aiohttp
 from aiofiles import os as aiofiles_io
 from jsmin import jsmin  # type: ignore
 
-from .env import env
+from weba.env import env
 
 # from .packages import download_packages
 from .utils import generate_keys, minimize_behavior  # type: ignore

@@ -178,12 +178,12 @@ async def load_page(
     if not page_path:
         return None
 
-    document = document or get_document()
+    document = document or get_document(request=request)
 
     params = (params or {}) | request.query_params._dict  # type: ignore
 
     page = load_page_class(page_path)(
-        document=get_document(request=request),
+        document=document,
         request=request,
         response=response,
         params=params,
@@ -254,7 +254,7 @@ def get_static_file_path(path: str) -> str:
     # Remove the "/static" prefix before forwarding the request
     path = path.replace(env.weba_public_url, "")
 
-    return re.sub(r"\-[\d\w]{15,}(?=\.\w+$)", "", path)
+    return re.sub(r"\-[\d\w]{12,}(?=\.\w+$)", "", path)
 
 
 def minimize_behavior(unminimized_behavior: str) -> str:

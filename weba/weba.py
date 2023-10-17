@@ -1,7 +1,6 @@
 from typing import Any, Optional
 
 import __main__
-import nest_asyncio
 import uvicorn
 from fastapi import FastAPI
 
@@ -11,8 +10,6 @@ from .env import env
 from .utils import find_open_port
 
 uvicorn_running = False
-
-nest_asyncio.apply()  # type: ignore
 
 
 def uvicorn_server(
@@ -30,7 +27,7 @@ def uvicorn_server(
         host=host,
         log_level=log_level,
         lifespan="on",
-        loop="asyncio",
+        # loop="asyncio",
     )
 
     return uvicorn.Server(config=config)
@@ -62,7 +59,7 @@ def run(
             "host": host,
             "log_level": log_level,
             "lifespan": "on",
-            "loop": "asyncio",
+            # "loop": "asyncio",
         }
 
         if env.live_reload:

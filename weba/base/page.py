@@ -13,11 +13,13 @@ LayoutType = type(ContextManager) | type(AsyncContextManager)
 
 
 class Page(Methods):
+    title: str = "Weba"
+
     content: Optional[Callable[..., Any] | Callable[..., Coroutine[Any, Any, Any]]]
 
     title: str = "Weba"
 
-    layout: Optional[LayoutType] = None
+    layout: Optional[LayoutType]
 
     # TODO: Remove this init and move to methods
     def __init__(
@@ -29,16 +31,16 @@ class Page(Methods):
     ) -> None:
         title = title or self.title
         self._document = document or WebaDocument(title=title)
-        self.document.title = title
+        self._document.title = title
 
         self._args = args
         self._kwargs = kwargs
 
     async def render(self) -> str:
-        with self.doc.body:
+        with self._document as doc:
             await self._render_content
 
-        return self.doc.render(pretty=env.pretty_html)
+        return doc.render(pretty=env.pretty_html)
 
     @property
     def document(self) -> WebaDocument:
@@ -46,16 +48,16 @@ class Page(Methods):
 
     @property
     def doc(self) -> WebaDocument:
-        return self.document
+        return self._document
 
     @property
     async def _content(self) -> Optional[Callable[..., Any] | Callable[..., Coroutine[Any, Any, Any]]]:
-        if not self.content:
+        if not hasattr(self, "content"):
             raise WebaPageException("content is not set")
 
         if inspect.iscoroutinefunction(self.content):
             await self.content()
-        else:
+        elif callable(self.content):
             self.content()
 
     @property
