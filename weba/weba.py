@@ -27,7 +27,6 @@ def uvicorn_server(
         host=host,
         log_level=log_level,
         lifespan="on",
-        # loop="asyncio",
     )
 
     return uvicorn.Server(config=config)
@@ -59,7 +58,6 @@ def run(
             "host": host,
             "log_level": log_level,
             "lifespan": "on",
-            # "loop": "asyncio",
         }
 
         if env.live_reload:
