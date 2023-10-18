@@ -1,3 +1,6 @@
+from typing import Any
+
+
 def clean_attribute(attribute: str):
     """
     Normalize attribute names for shorthand and work arounds for limitations
@@ -53,3 +56,23 @@ def clean_attribute(attribute: str):
         attribute = attribute.replace("_", ":", 1).lower()
 
     return attribute
+
+
+def escape(data: Any, quote=True):  # stolen from std lib cgi # type: ignore
+    """
+    Escapes special characters into their html entities
+    Replace special characters "&", "<" and ">" to HTML-safe sequences.
+    If the optional flag quote is true, the quotation mark character (")
+    is also translated.
+
+    This is used to escape content that appears in the body of an HTML document
+    """
+    # Addition to convert ints to strings
+    if isinstance(data, int):
+        data = str(data)
+    data = data.replace("&", "&amp;")  # Must be done first!
+    data = data.replace("<", "&lt;")
+    data = data.replace(">", "&gt;")
+    if quote:
+        data = data.replace('"', "&quot;")
+    return data

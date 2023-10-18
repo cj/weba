@@ -1,17 +1,27 @@
-from dominate.svg import svg
-from dominate.tags import dom_tag
-from dominate.util import text
+import sys
 
-from .dominate_overrides import clean_attribute
+import dominate.util  # noqa: F401
+
+dominate_util_module = sys.modules["dominate.util"]
+
+from .dominate_overrides import clean_attribute, escape  # noqa: E402
+
+dominate_util_module.escape = escape  # type: ignore
+dominate_util_module.str_escape = escape  # type: ignore
+
+from dominate.svg import svg  # noqa: E402
+from dominate.tags import dom_tag  # noqa: E402
 
 dom_tag.clean_attribute = clean_attribute
+
+text = dominate_util_module.text
 
 
 def raw(s: str):
     """
     Inserts a raw string into the DOM. Unsafe. Alias for text(x, escape=False)
     """
-    return text(s, escape=False)
+    return dominate_util_module.text(s, escape=False)
 
 
 from dominate.tags import (  # noqa: E402
