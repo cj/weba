@@ -5,8 +5,8 @@ from fastapi import Request, Response
 from starlette.background import BackgroundTasks
 
 if TYPE_CHECKING:
-    from .component import Component
-    from .page import Page
+    from .component import Component  # noqa: TCH004
+    from .page import Page  # noqa: TCH004
 
 
 WebaMethodsException = Exception
@@ -18,9 +18,6 @@ class Methods:
 
     @cached_property
     def _parent(self) -> Union["Page", "Component", None]:
-        from .component import Component
-        from .page import Page
-
         return next((arg for arg in self._args if isinstance(arg, (Page | Component))), None)
 
     @property

@@ -1,6 +1,7 @@
 import asyncio
 import hashlib
 import inspect
+import json
 import os
 import re
 import shutil
@@ -237,7 +238,7 @@ class Build:
         return file_content
 
     async def create_secrets(self):
-        if env.is_prod:
+        if env.is_prd:
             return
 
         secrets_path = os.path.join(env.weba_path, ".secrets")
@@ -249,7 +250,7 @@ class Build:
         env.cookie_secrets = generate_keys(3)
         session_secret_key: str = generate_keys(1)[0]
         env.session_secret_key = session_secret_key
-        cookie_secrets = ",".join(env.cookie_secrets)
+        cookie_secrets = json.dumps(env.cookie_secrets)
 
         # make the .secrets file
         async with aiofiles.open(secrets_path, "w") as f:

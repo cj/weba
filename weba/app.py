@@ -53,7 +53,7 @@ class WebaFastAPI(FastAPI):
 
 
 def load_app() -> WebaFastAPI:
-    if not env.cookie_secrets and not env.is_prod:
+    if not env.cookie_secrets and not env.is_prd:
         asyncio.run(build.create_weba_hidden_directory())
         asyncio.run(build.create_secrets())
 
@@ -74,14 +74,14 @@ def load_app() -> WebaFastAPI:
     app.add_middleware(
         SessionMiddleware,
         secret_key=env.session_secret_key,
-        https_only=env.is_prod,
+        https_only=env.is_prd,
     )
 
     app.add_middleware(
         SecureCookiesMiddleware,
         secrets=env.cookie_secrets,
-        cookie_httponly=env.is_prod,
-        cookie_secure=env.is_prod,
+        cookie_httponly=env.is_prd,
+        cookie_secure=env.is_prd,
         included_cookies=env.cookie_include_list,
     )
 

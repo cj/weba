@@ -1,4 +1,3 @@
-import json
 import logging
 import os
 import traceback as tb
@@ -7,11 +6,9 @@ from typing import Any, List, Tuple, Type
 
 from dominate.dom_tag import Callable
 from dotenv import load_dotenv
-from pydantic import AliasChoices, Field, model_validator, validator  # type: ignore
-from pydantic.fields import FieldInfo
+from pydantic import AliasChoices, Field, model_validator  # type: ignore
 from pydantic_settings import (
     BaseSettings,
-    DotEnvSettingsSource,
     PydanticBaseSettingsSource,
     SettingsConfigDict,
 )
@@ -45,6 +42,22 @@ class Settings(BaseSettings):
         extra="ignore",
         env_file_encoding="utf-8",
     )
+
+    @classmethod
+    def settings_customise_sources(
+        cls,
+        settings_cls: Type[BaseSettings],  # noqa: ARG003
+        init_settings: PydanticBaseSettingsSource,
+        env_settings: PydanticBaseSettingsSource,
+        dotenv_settings: PydanticBaseSettingsSource,  # noqa: ARG003
+        file_secret_settings: PydanticBaseSettingsSource,
+    ) -> Tuple[PydanticBaseSettingsSource, ...]:
+        return (
+            init_settings,
+            dotenv_settings,
+            env_settings,
+            file_secret_settings,
+        )
 
     handle_exception: Callable[..., Any] = lambda _e: [  # noqa: E731
         uvicorn_logger.error(line) for line in tb.format_exc().splitlines()
@@ -142,7 +155,7 @@ class Settings(BaseSettings):
             settings.add_htmx_extention("ws")
 
         if not os.getenv("WEBA_PRETTY_HTML"):
-            settings.pretty_html = not settings.is_prod
+            settings.pretty_html = not settings.is_prd
 
         return settings
 
@@ -180,6 +193,22 @@ class Settings(BaseSettings):
     #     self.packages.extend(packages)
 
     @property
+    def environment(self) -> str:
+        env = None
+
+        match self.env:
+            case "production" | "prod" | "prd":
+                env = "production"
+            case "staging" | "stg":
+                env = "staging"
+            case "testing" | "test" | "tst":
+                env = "testing"
+            case _:
+                env = "development"
+
+        return env
+
+    @property
     def is_test(self) -> bool:
         return self.env in ("test", "testing", "tst")
 
@@ -192,7 +221,7 @@ class Settings(BaseSettings):
         return self.env in ("staging", "stg")
 
     @property
-    def is_prod(self) -> bool:
+    def is_prd(self) -> bool:
         return self.env in ("production", "prod", "prd")
 
 
