@@ -2,7 +2,7 @@ import logging
 import os
 import traceback as tb
 from pathlib import Path
-from typing import Any, List, Tuple, Type
+from typing import Any, List, Optional, Tuple, Type
 
 from dominate.dom_tag import Callable
 from dotenv import load_dotenv
@@ -58,6 +58,9 @@ class Settings(BaseSettings):
             env_settings,
             file_secret_settings,
         )
+
+    lifespan_on_startup: List[Any] = []
+    lifespan_on_shutdown: List[Any] = []
 
     handle_exception: Callable[..., Any] = lambda _e: [  # noqa: E731
         uvicorn_logger.error(line) for line in tb.format_exc().splitlines()

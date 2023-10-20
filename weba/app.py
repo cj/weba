@@ -1,4 +1,6 @@
 import asyncio
+import contextlib
+from contextlib import asynccontextmanager
 from typing import Any, ParamSpec, TypeVar
 
 from dominate.dom_tag import Callable
@@ -27,6 +29,12 @@ P = ParamSpec("P")
 R = TypeVar("R")
 
 
+@asynccontextmanager  # type: ignore
+async def _lifespan(_) -> Any:
+    with contextlib.suppress(asyncio.exceptions.CancelledError):
+        yield
+
+
 class WebaFastAPI(FastAPI):
     def __init__(self, *args, **kwargs):  # type: ignore
         super().__init__(*args, **kwargs)
@@ -52,12 +60,17 @@ class WebaFastAPI(FastAPI):
         return decorator
 
 
-def load_app() -> WebaFastAPI:
+def load_app() -> WebaFastAPI:  # type: ignore
     if not env.cookie_secrets and not env.is_prd:
         asyncio.run(build.create_weba_hidden_directory())
         asyncio.run(build.create_secrets())
 
-    app = WebaFastAPI(default_response_class=HTMLResponse)
+    app = WebaFastAPI(
+        default_response_class=HTMLResponse,
+        lifespan=_lifespan,
+        docs_url=None,
+        redoc_url=None,
+    )
 
     app.add_middleware(
         WebaMiddleware,

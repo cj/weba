@@ -12,13 +12,15 @@ icecream.install()
 pytest_plugins = ["weba.test"]
 
 
+asyncio.run(build.run())
+
+
 def pytest_configure(config):  # type: ignore  # noqa: ARG001
     """
     Allows plugins and conftest files to perform initial configuration.
     This hook is called for every plugin and initial conftest
     file after command line options have been parsed.
     """
-    asyncio.run(build.run())
 
 
 def pytest_sessionstart(session):  # type: ignore  # noqa: ARG001

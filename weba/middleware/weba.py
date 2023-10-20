@@ -64,7 +64,7 @@ class WebaMiddleware:
         if scope["type"] == "websocket" and scope["path"] == env.live_reload_url:
             return await self.handle_websocket(scope)
 
-        if scope["type"] != "http":
+        if scope["type"] == "lifespan":
             return await self.app(scope, receive, self.handle_lifespan)
 
         if scope["path"].startswith(env.weba_public_url):
@@ -151,7 +151,7 @@ class WebaMiddleware:
         except Exception as e:
             env.handle_exception(e)
 
-            html = await load_status_code_page(500, request, response)
+            html = await load_status_code_page(200 if env.live_reload else 500, request, response)
 
         if html:
             response.body = html.encode()
@@ -172,13 +172,19 @@ class WebaMiddleware:
                 raise
 
     async def handle_lifespan(self, message: Message):
+        from weba.env import env
+
         from ..build import build
 
         match message["type"]:
             case "lifespan.startup.complete":
-                if not env.is_test:
-                    await build.run()
-                    await self.send(message)
+                await asyncio.gather(
+                    build.run(),
+                    *[event() for event in env.lifespan_on_startup],
+                )
+                return await self.send(message)
+            case "lifespan.shutdown.complete":
+                await asyncio.gather(*[event() for event in env.lifespan_on_shutdown])
             case _:
                 pass
 

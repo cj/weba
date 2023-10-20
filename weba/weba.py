@@ -17,6 +17,7 @@ def uvicorn_server(
     host: Optional[str] = None,
     app: Optional[FastAPI] = None,
     log_level: str = "info",
+    **kwargs: Any,
 ) -> uvicorn.Server:
     open_port = port or find_open_port()
     host = host or env.host
@@ -26,7 +27,7 @@ def uvicorn_server(
         port=open_port,
         host=host,
         log_level=log_level,
-        lifespan="on",
+        **kwargs,
     )
 
     return uvicorn.Server(config=config)
@@ -37,6 +38,8 @@ def run(
     app: Optional[FastAPI] = None,
     host: Optional[str] = None,
     log_level: str = "info",
+    # lifespan_handler: Optional[Lifespan] = None,  # type: ignore
+    **kwargs: Any,
 ) -> None:
     if doc.body:
 
@@ -58,13 +61,14 @@ def run(
             "host": host,
             "log_level": log_level,
             "lifespan": "on",
-        }
+        } | kwargs
 
         if env.live_reload:
             uvicorn_args |= {
                 "reload": True,
                 "reload_dirs": [project_root_path],
                 "reload_excludes": env.ignored_folders,
+                "reload_delay": 0,
             }
 
         return uvicorn.run(  # type: ignore
