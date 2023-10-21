@@ -178,10 +178,14 @@ class WebaMiddleware:
 
         match message["type"]:
             case "lifespan.startup.complete":
+                events = env.lifespan_on_startup
+
+                if env.live_reload:
+                    events.append(build.run)
                 await asyncio.gather(
-                    build.run(),
                     *[event() for event in env.lifespan_on_startup],
                 )
+
                 return await self.send(message)
             case "lifespan.shutdown.complete":
                 await asyncio.gather(*[event() for event in env.lifespan_on_shutdown])
