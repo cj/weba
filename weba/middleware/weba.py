@@ -151,7 +151,7 @@ class WebaMiddleware:
         except Exception as e:
             env.handle_exception(e)
 
-            html = await load_status_code_page(200 if env.live_reload else 500, request, response)
+            html = await load_status_code_page(500, request, response)
 
         if html:
             response.body = html.encode()
