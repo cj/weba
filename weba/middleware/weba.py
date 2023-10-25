@@ -1,7 +1,7 @@
 import asyncio
 import contextlib
 from pathlib import Path
-from typing import List, Optional, Pattern
+from typing import List, Optional, Pattern, Union
 
 from fastapi import HTTPException, Response
 from starlette.background import BackgroundTasks
@@ -28,8 +28,8 @@ class WebaHTTPRedirectException(HTTPException):
         self,
         status_code: int,
         detail: Optional[str] = None,
-        headers: dict[str, str] | None = None,
-        background: BackgroundTasks | None = None,
+        headers: Optional[Union[dict[str, str], None]] = None,
+        background: Optional[Union[BackgroundTasks, None]] = None,
     ) -> None:
         super().__init__(status_code=status_code, detail=detail, headers=headers)
         self.background = background
@@ -47,11 +47,11 @@ class WebaMiddleware:
     def __init__(
         self,
         app: ASGIApp,
-        exlcude_paths: Optional[List[str]] = None,
+        exclude_paths: Optional[List[str]] = None,
         include_paths: Optional[List[str]] = None,
     ) -> None:
         self.app = app
-        self.exclude_paths = env.exclude_paths + (exlcude_paths or [])
+        self.exclude_paths = env.exclude_paths + (exclude_paths or [])
         self.include_paths = env.include_paths + (include_paths or [])
         self.staticfiles = StaticFiles(directory=env.weba_public_dir, check_dir=False)
         self.public_staticfiles = StaticFiles(directory=env.public_dir, check_dir=False)
@@ -97,22 +97,8 @@ class WebaMiddleware:
         await self.app(scope, receive, self.handle_response)
 
     async def handle_response(self, message: Message):
-        # if message["type"] == "http.response.start":
-        #     status_code = message["status"]
-        #     headers = message.get("headers", [])
-        #     headers.append((b"cache-control", b"no-store"))
-        #     message["headers"] = headers
-
-        #     if status_code == 200:
-        #         headers.append((b"content-type", b"text/html; charset=utf-8"))
-        #         message["headers"] = headers
-
         if message.get("type") == "http.response.body":
             body = message.get("body", b"")
-
-            # if isinstance(self.scope["weba_document"], WebaDocument):
-            #     breakpoint()
-
             message["body"] = body
 
         await self.send(message)
@@ -130,7 +116,7 @@ class WebaMiddleware:
         response.headers["Vary"] = "Sec-CH-Prefers-Color-Scheme"
         response.headers["Critical-CH"] = "Sec-CH-Prefers-Color-Scheme"
 
-        html: str | None = None
+        html: Optional[str] = None
 
         try:
             html = await load_page(

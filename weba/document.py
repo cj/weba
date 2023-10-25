@@ -8,11 +8,12 @@ from fastapi import Request
 
 from .env import env
 
-SCRIPT_TAGS: Any = []
+SCRIPT_TAGS: list[Any] = []
 """Used to cache the script tags as this is only needed to be ran once and does not change"""
 
 
-def load_script_tags() -> None:
+def load_script_tags() -> list[Any]:
+    # Avoid unnecessary operations if SCRIPT_TAGS is not empty
     if SCRIPT_TAGS:
         return SCRIPT_TAGS
 
@@ -20,19 +21,16 @@ def load_script_tags() -> None:
 
     files = sorted(build.files.items())
 
-    tags: Any = []
-
     for file_name, file_hash in files:
-        if file_hash == "":
-            file_url = f"{env.weba_public_url}/{file_name}"
-        else:
-            split = file_name.rsplit(".", 1)
-            file_url = f"{env.weba_public_url}/{split[0]}-{file_hash}.{split[1]}"
+        file_url = (
+            f"{env.weba_public_url}/{file_name}"
+            if file_hash == ""
+            else f"{env.weba_public_url}/{file_name.rsplit('.', 1)[0]}-{file_hash}.{file_name.rsplit('.', 1)[1]}"
+        )
 
-        # If the file is a js file
+        # Create a script tag with the file name and hash as key and value
         if file_url.endswith(".css"):
-            # Create a script tag with the file name and hash as key and value
-            tags.append(
+            SCRIPT_TAGS.append(
                 t.link(
                     rel="stylesheet",
                     href=file_url,
@@ -40,14 +38,13 @@ def load_script_tags() -> None:
                 )
             )
         elif file_url.endswith("._hs"):
-            tags.append(t.script(src=file_url, type="text/hyperscript"))
+            SCRIPT_TAGS.append(t.script(src=file_url, type="text/hyperscript"))
         else:
-            # Create a script tag with the file name and hash as key and value
-            tags.append(t.script(src=file_url, type="text/javascript"))
+            SCRIPT_TAGS.append(t.script(src=file_url, type="text/javascript"))
 
     # FIXME: currently htmx boost does not update the body tag
     # https://github.com/bigskysoftware/htmx/issues/1384
-    tags.append(
+    SCRIPT_TAGS.append(
         t.script(
             raw(
                 """
@@ -66,8 +63,6 @@ def load_script_tags() -> None:
         )
     )
 
-    SCRIPT_TAGS.extend(tags)
-
     return SCRIPT_TAGS
 
 
@@ -77,18 +72,15 @@ class WebaDocument(dominate.document):
 
     def __init__(self, title: str = "Weba", doctype: str = "<!DOCTYPE html>", *args: Any, **kwargs: Any):
         self._weba_head_rendered = False
-
         super().__init__(*args, title=title, doctype=doctype, **kwargs)  # type: ignore
 
     def render(self, indent: str = "  ", pretty: bool = True, xhtml: bool = False):
-        self._render_default_head()
+        if not self._weba_head_rendered:
+            self._render_default_head()
 
         return super().render(indent, pretty, xhtml)
 
     def _render_default_head(self) -> None:
-        if self._weba_head_rendered:
-            return
-
         with self.head:
             t.meta(charset="utf-8")
             t.meta(name="viewport", content="width=device-width, initial-scale=1")

@@ -1,44 +1,40 @@
 import inspect
-from typing import Any, Callable, Coroutine, Dict, ParamSpec, TypeVar
+from typing import Any, Dict
 
 from .methods import Methods
 
-P = ParamSpec("P")
-R = TypeVar("R")
-
 
 class NewInitCaller(type):
-    def __call__(cls_, *args: Any, **kwargs: Any):  # type: ignore  # noqa: N804
-        # sourcery skip: instance-method-first-arg-name
+    def __call__(self, *args: Any, **kwargs: Any):  # type: ignore  # noqa: N804
         """Called when you call MyNewClass()"""
-        obj = type.__call__(cls_, *args, **kwargs)
+        obj = type.__call__(self, *args, **kwargs)
         obj._args = args or ()
         obj._kwargs = kwargs or {}
 
-        if len(inspect.signature(obj.__init__).parameters) > 0:
+        init_signature = inspect.signature(obj.__init__)
+        if len(init_signature.parameters) > 0:
             obj.__init__(*args, **kwargs)
 
         if not obj._kwargs.get("_skip_content_call"):
-            if hasattr(obj, "_content") and not inspect.iscoroutinefunction(obj._content):
-                if len(inspect.signature(obj._content).parameters) > 0:
-                    return obj._content(*args, **kwargs)
-                else:
-                    return obj._content()
-
-            if hasattr(obj, "content") and not inspect.iscoroutinefunction(obj.content):
-                if len(inspect.signature(obj.content).parameters) > 0:
-                    return obj.content(*args, **kwargs)
-                else:
-                    return obj.content()
+            for method_name in ["_content", "content"]:
+                if self._is_callable(obj, method_name):
+                    method = getattr(obj, method_name)
+                    method_signature = inspect.signature(method)
+                    if len(method_signature.parameters) > 0:
+                        return method(*args, **kwargs)
+                    else:
+                        return method()
 
         return obj
 
+    @staticmethod
+    def _is_callable(obj: Any, method_name: str) -> bool:
+        """Check if a method exists and is not a coroutine"""
+        method = getattr(obj, method_name, None)
+        return bool(method and not inspect.iscoroutinefunction(method))
+
 
 class Component(Methods, object, metaclass=NewInitCaller):
-    content: Callable[..., Any] | Callable[..., Coroutine[Any, Any, Any]]
-    content_async: Callable[..., Any] | Callable[..., Coroutine[Any, Any, Any]]
-    _content: Callable[..., Any] | Callable[..., Coroutine[Any, Any, Any]]
-    _content_async: Callable[..., Any] | Callable[..., Coroutine[Any, Any, Any]]
     _args: tuple[Any, ...]
     _kwargs: Dict[str, Any]
 
@@ -46,19 +42,20 @@ class Component(Methods, object, metaclass=NewInitCaller):
         pass
 
     def __await__(self) -> Any:
-        if hasattr(self, "_content_async") and inspect.iscoroutinefunction(self._content_async):
-            # check to see if content takes args
-            if len(inspect.signature(self._content_async).parameters) > 0:
-                return self._content_async(*self._args, **self._kwargs).__await__()
-            else:
-                return self._content_async().__await__()
+        for method_name in ["_content_async", "content_async"]:
+            if self._is_coroutine(self, method_name):
+                method = getattr(self, method_name)
+                method_signature = inspect.signature(method)
+                if len(method_signature.parameters) > 0:
+                    return method(*self._args, **self._kwargs).__await__()
+                else:
+                    return method().__await__()
 
-        if hasattr(self, "content_async") and inspect.iscoroutinefunction(self.content_async):
-            # check to see if content takes args
-            if len(inspect.signature(self.content_async).parameters) > 0:
-                return self.content_async(*self._args, **self._kwargs).__await__()
-            else:
-                return self.content_async().__await__()
+    @staticmethod
+    def _is_coroutine(obj: Any, method_name: str) -> bool:
+        """Check if a method exists and is a coroutine"""
+        method = getattr(obj, method_name, None)
+        return bool(method and inspect.iscoroutinefunction(method))
 
     def __enter__(self):
         return self

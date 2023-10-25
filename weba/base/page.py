@@ -8,7 +8,6 @@ from .methods import Methods
 
 WebaPageException = Exception
 
-
 LayoutType = type(ContextManager) | type(AsyncContextManager)
 
 
@@ -17,8 +16,6 @@ class Page(Methods):
 
     before_render: Optional[Callable[..., Any] | Callable[..., Coroutine[Any, Any, Any]]]
     content: Optional[Callable[..., Any] | Callable[..., Coroutine[Any, Any, Any]]]
-
-    title: str = "Weba"
 
     layout: Optional[LayoutType]
 
@@ -46,8 +43,7 @@ class Page(Methods):
         return doc.render(pretty=env.pretty_html)
 
     async def _before_render(self):
-        # check to see if before render is defined if so call it
-        if hasattr(self, "before_render"):
+        if hasattr(self, "before_render") and self.before_render is not None:
             if inspect.iscoroutinefunction(self.before_render):
                 await self.before_render()
             elif callable(self.before_render):
@@ -63,7 +59,7 @@ class Page(Methods):
 
     @property
     async def _content(self) -> Optional[Callable[..., Any] | Callable[..., Coroutine[Any, Any, Any]]]:
-        if not hasattr(self, "content"):
+        if not hasattr(self, "content") or self.content is None:
             raise WebaPageException("content is not set")
 
         if inspect.iscoroutinefunction(self.content):
@@ -73,7 +69,7 @@ class Page(Methods):
 
     @property
     async def _render_content(self) -> None:
-        if hasattr(self, "layout") and self.layout:
+        if hasattr(self, "layout") and self.layout is not None:
             if is_asynccontextmanager(self.layout):
                 async with self.layout():
                     await self._content
