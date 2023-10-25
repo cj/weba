@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "weba"
-version = "0.0.20"
+version = "0.0.21"
 description = "Build web applications using FastAPI, Htmx and Tailwind"
 authors = ["CJ Lazell <cjlazell@gmail.com>"]
 license = "MIT"
