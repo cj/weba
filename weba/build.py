@@ -63,9 +63,10 @@ def extract_name_version(url: str) -> str:
 
         return f"1-tw-{plugins}-{tw_match['version']}"
 
-    pattern = r".*\/(?P<name>.+)@(?P<version>\d+(\.\d+){0,3})\/.*\.(?P<ext>\w+)"
+    pattern = r".*\/(?P<name>.+)@(?P<version>\d+(\.\d+){0,3})(\/.*\.|)(?P<ext>\w+)"
 
     if not (match := re.match(pattern, url)):
+        print(url)
         return url.split("/")[-1]
 
     if match["name"] == "htmx.org":
@@ -78,6 +79,9 @@ def extract_name_version(url: str) -> str:
         version = "1" if name == "htmx" else "2"
 
         return f"{version}-{name}-{htmx_match['version']}.{htmx_match['ext']}"
+
+    if match["name"] == "hyperscript.org@":
+        return f"2-hyperscript-{match['version']}.js"
 
     filename = f"{match['name']}-{match['version']}.{match['ext']}"
 

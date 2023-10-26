@@ -2,6 +2,7 @@ from functools import cached_property
 from typing import TYPE_CHECKING, Any, Dict, Union
 
 from fastapi import Request, Response
+from frozendict import frozendict
 from starlette.background import BackgroundTasks
 
 if TYPE_CHECKING:
@@ -39,8 +40,8 @@ class Methods:
         return response
 
     @property
-    def params(self) -> Dict[str, Any]:
-        return self._kwargs.get("params") or (self._parent.params if self._parent else {})
+    def params(self) -> frozendict[str, Any]:
+        return frozendict(self._kwargs.get("params") or (self._parent.params if self._parent else {}))
 
     @property
     def background_tasks(self) -> BackgroundTasks:

@@ -35,6 +35,16 @@ class WebaHTTPRedirectException(HTTPException):
         self.background = background
 
 
+class WebaHTTP404Exception(HTTPException):
+    def __init__(
+        self,
+        status_code: int = 404,
+        detail: Optional[str] = None,
+        headers: Optional[Union[dict[str, str], None]] = None,
+    ) -> None:
+        super().__init__(status_code=status_code, detail=detail, headers=headers)
+
+
 class WebaMiddleware:
     app: ASGIApp
     exclude_paths: List[str]
@@ -134,6 +144,8 @@ class WebaMiddleware:
             response.background = e.background
 
             return await response(scope, receive, send)
+        except WebaHTTP404Exception:
+            html = await load_status_code_page(404, request, response)
         except Exception as e:
             env.handle_exception(e)
 

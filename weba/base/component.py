@@ -1,5 +1,5 @@
 import inspect
-from typing import Any, Dict
+from typing import Any, Callable, Coroutine, Dict
 
 from .methods import Methods
 
@@ -35,6 +35,10 @@ class NewInitCaller(type):
 
 
 class Component(Methods, object, metaclass=NewInitCaller):
+    content: Callable[..., Any] | Callable[..., Coroutine[Any, Any, Any]]
+    content_async: Callable[..., Any] | Callable[..., Coroutine[Any, Any, Any]]
+    _content: Callable[..., Any] | Callable[..., Coroutine[Any, Any, Any]]
+    _content_async: Callable[..., Any] | Callable[..., Coroutine[Any, Any, Any]]
     _args: tuple[Any, ...]
     _kwargs: Dict[str, Any]
 
