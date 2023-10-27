@@ -46,7 +46,7 @@ class Component(Methods, object, metaclass=NewInitCaller):
         pass
 
     def __await__(self) -> Any:
-        for method_name in ["_content_async", "content_async"]:
+        for method_name in ["_content", "content", "_content_async", "content_async"]:
             if self._is_coroutine(self, method_name):
                 method = getattr(self, method_name)
                 method_signature = inspect.signature(method)
