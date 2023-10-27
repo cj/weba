@@ -1,4 +1,21 @@
+import asyncio
 from typing import Any
+
+
+def get_or_create_event_loop():
+    try:
+        return asyncio.get_running_loop()
+    except RuntimeError:
+        # Create a new event loop
+        loop = asyncio.new_event_loop()
+        asyncio.set_event_loop(loop)
+        return loop
+
+
+def get_thread_context():
+    loop = get_or_create_event_loop()
+    context = [asyncio.current_task(loop=loop)]
+    return hash(tuple(context))
 
 
 def clean_attribute(attribute: str):

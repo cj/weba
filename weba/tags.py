@@ -1,27 +1,30 @@
-import sys
+import dominate.dom_tag  # noqa: F401,E402
 
-import dominate.util  # noqa: F401
+from .dominate_overrides import clean_attribute, escape, get_thread_context  # noqa: E402
 
-dominate_util_module = sys.modules["dominate.util"]
+# NOTE: This is to update dominate to work with asyncio!!!
+# without this dominate will work with asyncio, but you will get some nasty race conditions
+# that will cause your async page methods to load other loaded pages if it is slow.
+dominate.dom_tag._get_thread_context = get_thread_context  # type: ignore
 
-from .dominate_overrides import clean_attribute, escape  # noqa: E402
+import dominate.util  # noqa: F401,E402
 
-dominate_util_module.escape = escape  # type: ignore
-dominate_util_module.str_escape = escape  # type: ignore
+dominate.util.escape = escape  # type: ignore
+dominate.util.str_escape = escape  # type: ignore
 
 from dominate.svg import svg  # noqa: E402
 from dominate.tags import dom_tag  # noqa: E402
 
 dom_tag.clean_attribute = clean_attribute
 
-text = dominate_util_module.text
+text = dominate.util.text
 
 
 def raw(s: str):
     """
     Inserts a raw string into the DOM. Unsafe. Alias for text(x, escape=False)
     """
-    return dominate_util_module.text(s, escape=False)
+    return dominate.util.text(s, escape=False)
 
 
 from dominate.tags import (  # noqa: E402
