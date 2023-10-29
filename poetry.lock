@@ -186,20 +186,21 @@ trio = ["trio (<0.22)"]
 
 [[package]]
 name = "asttokens"
-version = "2.4.0"
+version = "2.4.1"
 description = "Annotate AST trees with source code positions"
 optional = false
 python-versions = "*"
 files = [
-    {file = "asttokens-2.4.0-py2.py3-none-any.whl", hash = "sha256:cf8fc9e61a86461aa9fb161a14a0841a03c405fa829ac6b202670b3495d2ce69"},
-    {file = "asttokens-2.4.0.tar.gz", hash = "sha256:2e0171b991b2c959acc6c49318049236844a5da1d65ba2672c4880c1c894834e"},
+    {file = "asttokens-2.4.1-py2.py3-none-any.whl", hash = "sha256:051ed49c3dcae8913ea7cd08e46a606dba30b79993209636c4875bc1d637bc24"},
+    {file = "asttokens-2.4.1.tar.gz", hash = "sha256:b03869718ba9a6eb027e134bfdf69f38a236d681c83c160d510768af11254ba0"},
 ]
 
 [package.dependencies]
 six = ">=1.12.0"
 
 [package.extras]
-test = ["astroid", "pytest"]
+astroid = ["astroid (>=1,<2)", "astroid (>=2,<4)"]
+test = ["astroid (>=1,<2)", "astroid (>=2,<4)", "pytest"]
 
 [[package]]
 name = "async-timeout"
@@ -728,13 +729,13 @@ testing = ["hatch", "pre-commit", "pytest", "tox"]
 
 [[package]]
 name = "executing"
-version = "2.0.0"
+version = "2.0.1"
 description = "Get the currently executing AST node of a frame, and other information"
 optional = false
-python-versions = "*"
+python-versions = ">=3.5"
 files = [
-    {file = "executing-2.0.0-py2.py3-none-any.whl", hash = "sha256:06df6183df67389625f4e763921c6cf978944721abf3e714000200aab95b0657"},
-    {file = "executing-2.0.0.tar.gz", hash = "sha256:0ff053696fdeef426cda5bd18eacd94f82c91f49823a2e9090124212ceea9b08"},
+    {file = "executing-2.0.1-py2.py3-none-any.whl", hash = "sha256:eac49ca94516ccc753f9fb5ce82603156e590b27525a8bc32cce8ae302eb61bc"},
+    {file = "executing-2.0.1.tar.gz", hash = "sha256:35afe2ce3affba8ee97f2d69927fa823b08b472b7b994e36a52a964b93d16147"},
 ]
 
 [package.extras]
@@ -1526,18 +1527,18 @@ dev = ["black", "flake8", "flake8-black", "isort", "jupyter-console", "mkdocs", 
 
 [[package]]
 name = "pygls"
-version = "1.1.1"
+version = "1.1.2"
 description = "A pythonic generic language server (pronounced like 'pie glass')"
 optional = false
 python-versions = ">=3.7.9,<4"
 files = [
-    {file = "pygls-1.1.1-py3-none-any.whl", hash = "sha256:330704551a335b443bf1cdfb0507f121608591095898d451f0007eeb1510067c"},
-    {file = "pygls-1.1.1.tar.gz", hash = "sha256:b1b4ddd6f800a5573f61f0ec2cd3bc7a859d171f48142b46e1de35a1357c00fe"},
+    {file = "pygls-1.1.2-py3-none-any.whl", hash = "sha256:783d29c93679bb6756772f2de9b9f53b1a6fdf3fba66aeca23e87aa8aab20ecf"},
+    {file = "pygls-1.1.2.tar.gz", hash = "sha256:93fe17c01fd03307774290e685e7fa25bc1411cd72f243ff33eef21927fd0ad5"},
 ]
 
 [package.dependencies]
 lsprotocol = "2023.0.0b1"
-typeguard = ">=3.0.0,<4.0.0"
+typeguard = ">=3.0.0,<5"
 
 [package.extras]
 ws = ["websockets (>=11.0.3,<12.0.0)"]
@@ -1558,13 +1559,13 @@ plugins = ["importlib-metadata"]
 
 [[package]]
 name = "pyright"
-version = "1.1.332"
+version = "1.1.333"
 description = "Command line wrapper for pyright"
 optional = false
 python-versions = ">=3.7"
 files = [
-    {file = "pyright-1.1.332-py3-none-any.whl", hash = "sha256:4802bdc603f165ccfb84338ef850e90181abbb621028b09b81ec8aa5e97dfae2"},
-    {file = "pyright-1.1.332.tar.gz", hash = "sha256:a47f760c2f00aa9f593f78a7b22f98b22a9b9e1952d6a31dbed91842ca47b0b3"},
+    {file = "pyright-1.1.333-py3-none-any.whl", hash = "sha256:f0a7b7b0cac11c396b17ef3cf6c8527aca1269edaf5cf8203eed7d6dd1ef52aa"},
+    {file = "pyright-1.1.333.tar.gz", hash = "sha256:1c49b0029048120c4378f3baf6c1dcbbfb221678bb69654fe773c514430ac53c"},
 ]
 
 [package.dependencies]
@@ -2098,21 +2099,21 @@ files = [
 
 [[package]]
 name = "typeguard"
-version = "3.0.2"
+version = "4.1.5"
 description = "Run-time type checker for Python"
 optional = false
-python-versions = ">=3.7.4"
+python-versions = ">=3.8"
 files = [
-    {file = "typeguard-3.0.2-py3-none-any.whl", hash = "sha256:bbe993854385284ab42fd5bd3bee6f6556577ce8b50696d6cb956d704f286c8e"},
-    {file = "typeguard-3.0.2.tar.gz", hash = "sha256:fee5297fdb28f8e9efcb8142b5ee219e02375509cd77ea9d270b5af826358d5a"},
+    {file = "typeguard-4.1.5-py3-none-any.whl", hash = "sha256:8923e55f8873caec136c892c3bed1f676eae7be57cdb94819281b3d3bc9c0953"},
+    {file = "typeguard-4.1.5.tar.gz", hash = "sha256:ea0a113bbc111bcffc90789ebb215625c963411f7096a7e9062d4e4630c155fd"},
 ]
 
 [package.dependencies]
-typing-extensions = {version = ">=4.4.0", markers = "python_version < \"3.11\""}
+typing-extensions = {version = ">=4.7.0", markers = "python_version < \"3.12\""}
 
 [package.extras]
-doc = ["packaging", "sphinx-autodoc-typehints (>=1.2.0)", "sphinx-rtd-theme"]
-test = ["mypy (>=0.991)", "pytest (>=7)"]
+doc = ["Sphinx (>=7)", "packaging", "sphinx-autodoc-typehints (>=1.2.0)"]
+test = ["coverage[toml] (>=7)", "mypy (>=1.2.0)", "pytest (>=7)"]
 
 [[package]]
 name = "typing-extensions"
