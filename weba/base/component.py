@@ -66,3 +66,9 @@ class Component(Methods, object, metaclass=NewInitCaller):
 
     def __exit__(self, exc_type: Any, exc_value: Any, traceback: Any) -> None:
         pass
+
+    def __aenter__(self):
+        return self
+
+    async def __aexit__(self, exc_type: Any, exc_value: Any, traceback: Any) -> None:
+        pass

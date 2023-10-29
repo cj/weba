@@ -4,18 +4,19 @@ import inspect
 import os
 import re
 import socket
+from contextlib import AbstractContextManager, contextmanager
 from functools import wraps
 from importlib import util
-from typing import Any, Coroutine, Dict, List, Optional, Tuple, TypeVar, cast
+from typing import Any, Callable, Coroutine, Dict, Generator, List, Optional, Tuple, TypeVar, cast
 
 from cryptography.fernet import Fernet
-from dominate.dom_tag import Callable
 from fastapi import Request, Response
 from fastapi.encoders import jsonable_encoder as _jsonable_encoder
 from starlette.background import BackgroundTasks
 
 from .document import WebaDocument, get_document
 from .env import env
+from .ui import ui
 
 current_dir_path = (
     env.pages_dir if os.path.isdir(env.pages_dir) else os.path.join(os.path.dirname(os.path.abspath(__file__)), "pages")
@@ -261,3 +262,46 @@ def minimize_behavior(unminimized_behavior: str) -> str:
     lines = unminimized_behavior.split("\n")
     minimized_lines = [line.strip() for line in lines if line.strip()]
     return " ".join(minimized_lines)
+
+
+CT = TypeVar("CT")
+
+
+def callable_contextmanager(
+    key: str,
+    position: Optional[int] = None,
+) -> Callable[[Callable[..., Generator[CT, None, None]]], Callable[..., AbstractContextManager[CT]]]:
+    """
+    A decorator to adapt functions into both callable and context-manageable forms.
+
+    Args:
+        key (str): The keyword argument to check in the decorated function.
+            If this key is present and its value is not None, the function
+            will be treated as a regular call. Otherwise, it'll be treated as a context manager.
+
+        position (Optional[int]): The positional argument index to check in the decorated function.
+            If provided and the number of arguments to the decorated function is greater than this index,
+            the function will be treated as a regular call.
+
+    Returns:
+        Callable[..., ContextManager]: The decorated function which can either be called directly
+            or used within a `with` statement as a context manager.
+    """
+
+    def decorator(func: Callable[..., Generator[CT, None, None]]) -> Callable[..., AbstractContextManager[CT]]:
+        @wraps(func)
+        def wrapper(*args, **kwargs) -> AbstractContextManager[CT]:  # type: ignore
+            cm = contextmanager(func)
+
+            # If value is provided, it's a regular function call
+            if key in kwargs and kwargs[key] is not None or (position and args.__len__() > position):
+                # If value is provided, it's a regular function call
+                with cm(*args, **kwargs) as response:
+                    ui.raw(f"{response}")
+            else:
+                response = cm(*args, **kwargs)
+                return response
+
+        return wrapper  # type: ignore
+
+    return decorator
