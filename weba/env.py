@@ -2,7 +2,7 @@ import logging
 import os
 import traceback as tb
 from pathlib import Path
-from typing import Any, List, Optional, Tuple, Type
+from typing import Any, List, Tuple, Type
 
 from dominate.dom_tag import Callable
 from dotenv import load_dotenv

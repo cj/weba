@@ -7,6 +7,7 @@ import re
 import shutil
 from time import time
 from typing import Annotated, Any, Dict, List, Optional, Text
+from urllib.parse import urlparse
 
 import aiofiles
 import aiohttp
@@ -52,8 +53,23 @@ def get_string_hash(string: Text) -> Text:
     return hash_md5.hexdigest()
 
 
+# List of allowed hosts for validation
+ALLOWED_HOSTS = [
+    "cdn.tailwindcss.com",
+    "htmx.org",
+    "hyperscript.org",
+    "daisyui.com",
+    "unpkg.com",
+    "cdn.jsdelivr.net",
+    "cdnjs.cloudflare.com",
+]
+
+
 def extract_name_version(url: str) -> str:
-    if url.startswith("https://cdn.tailwindcss.com"):
+    parsed_url = urlparse(url)
+    hostname = parsed_url.hostname
+
+    if hostname in ALLOWED_HOSTS:
         tw_pattern = r"(?P<start>.*\/)(?P<version>\d+(\.\d+){2})(\?plugins=)(?P<end>.*)"
 
         if not (tw_match := re.match(tw_pattern, url)):
@@ -66,7 +82,6 @@ def extract_name_version(url: str) -> str:
     pattern = r".*\/(?P<name>.+)@(?P<version>\d+(\.\d+){0,3})(\/.*\.|)(?P<ext>\w+)"
 
     if not (match := re.match(pattern, url)):
-        print(url)
         return url.split("/")[-1]
 
     if match["name"] == "htmx.org":
