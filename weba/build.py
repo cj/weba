@@ -56,12 +56,12 @@ def get_string_hash(string: Text) -> Text:
 # List of allowed hosts for validation
 ALLOWED_HOSTS = [
     "cdn.tailwindcss.com",
-    "htmx.org",
-    "hyperscript.org",
-    "daisyui.com",
-    "unpkg.com",
-    "cdn.jsdelivr.net",
-    "cdnjs.cloudflare.com",
+    # "htmx.org",
+    # "hyperscript.org",
+    # "daisyui.com",
+    # "unpkg.com",
+    # "cdn.jsdelivr.net",
+    # "cdnjs.cloudflare.com",
 ]
 
 

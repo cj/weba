@@ -199,6 +199,11 @@ async def load_status_code_page(
     request: Request,
     response: Optional[Response] = None,
 ) -> str | None:
+    if response:
+        # ISSUE: This is so we can check in the app if it's a 404, as htmx only excepts 200 responses
+        # https://htmx.org/extensions/response-targets/
+        response.headers["HX-Target"] = str(status_code)
+
     return await load_page(
         status_code,
         request,
