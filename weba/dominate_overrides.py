@@ -1,4 +1,5 @@
 import asyncio
+import datetime
 from typing import Any
 
 
@@ -85,8 +86,15 @@ def escape(data: Any, quote=True):  # stolen from std lib cgi # type: ignore
     This is used to escape content that appears in the body of an HTML document
     """
     # Addition to convert ints to strings
-    if isinstance(data, int):
+    if isinstance(data, (int, float, bool, complex)):
         data = str(data)
+    elif isinstance(data, datetime.datetime):
+        # convert to en-US format, on the system timezone
+        data = data.strftime("%m/%d/%Y %H:%M:%S")
+    elif isinstance(data, datetime.date):
+        data = data.strftime("%m/%d/%Y")
+    elif data is None:
+        data = ""
     data = data.replace("&", "&amp;")  # Must be done first!
     data = data.replace("<", "&lt;")
     data = data.replace(">", "&gt;")

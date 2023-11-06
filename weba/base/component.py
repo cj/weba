@@ -4,6 +4,13 @@ from typing import Any, Callable, Coroutine, Dict
 from .methods import Methods
 
 
+@staticmethod
+def _is_coroutine(obj: Any, method_name: str) -> bool:
+    """Check if a method exists and is a coroutine"""
+    method = getattr(obj, method_name, None)
+    return bool(method and inspect.iscoroutinefunction(method))
+
+
 class NewInitCaller(type):
     def __call__(self, *args: Any, **kwargs: Any):  # type: ignore  # noqa: N804
         """Called when you call MyNewClass()"""
@@ -20,11 +27,7 @@ class NewInitCaller(type):
                 if self._is_callable(obj, method_name):
                     method = getattr(obj, method_name)
                     method_signature = inspect.signature(method)
-                    if len(method_signature.parameters) > 0:
-                        return method(*args, **kwargs)
-                    else:
-                        return method()
-
+                    return method(*args, **kwargs) if len(method_signature.parameters) > 0 else method()
         return obj
 
     @staticmethod
@@ -47,19 +50,13 @@ class Component(Methods, object, metaclass=NewInitCaller):
 
     def __await__(self) -> Any:
         for method_name in ["_content", "content", "_content_async", "content_async"]:
-            if self._is_coroutine(self, method_name):
-                method = getattr(self, method_name)
-                method_signature = inspect.signature(method)
-                if len(method_signature.parameters) > 0:
-                    return method(*self._args, **self._kwargs).__await__()
-                else:
-                    return method().__await__()
-
-    @staticmethod
-    def _is_coroutine(obj: Any, method_name: str) -> bool:
-        """Check if a method exists and is a coroutine"""
-        method = getattr(obj, method_name, None)
-        return bool(method and inspect.iscoroutinefunction(method))
+            method = getattr(self, method_name)
+            method_signature = inspect.signature(method)
+            return (
+                method(*self._args, **self._kwargs).__await__()
+                if len(method_signature.parameters) > 0
+                else method().__await__()
+            )
 
     def __enter__(self):
         return self

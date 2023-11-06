@@ -39,9 +39,16 @@ class Methods:
 
         return response
 
-    @property
-    def params(self) -> frozendict[str, Any]:
-        return frozendict(self._kwargs.get("params") or (self._parent.params if self._parent else {}))
+    # @property
+    # def params(self) -> frozendict[str, Any]:
+    #     return frozendict(self._kwargs.get("params") or (self._parent.params if self._parent else {}))
+    @cached_property
+    def params(self) -> dict[str, Any]:
+        return (
+            self._kwargs.get("params")
+            or (self.request and self.request.query_params._dict)  # type: ignore
+            or (self._parent.params if self._parent else {})
+        )
 
     @property
     def background_tasks(self) -> BackgroundTasks:
