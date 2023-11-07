@@ -42,8 +42,21 @@ class CSRFMiddleware(BaseHTTPMiddleware):
                 return PlainTextResponse("Invalid Session", status_code=403)
 
             try:
+                # body = {}
+
+                # if request.headers.get("content-type", "").startswith("application/json"):
+                #     body = await request.json()
+                # else:
+                #     body = dict(await request.form())
+
+                # decoded_csrf_token = self._secure_middleware.decrypt(
+                #     request.headers.get("x-csrf-token", body.get("_csrf_token", ""))  # type: ignore
+                # )
+
                 decoded_csrf_token = self._secure_middleware.decrypt(request.headers.get("x-csrf-token", ""))
+
                 csrf_session_id, csrf_host, csrf_user_agent = decoded_csrf_token.split("||")
+
                 if session_id != csrf_session_id or host != csrf_host or user_agent != csrf_user_agent:
                     return PlainTextResponse("Invalid CSRF Token", status_code=403)
             except CSRFTokenError:
