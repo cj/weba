@@ -117,7 +117,7 @@ class Settings(BaseSettings):
     css_files: List[str] = []
     js_files: List[str] = []
     hs_files: List[str] = []
-    htmx_version: str = "1.9.7"
+    htmx_version: str = "1.9.8"
     htmx_extentions: List[str] = ["head-support", "json-enc"]
     htmx_boost: bool = True
     htmx_config: dict[str, Any] = {}
