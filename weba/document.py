@@ -84,7 +84,11 @@ class WebaDocument(dominate.document):
     def _render_default_head(self) -> None:
         with self.head:
             t.meta(charset="utf-8")
-            t.meta(name="viewport", content="width=device-width, initial-scale=1")
+            t.meta(
+                name="viewport",
+                content="width=device-width, initial-scale=1.0, minimum-scale=1.0, maximum-scale=1.0, "
+                "user-scalable=no, viewport-fit=cover",
+            )
             t.meta(name="htmx-config", content=f"{json.dumps(env.htmx_config)}")
 
         self.head.add(load_script_tags())  # type: ignore
@@ -105,7 +109,8 @@ def get_document(
 
     doc.body["hx-ext"] = ", ".join(env.htmx_extentions)
 
-    doc.body["class"] = "min-h-screen overflow-x-hidden overflow-y-auto overscroll-y-none flex flex-col"
+    doc.body["class"] = "overflow-x-hidden overflow-y-auto overscroll-y-none h-full"
+    doc["class"] = "h-full"
 
     if request:
         request.session.setdefault("store", {})
