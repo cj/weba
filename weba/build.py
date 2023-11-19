@@ -95,8 +95,9 @@ def extract_name_version(url: str) -> str:
 
         return f"{version}-{name}-{htmx_match['version']}.{htmx_match['ext']}"
 
-    if match["name"] == "hyperscript.org@":
-        return f"2-hyperscript-{match['version']}.js"
+    if match["name"] == "hyperscript.org":
+        # NOTE: Hyperscript needs to be loaded last
+        return f"z-hyperscript-{match['version']}.js"
 
     filename = f"{match['name']}-{match['version']}.{match['ext']}"
 
