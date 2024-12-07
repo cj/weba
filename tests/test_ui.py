@@ -139,3 +139,26 @@ async def test_ui_value_to_string_conversion():
     date = datetime(2024, 12, 25, 12, 0)
     date_tag = ui.p(date)
     assert str(date_tag) == "<p>2024-12-25 12:00:00</p>"
+
+
+@pytest.mark.asyncio
+async def test_ui_htmx_search_form():
+    with ui.div() as form:
+        ui.input_(
+            type="text", name="search", hx_post="/search", hx_trigger="keyup changed delay:500ms", hx_target="#results"
+        )
+        with ui.div(id="results"):
+            ui.p("Results will appear here...")
+
+    result = str(form)
+    # Check that all required attributes are present
+    assert "<div>" in result
+    assert 'type="text"' in result
+    assert 'name="search"' in result
+    assert 'hx-post="/search"' in result
+    assert 'hx-trigger="keyup changed delay:500ms"' in result
+    assert 'hx-target="#results"' in result
+    assert '<div id="results">' in result
+    assert "<p>Results will appear here...</p>" in result
+    assert result.startswith("<div>")
+    assert result.endswith("</div>")

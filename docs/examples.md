@@ -15,6 +15,7 @@ print(str(container))
 ```
 
 This produces:
+
 ```html
 <div>
     <h1>Hello, World!</h1>
@@ -35,6 +36,7 @@ print(str(container))
 ```
 
 Output:
+
 ```html
 <div class="container mx-auto p-4">
     <h1 class="text-2xl font-bold">Styled Heading</h1>

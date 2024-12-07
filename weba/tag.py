@@ -21,12 +21,14 @@ class Tag:
 
     def __exit__(self, *args: Any) -> None:
         current_parent.reset(self._token)
-        if self.parent:
+        if self.parent and self not in self.parent._children:
             self.parent._children.append(self)
 
     def add_child(self, child: "Tag") -> None:
         """Add a child tag to this tag."""
-        self._children.append(child)
+        if child not in self._children:
+            self._children.append(child)
+            self.tag.append(child.tag)
 
     def __getitem__(self, key: str) -> Any:
         """Allow accessing tag attributes like tag['class']."""
@@ -50,18 +52,18 @@ class Tag:
         return self.tag.attrs["class"]
 
     def __str__(self) -> str:
-        # Store the original string content
+        # Store the original string content if it exists
         original_string = self.tag.string
 
-        # Clear the tag contents but preserve the original string
+        # Clear existing content
         self.tag.clear()
 
-        # Restore the original string if it existed
-        if original_string is not None:
-            self.tag.string = original_string
-
-        # Add all children's tags
+        # Add all children's tags first
         for child in self._children:
             self.tag.append(child.tag)
+
+        # Restore the original string content if there were no children
+        if not self._children and original_string is not None:
+            self.tag.string = original_string
 
         return str(self.tag)

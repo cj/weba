@@ -1,12 +1,10 @@
 from collections.abc import Callable, Sequence
-from typing import TYPE_CHECKING, Any
+from typing import Any
 
 from bs4 import BeautifulSoup
+from bs4 import Tag as BeautifulSoupTag
 
 from .tag import Tag, current_parent
-
-if TYPE_CHECKING:
-    from bs4 import Tag as Bs4Tag
 
 
 class Ui:
@@ -18,7 +16,7 @@ class Ui:
     def __getattr__(self, tag_name: str) -> Callable[..., Tag]:
         def create_tag(*args: Any, **kwargs: str | int | float | Sequence[Any]) -> Tag:
             # Convert underscore attributes to dashes
-            converted_kwargs = {}
+            converted_kwargs: dict[str, Any] = {}
 
             for key, value in kwargs.items():
                 # Special case for class_ attribute
@@ -35,18 +33,26 @@ class Ui:
 
                 converted_kwargs[new_key] = value
 
-            # Type ignore needed since BeautifulSoup's new_tag has complex typing
-            tag: Bs4Tag = self.soup.new_tag(tag_name, **converted_kwargs)  # pyright: ignore[reportUnknownArgumentType, reportUnknownMemberType]
+            # Special case for reserved python words like input_ to remove the underscore from the tag name
+            actual_tag_name = tag_name.rstrip("_")
+
+            # Create the tag directly using bs4.Tag
+            tag = BeautifulSoupTag(
+                builder=self.soup.builder,
+                name=actual_tag_name,
+                attrs=converted_kwargs,
+            )
 
             parent = current_parent.get()
             tag_obj = Tag(tag, parent)
 
-            if args:
-                tag.string = str(args[0])
-
             # If there's a current parent, add this tag as its child
             if parent:
                 parent.add_child(tag_obj)
+
+            # Set string content if provided
+            if args:
+                tag.string = str(args[0])
 
             return tag_obj
 
