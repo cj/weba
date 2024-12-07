@@ -1,4 +1,5 @@
 import asyncio
+import json
 
 import pytest
 
@@ -495,3 +496,27 @@ async def test_ui_text():
     whitespace_tag = ui.raw("   ")
 
     assert str(whitespace_tag) == "   "
+
+
+@pytest.mark.asyncio
+async def test_ui_json_attributes():
+    # Test dictionary attribute
+    data = {"name": "John", "age": 30}
+    with ui.div(data_user=data) as div:
+        # Parse and compare as JSON to ignore formatting differences
+        assert json.loads(div["data-user"]) == data
+
+    # Test array attribute
+    items = ["apple", "banana", "orange"]
+    with ui.div(data_items=items) as div:
+        assert json.loads(div["data-items"]) == items
+
+    # Test nested structures
+    complex_data = {"user": {"name": "John", "age": 30}, "items": ["apple", "banana"], "active": True}
+    with ui.div(data_complex=complex_data) as div:
+        assert json.loads(div["data-complex"]) == complex_data
+
+    # Test empty containers
+    with ui.div(data_empty_obj={}, data_empty_arr=[]) as div:
+        assert div["data-empty-obj"] == "{}"
+        assert div["data-empty-arr"] == "[]"

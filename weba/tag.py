@@ -1,3 +1,4 @@
+import json
 from contextvars import ContextVar, Token
 from typing import TYPE_CHECKING, Any
 
@@ -50,8 +51,9 @@ class Tag:
     def __getitem__(self, key: str) -> Any:
         """Allow accessing tag attributes like tag['class']."""
         if key != "class":
-            return self.tag[key]
-
+            value = self.tag[key]
+            # Convert objects/arrays to JSON string representation
+            return json.dumps(value) if isinstance(value, dict | list) else value
         # Initialize class as empty list if it doesn't exist
         if "class" not in self.tag.attrs:
             self.tag.attrs["class"] = []

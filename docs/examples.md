@@ -211,8 +211,42 @@ with ui.div() as container:
     ui.text(" last")
 
 print(str(container))  # <div>First <strong>important</strong> last</div>
+```
 
-# Complex text layout
+## JSON Attributes
+
+Handle complex data structures as HTML attributes:
+
+```python
+import json
+
+# Dictionary attributes
+data = {"name": "John", "age": 30}
+with ui.div(data_user=data) as div:
+    print(div["data-user"])  # {"name": "John", "age": 30}
+
+# Array attributes
+items = ["apple", "banana", "orange"]
+with ui.div(data_items=items) as div:
+    print(div["data-items"])  # ["apple", "banana", "orange"]
+
+# Nested structures
+complex_data = {
+    "user": {"name": "John", "age": 30},
+    "items": ["apple", "banana"],
+    "active": True
+}
+with ui.div(data_complex=complex_data) as div:
+    # Access and parse the JSON data
+    stored_data = json.loads(div["data-complex"])
+    print(stored_data["user"]["name"])  # John
+    print(stored_data["items"][0])      # apple
+    print(stored_data["active"])        # True
+```
+
+## Complex text layout
+
+```python
 with ui.article() as article:
     ui.text("Start of article. ")
     with ui.em():
@@ -221,4 +255,5 @@ with ui.article() as article:
     with ui.strong():
         ui.text("Strong text.")
     ui.text(" End of article.")
+
 ```
