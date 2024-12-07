@@ -51,6 +51,34 @@ class Tag:
 
         return self.tag.attrs["class"]
 
+    def append(self, child: "Tag") -> None:
+        """Append a child tag to this tag."""
+        self.add_child(child)
+
+    def __getattr__(self, name: str) -> Any:
+        """Proxy any unknown attributes/methods to the underlying BeautifulSoup tag."""
+        attr = getattr(self.tag, name)
+
+        # If it's a callable (method)
+        if callable(attr):
+
+            def wrapped(*args: Any, **kwargs: Any) -> Any:
+                # Convert Tag instances to their underlying BeautifulSoup tags
+                converted_args = [arg.tag if isinstance(arg, Tag) else arg for arg in args]
+                converted_kwargs = {k: v.tag if isinstance(v, Tag) else v for k, v in kwargs.items()}
+                result = attr(*converted_args, **converted_kwargs)
+
+                # If this was an append/insert operation, update our children
+                if name in ("append", "insert", "insert_before", "insert_after"):
+                    for arg in args:
+                        if isinstance(arg, Tag):
+                            self.add_child(arg)
+
+                return result
+
+            return wrapped
+        return attr
+
     def __str__(self) -> str:
         # Store the original string content if it exists
         original_string = self.tag.string

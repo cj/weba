@@ -2,7 +2,7 @@ import asyncio
 
 import pytest
 
-from weba import ui
+from weba import Tag, ui
 
 
 @pytest.mark.asyncio
@@ -162,3 +162,17 @@ async def test_ui_htmx_search_form():
     assert "<p>Results will appear here...</p>" in result
     assert result.startswith("<div>")
     assert result.endswith("</div>")
+
+
+@pytest.mark.asyncio
+async def test_ui_append_to_existing_element():
+    def list_item_tag(text: str) -> Tag:
+        return ui.li(text)
+
+    with ui.ul() as list_tag:
+        ui.li("Item 1")
+        ui.li("Item 2")
+
+    list_tag.append(list_item_tag("Item 3"))
+
+    assert "<ul><li>Item 1</li><li>Item 2</li><li>Item 3</li></ul>" in str(list_tag)
