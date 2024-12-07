@@ -13,6 +13,24 @@ class Ui:
     def __init__(self):
         self.soup = BeautifulSoup("", "html.parser")
 
+    def raw(self, html: str) -> Tag:
+        """Create a Tag from a raw HTML string.
+
+        Args:
+            html: Raw HTML string to parse
+
+        Returns:
+            Tag: A new Tag object containing the parsed HTML
+        """
+        parsed = BeautifulSoup(html, "html.parser")
+        if parsed.contents:
+            # Get the first meaningful tag
+            tag = next((t for t in parsed.contents if isinstance(t, BeautifulSoupTag)), None)
+            if tag:
+                return Tag(tag)
+        # Fallback to empty div if no valid tags found
+        return Tag(self.soup.new_tag("div"))  # pyright: ignore[reportUnknownMemberType]
+
     def __getattr__(self, tag_name: str) -> Callable[..., Tag]:
         def create_tag(*args: Any, **kwargs: str | int | float | Sequence[Any]) -> Tag:
             # Convert underscore attributes to dashes

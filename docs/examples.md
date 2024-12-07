@@ -119,18 +119,18 @@ def create_card(
     with ui.div(class_="card") as card:
         with ui.div(class_="card-header"):
             ui.h2(title)
-        
+
         with ui.div(class_="card-body"):
             ui.p(content)
             if items:
                 with ui.ul(class_="list"):
                     for item in items:
                         ui.li(item)
-        
+
         if button_text:
             with ui.div(class_="card-footer"):
                 ui.button(button_text, class_=button_class)
-    
+
     return card
 
 # Usage examples:

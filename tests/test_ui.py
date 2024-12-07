@@ -279,3 +279,37 @@ async def test_ui_card_component():
         "</div>"
     )
     assert expected3 in str(card3)
+
+
+@pytest.mark.asyncio
+async def test_ui_raw_html():
+    # Test basic HTML parsing
+    tag = ui.raw("<div>Hello World</div>")
+    tag["class"].append("raw")
+    assert str(tag) == '<div class="raw">Hello World</div>'
+
+    # Test nested HTML
+    tag = ui.raw('<div class="container"><p>Content</p><span>More</span></div>')
+    assert '<div class="container"><p>Content</p><span>More</span></div>' in str(tag)
+
+    # Test handling of invalid HTML
+    tag = ui.raw("Not HTML")
+    assert str(tag) == "<div></div>"  # Falls back to empty div
+
+    # Test complex HTML with attributes
+    complex_html = """
+        <article class="post" data-id="123">
+            <h2>Title</h2>
+            <div class="content">
+                <p>Paragraph 1</p>
+                <p>Paragraph 2</p>
+            </div>
+        </article>
+    """
+    tag = ui.raw(complex_html)
+    result = str(tag)
+    assert '<article class="post" data-id="123">' in result
+    assert "<h2>Title</h2>" in result
+    assert '<div class="content">' in result
+    assert "<p>Paragraph 1</p>" in result
+    assert "<p>Paragraph 2</p>" in result
