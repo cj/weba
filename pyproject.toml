@@ -27,7 +27,7 @@ Documentation = "https://cj.github.io/weba/"
 default-groups = ["dev", "lint", "test"]
 
 [dependency-groups]
-dev = ["pre-commit>=2.20.0", "tox-uv>=1.11.3", "deptry>=0.20.0"]
+dev = ["pre-commit>=2.20.0", "tox-uv>=1.11.3", "deptry>=0.20.0", "aider-chat>=0.20.0"]
 docs = [
     "mkdocs>=1.4.2",
     "mkdocs-material>=8.5.10",

@@ -18,7 +18,7 @@ check: ## Run code quality tools.
 .PHONY: test
 test: ## Test the code with pytest
 	@echo "🚀 Testing code: Running pytest"
-	@uv run python -m pytest --cov --cov-config=pyproject.toml --cov-report=xml
+	@uv run python -m pytest --cov --cov-config=pyproject.toml --cov-report=xml --cov-report=html
 
 .PHONY: build
 build: clean-build ## Build wheel file
@@ -42,9 +42,17 @@ build-and-publish: build publish ## Build and publish.
 docs-test: ## Test if documentation can be built without warnings or errors
 	@uv run mkdocs build -s
 
+.PHONY: serve-coverage
+serve-coverage: ## Serve the coverage report
+	@uv run python -m http.server --directory htmlcov 8222
+
 .PHONY: docs
 docs: ## Build and serve the documentation
 	@uv run mkdocs serve
+
+.PHONY: aider
+aider: ## Start aider with file watching and conventions
+	@uv run aider --watch-files --read CONVENTIONS.md
 
 .PHONY: help
 help:
