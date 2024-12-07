@@ -117,5 +117,7 @@ class Tag:
         raise TagAttributeError(type(self).__name__, name)
 
     def __str__(self) -> str:
-        # Don't modify the tag structure, just return its string representation
+        # Handle None content specially to render as empty string
+        if self.tag.string == "None":
+            self.tag.string = ""
         return str(self.tag)

@@ -132,7 +132,7 @@ async def test_ui_value_to_string_conversion():
     assert str(bool_tag) == "<p>True</p>"
 
     none_tag = ui.p(None)
-    assert str(none_tag) == "<p>None</p>"
+    assert str(none_tag) == "<p></p>"
 
     from datetime import datetime
 
