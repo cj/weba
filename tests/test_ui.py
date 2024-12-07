@@ -123,5 +123,19 @@ async def test_ui_class_manipulation():
 @pytest.mark.asyncio
 async def test_ui_value_to_string_conversion():
     number_tag = ui.p(123)
-
     assert str(number_tag) == "<p>123</p>"
+
+    float_tag = ui.p(3.14159)
+    assert str(float_tag) == "<p>3.14159</p>"
+
+    bool_tag = ui.p(True)
+    assert str(bool_tag) == "<p>True</p>"
+
+    none_tag = ui.p(None)
+    assert str(none_tag) == "<p>None</p>"
+
+    from datetime import datetime
+
+    date = datetime(2024, 12, 25, 12, 0)
+    date_tag = ui.p(date)
+    assert str(date_tag) == "<p>2024-12-25 12:00:00</p>"
