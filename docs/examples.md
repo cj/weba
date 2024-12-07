@@ -157,3 +157,68 @@ card3 = create_card(
     button_class="btn-primary"
 )
 ```
+
+## Raw HTML Integration
+
+Parse and integrate raw HTML strings:
+
+```python
+# Basic raw HTML
+tag = ui.raw("<div>Hello World</div>")
+tag["class"].append("raw")
+print(str(tag))  # <div class="raw">Hello World</div>
+
+# Complex nested HTML
+html = """
+<article class="post">
+    <h2>Blog Post</h2>
+    <div class="content">
+        <p>First paragraph</p>
+        <p>Second paragraph</p>
+    </div>
+</article>
+"""
+content = ui.raw(html)
+
+# Use raw HTML within context managers
+with ui.div(class_="wrapper") as container:
+    ui.raw("<header>Page Title</header>")
+    with ui.main():
+        ui.raw("<p>Some content</p>")
+    ui.raw("<footer>Page Footer</footer>")
+```
+
+## Text Node Handling
+
+Create and manipulate text nodes:
+
+```python
+# Basic text nodes
+text = ui.text("Hello World")
+print(str(text))  # Hello World
+
+# Different content types
+ui.text(42)  # "42"
+ui.text(3.14)  # "3.14"
+ui.text(True)  # "True"
+ui.text(None)  # "None"
+
+# Text nodes in context
+with ui.div() as container:
+    ui.text("First ")
+    with ui.strong():
+        ui.text("important")
+    ui.text(" last")
+
+print(str(container))  # <div>First <strong>important</strong> last</div>
+
+# Complex text layout
+with ui.article() as article:
+    ui.text("Start of article. ")
+    with ui.em():
+        ui.text("Emphasized text. ")
+    ui.text("Regular text. ")
+    with ui.strong():
+        ui.text("Strong text.")
+    ui.text(" End of article.")
+```
