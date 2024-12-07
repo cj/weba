@@ -28,6 +28,8 @@ class Tag:
         """Add a child tag to this tag."""
         if child not in self._children:
             self._children.append(child)
+            child.parent = self
+            # Always ensure BS4 tag structure is correct
             self.tag.append(child.tag)
 
     def __getitem__(self, key: str) -> Any:
@@ -55,11 +57,20 @@ class Tag:
         """Append a child tag to this tag."""
         self.add_child(child)
 
+    def wrap_tag(self, tag: Bs4Tag) -> "Tag | None":
+        """Wrap a BeautifulSoup tag in a Tag instance."""
+        if tag is None:
+            return None
+
+        # Check if the tag already has a parent Tag
+        parent = self if tag.parent == self.tag else None
+
+        return Tag(tag, parent)
+
     def __getattr__(self, name: str) -> Any:
         """Proxy any unknown attributes/methods to the underlying BeautifulSoup tag."""
         attr = getattr(self.tag, name)
 
-        # If it's a callable (method)
         if callable(attr):
 
             def wrapped(*args: Any, **kwargs: Any) -> Any:
@@ -68,30 +79,18 @@ class Tag:
                 converted_kwargs = {k: v.tag if isinstance(v, Tag) else v for k, v in kwargs.items()}
                 result = attr(*converted_args, **converted_kwargs)
 
-                # If this was an append/insert operation, update our children
-                if name in ("append", "insert", "insert_before", "insert_after"):
-                    for arg in args:
-                        if isinstance(arg, Tag):
-                            self.add_child(arg)
+                # Wrap the result if it is a BeautifulSoup tag
+                if name in {"select_one", "find", "find_next", "find_previous"}:
+                    return self.wrap_tag(result)  # pyright: ignore[reportArgumentType]
+                elif name in {"select", "find_all"}:
+                    return [self.wrap_tag(t) for t in result if t is not None]  # pyright: ignore[reportGeneralTypeIssues, reportUnknownVariableType, reportUnknownArgumentType]
 
                 return result
 
             return wrapped
+
         return attr
 
     def __str__(self) -> str:
-        # Store the original string content if it exists
-        original_string = self.tag.string
-
-        # Clear existing content
-        self.tag.clear()
-
-        # Add all children's tags first
-        for child in self._children:
-            self.tag.append(child.tag)
-
-        # Restore the original string content if there were no children
-        if not self._children and original_string is not None:
-            self.tag.string = original_string
-
+        # Don't modify the tag structure, just return its string representation
         return str(self.tag)

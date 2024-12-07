@@ -36,14 +36,16 @@ class Ui:
             # Special case for reserved python words like input_ to remove the underscore from the tag name
             actual_tag_name = tag_name.rstrip("_")
 
-            # Create the tag directly using bs4.Tag to avoid conflict with name being sent twice
+            parent = current_parent.get()
+
+            # Create the tag directly using bs4.Tag
             tag = BeautifulSoupTag(
                 builder=self.soup.builder,
                 name=actual_tag_name,
                 attrs=converted_kwargs,
             )
 
-            parent = current_parent.get()
+            # Create our wrapper Tag object
             tag_obj = Tag(tag, parent)
 
             # If there's a current parent, add this tag as its child

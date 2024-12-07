@@ -176,3 +176,23 @@ async def test_ui_append_to_existing_element():
     list_tag.append(list_item_tag("Item 3"))
 
     assert "<ul><li>Item 1</li><li>Item 2</li><li>Item 3</li></ul>" in str(list_tag)
+
+
+@pytest.mark.asyncio
+async def test_ui_replace_with():
+    with ui.div() as container:
+        original = ui.p("Original content")
+        ui.div("Other content")
+
+    replacement = ui.h2("New content")
+    original.replace_with(replacement)
+
+    assert "<div><h2>New content</h2><div>Other content</div></div>" in str(container)
+
+    with ui.div() as container:
+        ui.h1("Hello, World!")
+        ui.h2("This is a subtext.")
+
+    container.select_one("h1").replace_with(ui.h3("New heading"))
+
+    assert "<h3>New heading</h3>" in str(container)
