@@ -102,3 +102,58 @@ button["class"].append("active")
 button["class"].append("highlight")
 print(str(button))  # <button class="active highlight">Toggle</button>
 ```
+
+## Reusable Components
+
+Create reusable UI components with flexible configurations:
+
+```python
+def create_card(
+    title: str,
+    content: str,
+    items: list[str] | None = None,
+    button_text: str | None = None,
+    button_class: str = "btn"
+) -> Tag:
+    """Create a card component with customizable content."""
+    with ui.div(class_="card") as card:
+        with ui.div(class_="card-header"):
+            ui.h2(title)
+        
+        with ui.div(class_="card-body"):
+            ui.p(content)
+            if items:
+                with ui.ul(class_="list"):
+                    for item in items:
+                        ui.li(item)
+        
+        if button_text:
+            with ui.div(class_="card-footer"):
+                ui.button(button_text, class_=button_class)
+    
+    return card
+
+# Usage examples:
+# Full card with all features
+card1 = create_card(
+    title="Card Title",
+    content="Card content goes here",
+    items=["Item 1", "Item 2"],
+    button_text="Click me!"
+)
+
+# Simple card without button
+card2 = create_card(
+    title="Simple Card",
+    content="Just some content",
+    items=["Only item"]
+)
+
+# Card without list items
+card3 = create_card(
+    title="No Items",
+    content="A card without a list",
+    button_text="Submit",
+    button_class="btn-primary"
+)
+```

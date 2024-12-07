@@ -197,3 +197,85 @@ async def test_ui_replace_with():
 
     assert "<h1>Hello, World!</h1>" not in str(container)
     assert "<h3>New heading</h3>" in str(container)
+
+
+def create_card(
+    title: str,
+    content: str,
+    items: list[str] | None = None,
+    button_text: str | None = None,
+    button_class: str = "btn",
+) -> Tag:
+    """Create a card component with customizable content.
+
+    Args:
+        title: The card's header title
+        content: The main content text
+        items: Optional list items to display
+        button_text: Optional button text (no button if None)
+        button_class: CSS class for the button (defaults to "btn")
+
+    Returns:
+        Tag: The constructed card component
+    """
+    with ui.div(class_="card") as card:
+        with ui.div(class_="card-header"):
+            ui.h2(title)
+
+        with ui.div(class_="card-body"):
+            ui.p(content)
+
+            if items:
+                with ui.ul(class_="list"):
+                    for item in items:
+                        ui.li(item)
+
+        if button_text:
+            with ui.div(class_="card-footer"):
+                ui.button(button_text, class_=button_class)
+
+    return card
+
+
+@pytest.mark.asyncio
+async def test_ui_card_component():
+    # Test basic card
+    card1 = create_card(
+        title="Card Title", content="Card content goes here", items=["Item 1", "Item 2"], button_text="Click me!"
+    )
+
+    expected1 = (
+        '<div class="card">'
+        '<div class="card-header"><h2>Card Title</h2></div>'
+        '<div class="card-body"><p>Card content goes here</p>'
+        '<ul class="list"><li>Item 1</li><li>Item 2</li></ul></div>'
+        '<div class="card-footer"><button class="btn">Click me!</button></div>'
+        "</div>"
+    )
+    assert expected1 in str(card1)
+
+    # Test card without button
+    card2 = create_card(title="Simple Card", content="Just some content", items=["Only item"])
+
+    expected2 = (
+        '<div class="card">'
+        '<div class="card-header"><h2>Simple Card</h2></div>'
+        '<div class="card-body"><p>Just some content</p>'
+        '<ul class="list"><li>Only item</li></ul></div>'
+        "</div>"
+    )
+    assert expected2 in str(card2)
+
+    # Test card without items
+    card3 = create_card(
+        title="No Items", content="A card without a list", button_text="Submit", button_class="btn-primary"
+    )
+
+    expected3 = (
+        '<div class="card">'
+        '<div class="card-header"><h2>No Items</h2></div>'
+        '<div class="card-body"><p>A card without a list</p></div>'
+        '<div class="card-footer"><button class="btn-primary">Submit</button></div>'
+        "</div>"
+    )
+    assert expected3 in str(card3)
