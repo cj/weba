@@ -282,6 +282,54 @@ async def test_ui_card_component():
 
 
 @pytest.mark.asyncio
+async def test_ui_tag_attributes():
+    # Test non-class attribute access
+    with ui.div(id="test", data_value="123") as div:
+        assert div["id"] == "test"
+        assert div["data-value"] == "123"
+
+    # Test string class attribute handling
+    div.tag.attrs["class"] = "existing-class"
+    div["class"].append("new-class")
+    assert "existing-class new-class" in str(div)
+
+    # Test non-list class attribute handling
+    div.tag.attrs["class"] = 42  # Force non-list/non-string value
+    assert isinstance(div["class"], list)
+    assert len(div["class"]) == 0
+
+
+@pytest.mark.asyncio
+async def test_ui_wrap_tag():
+    # Test None tag handling
+    assert ui.div().wrap_tag(None) is None
+
+    # Test parent-child relationship
+    with ui.div() as parent:
+        child = ui.p("test")
+        parent.append(child)
+        assert child.parent == parent
+        assert child in parent._children  # pyright: ignore[reportPrivateUsage]
+
+
+@pytest.mark.asyncio
+async def test_ui_select_methods():
+    with ui.div() as container:
+        ui.p("First", class_="one")
+        ui.p("Second", class_="two")
+
+        # Test select method
+        paragraphs = container.select("p")
+        assert len(paragraphs) == 2
+        assert all(p.tag.name == "p" for p in paragraphs)
+
+        # Test find_all method
+        found = container.find_all("p")
+        assert len(found) == 2
+        assert all(p.tag.name == "p" for p in found)
+
+
+@pytest.mark.asyncio
 async def test_ui_raw_html():
     # Test basic HTML parsing
     tag = ui.raw("<div>Hello World</div>")

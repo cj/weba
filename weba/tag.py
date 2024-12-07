@@ -69,8 +69,10 @@ class Tag:
         """Append a child tag to this tag."""
         self.add_child(child)
 
-    def wrap_tag(self, tag: Bs4Tag) -> "Tag | None":
+    def wrap_tag(self, tag: Bs4Tag | None) -> "Tag | None":
         """Wrap a BeautifulSoup tag in a Tag instance."""
+        if tag is None:
+            return None
 
         # Check if the tag already has a parent Tag
         parent = self if tag.parent == self.tag else None
