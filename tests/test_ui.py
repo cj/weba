@@ -371,6 +371,39 @@ async def test_ui_raw_html():
 
 
 @pytest.mark.asyncio
+async def test_ui_parent_child_exit():
+    # Test parent-child relationship in __exit__
+    parent = Tag(ui.raw("<div>").tag)
+    child = Tag(ui.raw("<p>").tag, parent=None)
+
+    # Simulate entering and exiting context with parent-child relationship
+    child.parent = parent
+    child.__exit__(None, None, None)
+
+    assert child in parent._children  # pyright: ignore[reportPrivateUsage]
+
+
+@pytest.mark.asyncio
+async def test_ui_non_callable_attr():
+    # Test accessing a non-callable attribute
+    tag = ui.raw("<div>").tag
+    tag.non_callable = "test"  # pyright: ignore[reportAttributeAccessIssue]
+    wrapped = Tag(tag)
+
+    with pytest.raises(TagAttributeError):
+        wrapped.non_callable  # noqa: B018
+
+
+@pytest.mark.asyncio
+async def test_ui_nonexistent_attr():
+    # Test accessing a non-existent attribute
+    tag = Tag(ui.raw("<div>").tag)
+
+    with pytest.raises(TagAttributeError):
+        tag.nonexistent_attr  # noqa: B018
+
+
+@pytest.mark.asyncio
 async def test_ui_text():
     # Test basic text node
     text = ui.text("Hello World")

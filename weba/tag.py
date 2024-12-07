@@ -26,13 +26,16 @@ class Tag:
         self.tag = tag
         self.parent = parent
         self._children: list[Tag] = []
+        self._token: Token[Tag | None] | None = None
 
     def __enter__(self) -> "Tag":
-        self._token: Token[Tag | None] = current_parent.set(self)
+        self._token: Token[Tag | None] | None = current_parent.set(self)
+
         return self
 
     def __exit__(self, *args: Any) -> None:
-        current_parent.reset(self._token)
+        if self._token is not None:
+            current_parent.reset(self._token)
         if self.parent and self not in self.parent._children:
             self.parent._children.append(self)
 
@@ -104,6 +107,10 @@ class Tag:
                         return result
 
                     return wrapped
+
+                if not callable(attr):
+                    raise TagAttributeError(type(self).__name__, name)
+
                 return attr
 
         # Attribute does not exist or is None
