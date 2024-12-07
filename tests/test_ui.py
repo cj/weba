@@ -99,3 +99,29 @@ async def test_ui_attributes():
         ui.p(class_="inner", data_value="test")
 
     assert str(div3) == '<div class="outer"><p class="inner" data-value="test"></p></div>'
+
+
+@pytest.mark.asyncio
+async def test_ui_class_list():
+    # Test class attribute accepting a list
+    with ui.div(class_=["container", "mt-4", "px-2"]) as div:
+        pass
+
+    assert str(div) == '<div class="container mt-4 px-2"></div>'
+
+
+@pytest.mark.asyncio
+async def test_ui_class_manipulation():
+    # Test direct class manipulation
+    hello_tag = ui.h1("Hello, World!")
+    hello_tag["class"].append("highlight")
+    hello_tag["class"].append("text-xl")
+
+    assert 'class="highlight text-xl"' in str(hello_tag)
+
+
+@pytest.mark.asyncio
+async def test_ui_value_to_string_conversion():
+    number_tag = ui.p(123)
+
+    assert str(number_tag) == "<p>123</p>"

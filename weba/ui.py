@@ -1,4 +1,4 @@
-from collections.abc import Callable
+from collections.abc import Callable, Sequence
 from typing import TYPE_CHECKING, Any
 
 from bs4 import BeautifulSoup
@@ -16,17 +16,22 @@ class UiFactory:
         self.soup = BeautifulSoup("", "html.parser")
 
     def __getattr__(self, tag_name: str) -> Callable[..., Tag]:
-        def create_tag(*args: Any, **kwargs: Any) -> Tag:
+        def create_tag(*args: Any, **kwargs: str | int | float | Sequence[Any]) -> Tag:
             # Convert underscore attributes to dashes
             converted_kwargs = {}
 
             for key, value in kwargs.items():
                 # Special case for class_ attribute
-                new_key = "class" if key == "class_" else key.replace("_", "-")
-
-                # Handle boolean attributes (like hx-boost)
-                if isinstance(value, bool) and value:
-                    value = None
+                if key == "class_":
+                    new_key = "class"
+                    # Ensure value is a sequence
+                    if isinstance(value, list | tuple):
+                        value = " ".join(str(v) for v in value if isinstance(v, str | int | float))
+                else:
+                    new_key = key.replace("_", "-")
+                    # Handle boolean attributes (like hx-boost)
+                    if isinstance(value, bool) and value:
+                        value = None
 
                 converted_kwargs[new_key] = value
 
@@ -36,7 +41,7 @@ class UiFactory:
             parent = current_parent.get()
             tag_obj = Tag(tag, parent)
 
-            if args and isinstance(args[0], str):
+            if args:
                 tag.string = str(args[0])
 
             # If there's a current parent, add this tag as its child

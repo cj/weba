@@ -28,9 +28,37 @@ class Tag:
         """Add a child tag to this tag."""
         self._children.append(child)
 
+    def __getitem__(self, key: str) -> Any:
+        """Allow accessing tag attributes like tag['class']."""
+        if key != "class":
+            return self.tag[key]
+
+        # Initialize class as empty list if it doesn't exist
+        if "class" not in self.tag.attrs:
+            self.tag.attrs["class"] = []
+            return self.tag.attrs["class"]
+
+        # Get the current value
+        current_value = self.tag.attrs.get("class", [])
+
+        # Convert string class to list if needed
+        if isinstance(current_value, str):
+            self.tag.attrs["class"] = current_value.split()
+        elif not isinstance(current_value, list):
+            self.tag.attrs["class"] = []
+
+        return self.tag.attrs["class"]
+
     def __str__(self) -> str:
-        # Clear any existing children to avoid duplicates
+        # Store the original string content
+        original_string = self.tag.string
+
+        # Clear the tag contents but preserve the original string
         self.tag.clear()
+
+        # Restore the original string if it existed
+        if original_string is not None:
+            self.tag.string = original_string
 
         # Add all children's tags
         for child in self._children:
