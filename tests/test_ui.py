@@ -2,7 +2,7 @@ import asyncio
 
 import pytest
 
-from weba import Tag, ui
+from weba import Tag, TagAttributeError, ui
 
 
 @pytest.mark.asyncio
@@ -382,7 +382,7 @@ async def test_ui_text():
         assert str(prev_elem) == '<p class="two">Second</p>'
 
         # # Test Tag.__getattr__ with non-existent attribute
-        with pytest.raises(AttributeError):
+        with pytest.raises(TagAttributeError):
             container.nonexistent_method()
 
     # Test raw with empty/invalid HTML

@@ -9,6 +9,18 @@ if TYPE_CHECKING:
 current_parent: ContextVar["Tag | None"] = ContextVar("current_parent", default=None)
 
 
+class TagAttributeError(AttributeError):
+    """Custom exception for missing attributes or methods in Tag objects."""
+
+    def __init__(self, tag_name: str, attribute_name: str):
+        self.tag_name = tag_name
+        self.attribute_name = attribute_name
+        super().__init__(self._generate_message())
+
+    def _generate_message(self) -> str:
+        return f"'{self.tag_name}' object has no attribute or method '{self.attribute_name}'"
+
+
 class Tag:
     def __init__(self, tag: Bs4Tag, parent: "Tag | None" = None):
         self.tag = tag
@@ -59,8 +71,6 @@ class Tag:
 
     def wrap_tag(self, tag: Bs4Tag) -> "Tag | None":
         """Wrap a BeautifulSoup tag in a Tag instance."""
-        if tag is None:
-            return None
 
         # Check if the tag already has a parent Tag
         parent = self if tag.parent == self.tag else None
@@ -69,27 +79,33 @@ class Tag:
 
     def __getattr__(self, name: str) -> Any:
         """Proxy any unknown attributes/methods to the underlying BeautifulSoup tag."""
-        attr = getattr(self.tag, name)
+        # Check if the attribute exists and is not None
+        if hasattr(self.tag, name):
+            attr = getattr(self.tag, name)
 
-        if callable(attr):
+            # Ensure the attribute is callable or valid
+            if attr is not None:
+                if callable(attr):
 
-            def wrapped(*args: Any, **kwargs: Any) -> Any:
-                # Convert Tag instances to their underlying BeautifulSoup tags
-                converted_args = [arg.tag if isinstance(arg, Tag) else arg for arg in args]
-                converted_kwargs = {k: v.tag if isinstance(v, Tag) else v for k, v in kwargs.items()}
-                result = attr(*converted_args, **converted_kwargs)
+                    def wrapped(*args: Any, **kwargs: Any) -> Any:
+                        # Convert Tag instances to their underlying BeautifulSoup tags
+                        converted_args = [arg.tag if isinstance(arg, Tag) else arg for arg in args]
+                        converted_kwargs = {k: v.tag if isinstance(v, Tag) else v for k, v in kwargs.items()}
+                        result = attr(*converted_args, **converted_kwargs)
 
-                # Wrap the result if it is a BeautifulSoup tag
-                if name in {"select_one", "find", "find_next", "find_previous"}:
-                    return self.wrap_tag(result)  # pyright: ignore[reportArgumentType]
-                elif name in {"select", "find_all"}:
-                    return [self.wrap_tag(t) for t in result if t is not None]  # pyright: ignore[reportGeneralTypeIssues, reportUnknownVariableType, reportUnknownArgumentType]
+                        # Wrap the result if it is a BeautifulSoup tag
+                        if name in {"select_one", "find", "find_next", "find_previous"}:
+                            return self.wrap_tag(result)  # pyright: ignore[reportArgumentType]
+                        elif name in {"select", "find_all"}:
+                            return [self.wrap_tag(t) for t in result if t is not None]  # pyright: ignore[reportGeneralTypeIssues, reportUnknownVariableType, reportUnknownArgumentType]
 
-                return result
+                        return result
 
-            return wrapped
+                    return wrapped
+                return attr
 
-        return attr
+        # Attribute does not exist or is None
+        raise TagAttributeError(type(self).__name__, name)
 
     def __str__(self) -> str:
         # Don't modify the tag structure, just return its string representation
