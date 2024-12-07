@@ -3,7 +3,7 @@ from typing import TYPE_CHECKING, Any
 
 from bs4 import Tag as Bs4Tag
 
-if TYPE_CHECKING:
+if TYPE_CHECKING:  # pragma: no cover
     from contextvars import Token
 
 current_parent: ContextVar["Tag | None"] = ContextVar("current_parent", default=None)
