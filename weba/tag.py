@@ -29,7 +29,7 @@ class Tag:
         self._token: Token[Tag | None] | None = None
 
     def __enter__(self) -> "Tag":
-        self._token: Token[Tag | None] | None = current_parent.set(self)
+        self._token = current_parent.set(self)
 
         return self
 
