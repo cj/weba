@@ -399,7 +399,28 @@ async def test_ui_nonexistent_attr():
     # Test accessing a non-existent attribute
     tag = Tag(ui.raw("<div>").tag)
 
+    # Test attribute that doesn't exist at all
     with pytest.raises(TagAttributeError):
+        tag.nonexistent_attr  # noqa: B018
+
+    # Test attribute that exists but is None
+    tag.tag.test_attr = None  # pyright: ignore[reportAttributeAccessIssue]
+
+    with pytest.raises(TagAttributeError):
+        tag.test_attr  # noqa: B018
+
+    # Test attribute that exists but disappears (race condition simulation)
+    tag.tag.temp_attr = "test"  # pyright: ignore[reportAttributeAccessIssue]
+
+    delattr(tag.tag, "temp_attr")  # This will make hasattr true but getattr fail
+
+    with pytest.raises(TagAttributeError):
+        tag.temp_attr  # noqa: B018
+
+    # Test attribute that truly doesn't exist by mocking hasattr
+    from unittest.mock import patch
+
+    with patch("builtins.hasattr", return_value=False), pytest.raises(TagAttributeError):
         tag.nonexistent_attr  # noqa: B018
 
 

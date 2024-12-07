@@ -84,32 +84,35 @@ class Tag:
 
     def __getattr__(self, name: str) -> Any:
         """Proxy any unknown attributes/methods to the underlying BeautifulSoup tag."""
-        # Check if the attribute exists and is not None
-        if hasattr(self.tag, name):
-            attr = getattr(self.tag, name)
+        # Check if the attribute exists
+        if not hasattr(self.tag, name):
+            raise TagAttributeError(type(self).__name__, name)
 
-            # Ensure the attribute is callable or valid
-            if attr is not None:
-                if callable(attr):
+        # Get the attribute
+        attr = getattr(self.tag, name)
 
-                    def wrapped(*args: Any, **kwargs: Any) -> Any:
-                        # Convert Tag instances to their underlying BeautifulSoup tags
-                        converted_args = [arg.tag if isinstance(arg, Tag) else arg for arg in args]
-                        converted_kwargs = {k: v.tag if isinstance(v, Tag) else v for k, v in kwargs.items()}
-                        result = attr(*converted_args, **converted_kwargs)
+        # Check if the attribute is None
+        if attr is not None:
+            if callable(attr):
 
-                        # Wrap the result if it is a BeautifulSoup tag
-                        if name in {"select_one", "find", "find_next", "find_previous"}:
-                            return self.wrap_tag(result)  # pyright: ignore[reportArgumentType]
-                        elif name in {"select", "find_all"}:
-                            return [self.wrap_tag(t) for t in result if t is not None]  # pyright: ignore[reportGeneralTypeIssues, reportUnknownVariableType, reportUnknownArgumentType]
+                def wrapped(*args: Any, **kwargs: Any) -> Any:
+                    # Convert Tag instances to their underlying BeautifulSoup tags
+                    converted_args = [arg.tag if isinstance(arg, Tag) else arg for arg in args]
+                    converted_kwargs = {k: v.tag if isinstance(v, Tag) else v for k, v in kwargs.items()}
+                    result = attr(*converted_args, **converted_kwargs)
 
-                        return result
+                    # Wrap the result if it is a BeautifulSoup tag
+                    if name in {"select_one", "find", "find_next", "find_previous"}:
+                        return self.wrap_tag(result)  # pyright: ignore[reportArgumentType]
+                    elif name in {"select", "find_all"}:
+                        return [self.wrap_tag(t) for t in result if t is not None]  # pyright: ignore[reportGeneralTypeIssues, reportUnknownVariableType, reportUnknownArgumentType]
 
-                    return wrapped
+                    return result
 
-                # If it's not callable, return the attribute value directly
-                return attr if callable(attr) else attr
+                return wrapped
+
+            # If it's not callable, return the attribute value directly
+            return attr if callable(attr) else attr
 
         # Attribute does not exist or is None
         raise TagAttributeError(type(self).__name__, name)
