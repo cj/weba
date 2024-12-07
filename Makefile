@@ -54,6 +54,10 @@ docs: ## Build and serve the documentation
 aider: ## Start aider with file watching and conventions
 	@uv run aider --watch-files --read CONVENTIONS.md
 
+.PHONY: test-watch
+test-watch: ## Watch for changes and run tests automatically
+	@uv run ptw
+
 .PHONY: help
 help:
 	@uv run python -c "import re; \

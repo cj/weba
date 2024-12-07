@@ -17,6 +17,7 @@ classifiers = [
     "Programming Language :: Python :: 3.13",
     "Topic :: Software Development :: Libraries :: Python Modules",
 ]
+dependencies = ["beautifulsoup4>=4"]
 
 [project.urls]
 Homepage = "https://cj.github.io/weba/"
@@ -24,17 +25,23 @@ Repository = "https://github.com/cj/weba"
 Documentation = "https://cj.github.io/weba/"
 
 [tool.uv]
-default-groups = ["dev", "lint", "test"]
+default-groups = ["dev", "lint", "test", "docs"]
 
 [dependency-groups]
-dev = ["pre-commit>=2.20.0", "tox-uv>=1.11.3", "deptry>=0.20.0", "aider-chat>=0.20.0"]
-docs = [
-    "mkdocs>=1.4.2",
-    "mkdocs-material>=8.5.10",
-    "mkdocstrings[python]>=0.26.1",
+dev = [
+    "pre-commit>=2.20.0",
+    "tox-uv>=1.11.3",
+    "deptry>=0.20.0",
+    "aider-chat>=0.20.0",
 ]
-lint = ["ruff>=0.8.2", "pyright"]
-test = ["pytest>=7.2.0", "pytest-cov>=4.0.0"]
+docs = ["mkdocs", "mkdocs-material", "mkdocstrings[python]"]
+lint = ["ruff>=0.8.2", "pyright", "types-beautifulsoup4>=4.12.0.20241020"]
+test = [
+    "pytest-asyncio>=0.24.0",
+    "pytest>=7.2.0",
+    "pytest-cov>=4.0.0",
+    "pytest-watch>=4.2.0",
+]
 
 [build-system]
 requires = ["setuptools >= 61.0"]
@@ -87,6 +94,7 @@ strict = true
 typeCheckingMode = "strict"
 venvPath = "."
 venv = ".venv"
+extraPaths = [".venv/lib/python3.12/site-packages"]
 
 [tool.ruff.lint.per-file-ignores]
 "tests/*" = ["S101"]
