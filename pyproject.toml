@@ -7,15 +7,15 @@ readme = "README.md"
 keywords = ['python']
 requires-python = ">=3.9,<4.0"
 classifiers = [
-  "Intended Audience :: Developers",
-  "Programming Language :: Python",
-  "Programming Language :: Python :: 3",
-  "Programming Language :: Python :: 3.9",
-  "Programming Language :: Python :: 3.10",
-  "Programming Language :: Python :: 3.11",
-  "Programming Language :: Python :: 3.12",
-  "Programming Language :: Python :: 3.13",
-  "Topic :: Software Development :: Libraries :: Python Modules",
+    "Intended Audience :: Developers",
+    "Programming Language :: Python",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Topic :: Software Development :: Libraries :: Python Modules",
 ]
 
 [project.urls]
@@ -29,9 +29,9 @@ default-groups = ["dev", "lint", "test"]
 [dependency-groups]
 dev = ["pre-commit>=2.20.0", "tox-uv>=1.11.3", "deptry>=0.20.0"]
 docs = [
-  "mkdocs>=1.4.2",
-  "mkdocs-material>=8.5.10",
-  "mkdocstrings[python]>=0.26.1",
+    "mkdocs>=1.4.2",
+    "mkdocs-material>=8.5.10",
+    "mkdocstrings[python]>=0.26.1",
 ]
 lint = ["ruff>=0.8.2", "pyright"]
 test = ["pytest>=7.2.0", "pytest-cov>=4.0.0"]
@@ -52,32 +52,32 @@ fix = true
 
 [tool.ruff.lint]
 select = [
-  "E",   # pycodestyle errors
-  "W",   # pycodestyle warnings
-  "F",   # pyflakes
-  "N",   # pep8-naming
-  "I",   # isort
-  "C",   # flake8-comprehensions
-  "B",   # flake8-bugbear
-  "S",   # flake8-bandit
-  "PT",  # flake8-pytest-style
-  "TC",  # flake8-type-checking
-  "ARG", # flake8-unused-arguments
-  "YTT", # flake8-2020
-  "A",   # flake8-builtins
-  "C4",  # flake8-comprehensions (specific rules)
-  "T10", # flake8-debugger
-  "SIM", # flake8-simplify
-  "C90", # mccabe
-  "PGH", # pygrep-hooks
-  "UP",  # pyupgrade
-  "RUF", # ruff
-  "TRY", # tryceratops
+    "E",   # pycodestyle errors
+    "W",   # pycodestyle warnings
+    "F",   # pyflakes
+    "N",   # pep8-naming
+    "I",   # isort
+    "C",   # flake8-comprehensions
+    "B",   # flake8-bugbear
+    "S",   # flake8-bandit
+    "PT",  # flake8-pytest-style
+    "TC",  # flake8-type-checking
+    "ARG", # flake8-unused-arguments
+    "YTT", # flake8-2020
+    "A",   # flake8-builtins
+    "C4",  # flake8-comprehensions (specific rules)
+    "T10", # flake8-debugger
+    "SIM", # flake8-simplify
+    "C90", # mccabe
+    "PGH", # pygrep-hooks
+    "UP",  # pyupgrade
+    "RUF", # ruff
+    "TRY", # tryceratops
 ]
 
 ignore = [
-  "E501", # LineTooLong
-  "E731", # DoNotAssignLambda
+    "E501", # LineTooLong
+    "E731", # DoNotAssignLambda
 ]
 
 [tool.ruff.lint.flake8-type-checking]
@@ -85,6 +85,8 @@ strict = true
 
 [tool.pyright]
 typeCheckingMode = "strict"
+venvPath = "."
+venv = ".venv"
 
 [tool.ruff.lint.per-file-ignores]
 "tests/*" = ["S101"]
