@@ -223,12 +223,12 @@ import json
 # Dictionary attributes
 data = {"name": "John", "age": 30}
 with ui.div(data_user=data) as div:
-    print(div["data-user"])  # {"name": "John", "age": 30}
+    print(str(div))  # <div data-user='{"name": "John", "age": 30}'></div>
 
 # Array attributes
 items = ["apple", "banana", "orange"]
 with ui.div(data_items=items) as div:
-    print(div["data-items"])  # ["apple", "banana", "orange"]
+    print(str(div))  # <div data-items='["apple", "banana", "orange"]'></div>
 
 # Nested structures
 complex_data = {
@@ -237,6 +237,9 @@ complex_data = {
     "active": True
 }
 with ui.div(data_complex=complex_data) as div:
+    print(str(div))  
+    # <div data-complex='{"user": {"name": "John", "age": 30}, "items": ["apple", "banana"], "active": true}'></div>
+
     # Access and parse the JSON data
     stored_data = json.loads(div["data-complex"])
     print(stored_data["user"]["name"])  # John
