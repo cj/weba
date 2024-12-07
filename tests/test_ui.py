@@ -387,11 +387,11 @@ async def test_ui_parent_child_exit():
 async def test_ui_non_callable_attr():
     # Test accessing a non-callable attribute
     tag = ui.raw("<div>").tag
-    tag.non_callable = "test"  # pyright: ignore[reportAttributeAccessIssue]
+    tag.string = "test"  # Use BeautifulSoup's built-in string attribute
     wrapped = Tag(tag)
 
-    with pytest.raises(TagAttributeError):
-        wrapped.non_callable  # noqa: B018
+    # This should now return the string attribute
+    assert wrapped.string == "test"
 
 
 @pytest.mark.asyncio

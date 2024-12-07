@@ -108,10 +108,8 @@ class Tag:
 
                     return wrapped
 
-                if not callable(attr):
-                    raise TagAttributeError(type(self).__name__, name)
-
-                return attr
+                # If it's not callable, return the attribute value directly
+                return attr if callable(attr) else attr
 
         # Attribute does not exist or is None
         raise TagAttributeError(type(self).__name__, name)
