@@ -80,7 +80,7 @@ with ui.div() as content:
 Use HTMX attributes for dynamic behavior:
 
 ```python
-with ui.div() as form:
+with ui.form() as form:
     ui.input_(
         type="text",
         name="search",

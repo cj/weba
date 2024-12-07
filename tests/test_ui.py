@@ -143,7 +143,7 @@ async def test_ui_value_to_string_conversion():
 
 @pytest.mark.asyncio
 async def test_ui_htmx_search_form():
-    with ui.div() as form:
+    with ui.form() as form:
         ui.input_(
             type="text", name="search", hx_post="/search", hx_trigger="keyup changed delay:500ms", hx_target="#results"
         )
@@ -152,7 +152,7 @@ async def test_ui_htmx_search_form():
 
     result = str(form)
     # Check that all required attributes are present
-    assert "<div>" in result
+    assert "<form>" in result
     assert 'type="text"' in result
     assert 'name="search"' in result
     assert 'hx-post="/search"' in result
@@ -160,8 +160,8 @@ async def test_ui_htmx_search_form():
     assert 'hx-target="#results"' in result
     assert '<div id="results">' in result
     assert "<p>Results will appear here...</p>" in result
-    assert result.startswith("<div>")
-    assert result.endswith("</div>")
+    assert result.startswith("<form>")
+    assert result.endswith("</form>")
 
 
 @pytest.mark.asyncio
