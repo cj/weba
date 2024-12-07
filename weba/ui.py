@@ -13,6 +13,28 @@ class Ui:
     def __init__(self):
         self.soup = BeautifulSoup("", "html.parser")
 
+    def text(self, html: str | int | float | Sequence[Any] | None) -> Tag:
+        """Create a Tag from a string.
+
+        Args:
+            html: Raw HTML string to parse
+
+        Returns:
+            Tag: A new Tag object containing the parsed HTML
+        """
+        text_node = self.soup.new_string(str(html))  # pyright: ignore[reportUnknownMemberType, reportUnknownVariableType]
+
+        parent = current_parent.get()
+
+        # Wrap the text node in a Tag object
+        text_tag = Tag(text_node, parent)  # pyright: ignore[reportUnknownArgumentType]
+
+        # If there's a current parent, add this text node as its child
+        if parent:
+            parent.add_child(text_tag)
+
+        return text_tag
+
     def raw(self, html: str) -> Tag:
         """Create a Tag from a raw HTML string.
 
@@ -23,13 +45,23 @@ class Ui:
             Tag: A new Tag object containing the parsed HTML
         """
         parsed = BeautifulSoup(html, "html.parser")
+
         if parsed.contents:
             # Get the first meaningful tag
             tag = next((t for t in parsed.contents if isinstance(t, BeautifulSoupTag)), None)
             if tag:
-                return Tag(tag)
-        # Fallback to empty div if no valid tags found
-        return Tag(self.soup.new_tag("div"))  # pyright: ignore[reportUnknownMemberType]
+                # Wrap the raw tag in a Tag object
+                tag_obj = Tag(tag)
+
+                # If there's a current parent, add this tag as its child
+                parent = current_parent.get()
+                if parent:
+                    parent.add_child(tag_obj)
+
+                return tag_obj
+
+        # Fallback to text node if no valid tags found
+        return self.text(html)
 
     def __getattr__(self, tag_name: str) -> Callable[..., Tag]:
         def create_tag(*args: Any, **kwargs: str | int | float | Sequence[Any]) -> Tag:

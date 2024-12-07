@@ -294,7 +294,7 @@ async def test_ui_raw_html():
 
     # Test handling of invalid HTML
     tag = ui.raw("Not HTML")
-    assert str(tag) == "<div></div>"  # Falls back to empty div
+    assert str(tag) == "Not HTML"  # Falls back to plain text
 
     # Test complex HTML with attributes
     complex_html = """
@@ -313,3 +313,39 @@ async def test_ui_raw_html():
     assert '<div class="content">' in result
     assert "<p>Paragraph 1</p>" in result
     assert "<p>Paragraph 2</p>" in result
+
+    # Test raw HTML in context
+    with ui.div() as container:
+        ui.raw("<p>First paragraph</p>")
+        ui.raw("<p>Second paragraph</p>")
+
+    assert str(container) == "<div><p>First paragraph</p><p>Second paragraph</p></div>"
+
+
+@pytest.mark.asyncio
+async def test_ui_text():
+    # Test basic text node
+    text = ui.text("Hello World")
+    assert str(text) == "Hello World"
+
+    # Test with different types
+    assert str(ui.text(42)) == "42"
+    assert str(ui.text(3.14)) == "3.14"
+    assert str(ui.text(True)) == "True"
+    assert str(ui.text(None)) == "None"
+
+    # Test in context
+    with ui.div() as container:
+        ui.text("First")
+        ui.text("Second")
+
+    assert str(container) == "<div>FirstSecond</div>"
+
+    # Test with nested content
+    with ui.p() as para:
+        ui.text("Start ")
+        with ui.strong():
+            ui.text("middle")
+        ui.text(" end")
+
+    assert str(para) == "<p>Start <strong>middle</strong> end</p>"
