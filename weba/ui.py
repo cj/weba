@@ -17,7 +17,21 @@ class UiFactory:
 
     def __getattr__(self, tag_name: str) -> Callable[..., Tag]:
         def create_tag(*args: Any, **kwargs: Any) -> Tag:
-            tag: Bs4Tag = self.soup.new_tag(tag_name, **kwargs)  # pyright: ignore[reportUnknownMemberType]
+            # Convert underscore attributes to dashes
+            converted_kwargs = {}
+
+            for key, value in kwargs.items():
+                # Special case for class_ attribute
+                new_key = "class" if key == "class_" else key.replace("_", "-")
+
+                # Handle boolean attributes (like hx-boost)
+                if isinstance(value, bool) and value:
+                    value = None
+
+                converted_kwargs[new_key] = value
+
+            # Type ignore needed since BeautifulSoup's new_tag has complex typing
+            tag: Bs4Tag = self.soup.new_tag(tag_name, **converted_kwargs)  # pyright: ignore[reportUnknownArgumentType, reportUnknownMemberType]
 
             parent = current_parent.get()
             tag_obj = Tag(tag, parent)

@@ -1,1 +1,2 @@
 - Make sure to use typings
+- When ignoring pyright errors, use the following format: `# pyright: ignore[reportUnknownArgumentType, reportUnknownMemberType]`

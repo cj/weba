@@ -78,3 +78,24 @@ async def test_ui_async_context_isolation():
     # Verify each task maintained its own context
     assert str(div1) == "<div><p>Task 1 paragraph</p><p>Task 1 second paragraph</p></div>"
     assert str(div2) == "<div><p>Task 2 paragraph</p><p>Task 2 second paragraph</p></div>"
+
+
+@pytest.mark.asyncio
+async def test_ui_attributes():
+    # Test regular attributes
+    with ui.div(class_="container", data_test="value") as div1:
+        pass
+
+    assert str(div1) == '<div class="container" data-test="value"></div>'
+
+    # Test boolean attributes
+    with ui.div(hx_boost=True) as div2:
+        pass
+
+    assert str(div2) == "<div hx-boost></div>"
+
+    # Test nested elements with attributes
+    with ui.div(class_="outer") as div3:
+        ui.p(class_="inner", data_value="test")
+
+    assert str(div3) == '<div class="outer"><p class="inner" data-value="test"></p></div>'
