@@ -9,7 +9,7 @@ if TYPE_CHECKING:
     from bs4 import Tag as Bs4Tag
 
 
-class UiFactory:
+class Ui:
     """A factory class for creating UI elements using BeautifulSoup."""
 
     def __init__(self):
@@ -53,4 +53,4 @@ class UiFactory:
         return create_tag
 
 
-ui = UiFactory()
+ui = Ui()
