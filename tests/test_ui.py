@@ -195,4 +195,5 @@ async def test_ui_replace_with():
 
     container.select_one("h1").replace_with(ui.h3("New heading"))
 
+    assert "<h1>Hello, World!</h1>" not in str(container)
     assert "<h3>New heading</h3>" in str(container)
