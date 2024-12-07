@@ -349,3 +349,47 @@ async def test_ui_text():
         ui.text(" end")
 
     assert str(para) == "<p>Start <strong>middle</strong> end</p>"
+
+    # Test Tag.__getattr__ with various BeautifulSoup methods
+    with ui.div() as container:
+        ui.p("First", class_="one")
+        ui.p("Second", class_="two")
+        ui.div("Nested", class_="three")
+
+        # Test select_one
+        first = container.select_one("p.one")
+        assert str(first) == '<p class="one">First</p>'
+
+        # Test find
+        second = container.find("p", class_="two")
+        assert str(second) == '<p class="two">Second</p>'
+
+        # Test select
+        all_p = container.select("p")
+        assert len(all_p) == 2
+        assert str(all_p[0]) == '<p class="one">First</p>'
+
+        # Test find_all
+        divs = container.find_all("div")
+        assert len(divs) == 1
+        assert str(divs[0]) == '<div class="three">Nested</div>'
+
+        # Test find_next and find_previous
+        middle = container.find("p", class_="two")
+        next_elem = middle.find_next("div")
+        assert str(next_elem) == '<div class="three">Nested</div>'
+        prev_elem = next_elem.find_previous("p")
+        assert str(prev_elem) == '<p class="two">Second</p>'
+
+        # # Test Tag.__getattr__ with non-existent attribute
+        with pytest.raises(AttributeError):
+            container.nonexistent_method()
+
+    # Test raw with empty/invalid HTML
+    empty_tag = ui.raw("")
+
+    assert not str(empty_tag)
+
+    whitespace_tag = ui.raw("   ")
+
+    assert str(whitespace_tag) == "   "
