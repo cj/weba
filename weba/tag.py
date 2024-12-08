@@ -150,14 +150,7 @@ class Tag(PageElement):
         raise TagAttributeError(type(self).__name__, name)
 
     def comment(self, selector: str) -> list["Tag"]:
-        """Find all tags or text nodes that follow comments matching the given selector.
-
-        Args:
-            selector: The comment text to search for (e.g., "#button" or ".card")
-
-        Returns:
-            A list of Tag objects that immediately follow matching comments.
-        """
+        """Find all tags or text nodes that follow comments matching the given selector."""
         results: list[Tag] = []
 
         # Find all comment nodes matching the selector
@@ -170,13 +163,15 @@ class Tag(PageElement):
             while next_node and isinstance(next_node, NavigableString) and not next_node.strip():
                 next_node = next_node.next_sibling
 
-            if next_node:
-                if isinstance(next_node, Bs4Tag):
-                    results.append(Tag(next_node))
-                elif isinstance(next_node, NavigableString):
-                    text = next_node.strip()
-                    if text:
-                        results.append(Tag(NavigableString(text)))  # pyright: ignore[reportArgumentType]
+            # Branch for `Bs4Tag`
+            if isinstance(next_node, Bs4Tag):
+                results.append(Tag(next_node))
+
+            # Branch for `NavigableString`
+            elif isinstance(next_node, NavigableString):
+                text = next_node.strip()
+                # Wrap the NavigableString as a Tag
+                results.append(Tag(NavigableString(text)))  # pyright: ignore[reportArgumentType]
 
         return results
 

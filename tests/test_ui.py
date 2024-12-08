@@ -697,3 +697,101 @@ async def test_ui_comment():
     assert str(mixed[0]) == "This is some text."
     assert str(mixed[1]) == "Another piece of text."
     assert str(mixed[2]) == "<span>in a span</span>"
+
+
+@pytest.mark.asyncio
+async def test_ui_replace_with_no_parent():
+    # Create tags without a parent
+    original = Tag(ui.raw("<p>Original content</p>").tag)
+    replacement = Tag(ui.raw("<h2>Replacement content</h2>").tag)
+
+    # Call replace_with when _parent is None
+    original.replace_with(replacement)
+
+    # Verify that the replacement occurred in the DOM
+    assert str(original.tag) != str(replacement.tag)
+    assert str(replacement.tag) == "<h2>Replacement content</h2>"
+
+
+@pytest.mark.asyncio
+async def test_ui_insert_before_no_parent():
+    # Create tags without a parent
+    existing = Tag(ui.raw("<p>Existing content</p>").tag)
+    new_tag = Tag(ui.raw("<h2>New content</h2>").tag)
+
+    # Call insert_before when _parent is None
+    existing.insert_before(new_tag)
+
+    # Verify that the DOM structure reflects the insertion
+    assert str(existing.tag.previous_sibling) == "<h2>New content</h2>"
+    assert str(new_tag.tag.next_sibling) == "<p>Existing content</p>"
+
+
+@pytest.mark.asyncio
+async def test_ui_insert_after_no_parent():
+    # Create tags without a parent
+    existing = Tag(ui.raw("<p>Existing content</p>").tag)
+    new_tag = Tag(ui.raw("<h2>New content</h2>").tag)
+
+    # Call insert_after when _parent is None
+    existing.insert_after(new_tag)
+
+    # Verify that the DOM structure reflects the insertion
+    assert str(existing.tag.next_sibling) == "<h2>New content</h2>"
+    assert str(new_tag.tag.previous_sibling) == "<p>Existing content</p>"
+
+
+@pytest.mark.asyncio
+async def test_ui_wrap_tag_no_parent_relationship():
+    # Create a tag with a parent different from the current tag
+    other_tag = Tag(ui.raw("<div>").tag)
+    child_tag = Tag(ui.raw("<p>Child content</p>").tag)
+
+    # Simulate a different parent
+    other_tag.add_child(child_tag)  # Sets child_tag.parent = other_tag
+
+    # Wrap the tag in a different context
+    new_wrapper = Tag(ui.raw("<section>").tag)
+    wrapped = new_wrapper.wrap_tag(child_tag.tag)
+
+    # Assert the wrapped tag is not added as a child
+    assert wrapped is not None
+    assert wrapped.parent is None  # No parent relationship established with new_wrapper
+    assert wrapped not in new_wrapper._children  # pyright: ignore[reportPrivateUsage]
+
+    # Verify the tag's original parent remains unchanged
+    assert child_tag.parent == other_tag
+
+
+@pytest.mark.asyncio
+async def test_ui_comment_no_sibling():
+    # HTML with a comment but no following sibling
+    html = """<div>
+    <!-- .button -->
+    </div>"""
+
+    container = ui.raw(html)
+    results = container.comment(".button")
+
+    # Ensure no results are returned since there is no sibling
+    assert results == []
+
+
+@pytest.mark.asyncio
+async def test_ui_comment_with_text_sibling():
+    # HTML with a comment followed by plain text (NavigableString)
+    html = """<div>
+    <!-- .text -->
+    This is a plain text node.
+    </div>"""
+
+    # Parse the container
+    container = ui.raw(html)
+
+    # Call the `comment` method
+    results = container.comment(".text")
+
+    # Ensure the NavigableString is correctly wrapped and added to results
+    assert len(results) == 1
+    assert str(results[0]) == "This is a plain text node."
+    assert isinstance(results[0].tag, NavigableString)
