@@ -2,7 +2,7 @@ import json
 from contextvars import ContextVar, Token
 from typing import TYPE_CHECKING, Any, cast
 
-from bs4 import NavigableString
+from bs4 import NavigableString, PageElement
 from bs4 import Tag as Bs4Tag
 
 if TYPE_CHECKING:  # pragma: no cover
@@ -35,13 +35,22 @@ class TagKeyError(KeyError):
         return f"'{self.tag_type}' does not support attribute access: {self.key}"
 
 
-class Tag:
+class Tag(PageElement):
     def __init__(self, tag: Bs4Tag, parent: "Tag | None" = None):
+        super().__init__()
         # If it's a NavigableString, wrap it in a new Tag
         self.tag = tag
-        self.parent = parent
+        self._parent = parent
         self._children: list[Tag] = []
         self._token: Token[Tag | None] | None = None
+
+    @property
+    def parent(self) -> "Tag | None":
+        return self._parent
+
+    @parent.setter
+    def parent(self, value: "Tag | None") -> None:  # pyright: ignore[reportIncompatibleVariableOverride]
+        self._parent = value
 
     def __enter__(self) -> "Tag":
         self._token = current_parent.set(self)
@@ -51,8 +60,8 @@ class Tag:
     def __exit__(self, *args: Any) -> None:
         if self._token is not None:
             current_parent.reset(self._token)
-        if self.parent and self not in self.parent._children:
-            self.parent._children.append(self)
+        if self._parent is not None and self not in self._parent._children:
+            self._parent._children.append(self)
 
     def add_child(self, child: "Tag") -> None:
         """Add a child tag to this tag."""
@@ -90,19 +99,23 @@ class Tag:
 
         return self.tag.attrs["class"]
 
-    def append(self, child: "Tag") -> None:
-        """Append a child tag to this tag."""
-        self.add_child(child)
+    def append(self, content: "Tag") -> None:  # pyright: ignore[reportIncompatibleMethodOverride]
+        self.add_child(content)
 
     def wrap_tag(self, tag: Bs4Tag | None) -> "Tag | None":
         """Wrap a BeautifulSoup tag in a Tag instance."""
         if tag is None:
             return None
 
-        # Check if the tag already has a parent Tag
-        parent = self if tag.parent == self.tag else None
+        # Create new Tag instance
+        wrapped = Tag(tag)
 
-        return Tag(tag, parent)
+        # If the BS4 tag has a parent and it's this tag's BS4 tag
+        if tag.parent == self.tag:
+            wrapped.parent = self
+            self._children.append(wrapped)
+
+        return wrapped
 
     def __getattr__(self, name: str) -> Any:
         """Proxy any unknown attributes/methods to the underlying BeautifulSoup tag."""
@@ -202,6 +215,40 @@ class Tag:
                 next_node = next_node.next_sibling  # Move to the next sibling
 
         return None
+
+    def replace_with(self, new_tag: "Tag") -> None:  # pyright: ignore[reportIncompatibleMethodOverride]
+        """Replace this tag with another tag."""
+        self.tag.replace_with(new_tag.tag)
+        if self._parent:
+            # Update the parent's children list
+            idx = self._parent._children.index(self)
+            self._parent._children[idx] = new_tag
+            new_tag.parent = self._parent
+
+    def insert(self, position: int, new_tag: "Tag") -> None:  # pyright: ignore[reportIncompatibleMethodOverride]
+        """Insert a new tag at the given position."""
+        self.tag.insert(position, new_tag.tag)
+        if position < len(self._children):
+            self._children.insert(position, new_tag)
+        else:
+            self._children.append(new_tag)
+        new_tag.parent = self
+
+    def insert_before(self, new_tag: "Tag") -> None:  # pyright: ignore[reportIncompatibleMethodOverride]
+        """Insert a new tag before this tag."""
+        self.tag.insert_before(new_tag.tag)
+        if self._parent:
+            idx = self._parent._children.index(self)
+            self._parent._children.insert(idx, new_tag)
+            new_tag.parent = self._parent
+
+    def insert_after(self, new_tag: "Tag") -> None:  # pyright: ignore[reportIncompatibleMethodOverride]
+        """Insert a new tag after this tag."""
+        self.tag.insert_after(new_tag.tag)
+        if self._parent:
+            idx = self._parent._children.index(self)
+            self._parent._children.insert(idx + 1, new_tag)
+            new_tag.parent = self._parent
 
     def __str__(self) -> str:
         # Handle None content specially to render as empty string

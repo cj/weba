@@ -201,6 +201,57 @@ async def test_ui_replace_with():
     assert "<h3>New heading</h3>" in str(container)
 
 
+@pytest.mark.asyncio
+async def test_ui_insert_methods():
+    # Test insert at specific position
+    with ui.ul() as list_tag:
+        ui.li("First")
+        ui.li("Third")
+
+    second = ui.li("Second")
+    list_tag.insert(1, second)
+
+    assert str(list_tag) == "<ul><li>First</li><li>Second</li><li>Third</li></ul>"
+    assert second.parent == list_tag
+    assert second in list_tag._children  # pyright: ignore[reportPrivateUsage]
+
+    # Test insert_before
+    with ui.div() as container:
+        middle = ui.p("Middle")
+        ui.p("End")
+
+    start = ui.p("Start")
+    middle.insert_before(start)
+
+    assert str(container) == "<div><p>Start</p><p>Middle</p><p>End</p></div>"
+    assert start.parent == container
+    assert start in container._children  # pyright: ignore[reportPrivateUsage]
+
+    # Test insert_after
+    with ui.div() as container:
+        ui.p("Start")
+        middle = ui.p("Middle")
+
+    end = ui.p("End")
+    middle.insert_after(end)
+
+    assert str(container) == "<div><p>Start</p><p>Middle</p><p>End</p></div>"
+    assert end.parent == container
+    assert end in container._children  # pyright: ignore[reportPrivateUsage]
+
+    # Test insert at end position
+    with ui.ul() as list_tag:
+        ui.li("First")
+        ui.li("Second")
+
+    last = ui.li("Last")
+    list_tag.insert(2, last)
+
+    assert str(list_tag) == "<ul><li>First</li><li>Second</li><li>Last</li></ul>"
+    assert last.parent == list_tag
+    assert last in list_tag._children  # pyright: ignore[reportPrivateUsage]
+
+
 def create_card(
     title: str,
     content: str,
