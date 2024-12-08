@@ -222,6 +222,10 @@ with ui.article() as article:
     with ui.strong():
         ui.text("Strong text.")
     ui.text(" End of article.")
+
+print(str(article))
+# <article>Start of article. <em>Emphasized text. </em>Regular text. <strong>Strong text.</strong> 
+# End of article.</article>
 ```
 
 ## JSON Attributes
