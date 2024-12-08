@@ -171,7 +171,31 @@ class Tag(PageElement):
         raise TagAttributeError(type(self).__name__, name)
 
     def comment(self, selector: str) -> list["Tag"]:
-        """Find all tags or text nodes that follow comments matching the given selector."""
+        """Find all tags or text nodes that follow comments matching the given selector.
+
+        This method searches for HTML comments containing the selector text and returns
+        the elements that immediately follow those comments. It can return both HTML
+        elements and text nodes.
+
+        Args:
+            selector: The comment text to search for (e.g., "#button" or ".card")
+
+        Returns:
+            A list of Tag objects that immediately follow matching comments.
+            For text nodes, returns them wrapped in Tag objects.
+            Returns an empty list if no matches are found.
+
+        Example:
+            Given HTML:
+                <!-- .card -->
+                <div>Card 1</div>
+                <!-- .card -->
+                <div>Card 2</div>
+
+            Usage:
+                cards = container.comment(".card")
+                # Returns list of two div Tags
+        """
         results: list[Tag] = []
 
         # Find all comment nodes matching the selector
@@ -199,11 +223,28 @@ class Tag(PageElement):
     def comment_one(self, selector: str) -> "Tag | None":
         """Find the first tag or text node that follows a comment matching the given selector.
 
+        This method searches for the first HTML comment containing the selector text and returns
+        the element that immediately follows it. It can return both HTML elements and text nodes.
+        Similar to comment() but returns only the first match.
+
         Args:
             selector: The comment text to search for (e.g., "#button" or ".card")
 
         Returns:
-            The first Tag object that immediately follows a matching comment, or None if not found.
+            A Tag object that immediately follows the first matching comment.
+            For text nodes, returns them wrapped in Tag objects.
+            Returns None if no match is found.
+
+        Example:
+            Given HTML:
+                <!-- #submit-button -->
+                <button>Submit</button>
+                <!-- #cancel-button -->
+                <button>Cancel</button>
+
+            Usage:
+                submit = container.comment_one("#submit-button")
+                # Returns the first button Tag
         """
 
         # Find all comment nodes matching the selector
