@@ -881,3 +881,37 @@ async def test_ui_comment_with_text_sibling():
     assert len(results) == 1
     assert str(results[0]) == "This is a plain text node."
     assert isinstance(results[0].tag, NavigableString)
+
+
+@pytest.mark.asyncio
+async def test_ui_extract():
+    # Test basic extraction
+    with ui.div() as container:
+        child = ui.p("Test")
+        assert child in container._children  # pyright: ignore[reportPrivateUsage]
+
+        extracted = child.extract()
+        assert extracted is child
+        assert child.parent is None
+        assert child not in container._children  # pyright: ignore[reportPrivateUsage]
+        assert str(container) == "<div></div>"
+
+    # Test extraction with known index
+    with ui.div() as container:
+        ui.span("First")
+        middle = ui.p("Middle")
+        ui.span("Last")
+
+        index = container._children.index(middle)  # pyright: ignore[reportPrivateUsage]
+        extracted = middle.extract(index)
+
+        assert extracted is middle
+        assert middle.parent is None
+        assert middle not in container._children  # pyright: ignore[reportPrivateUsage]
+        assert str(container) == "<div><span>First</span><span>Last</span></div>"
+
+    # Test extraction of element without parent
+    orphan = ui.p("Orphan")
+    extracted = orphan.extract()
+    assert extracted is orphan
+    assert orphan.parent is None

@@ -396,6 +396,26 @@ class Tag(PageElement):
 
         return child
 
+    def extract(self, index: int | None = None) -> "Tag":
+        """Destructively rips this element out of the tree.
+
+        :param index: The location of this element in its parent's
+           .contents, if known. Passing this in allows for a performance
+           optimization.
+
+        :return: `self`, no longer part of the tree.
+        """
+        if self._parent:
+            if index is not None:
+                self._parent._children.pop(index)
+            else:
+                self._parent._children.remove(self)
+            self._parent = None
+
+        self.tag.extract(index)
+
+        return self
+
     def __str__(self) -> str:
         # Handle None content specially to render as empty string
         if not isinstance(self.tag, NavigableString) and self.tag.string == "None":
