@@ -237,7 +237,7 @@ complex_data = {
     "active": True
 }
 with ui.div(data_complex=complex_data) as div:
-    print(str(div))  
+    print(str(div))
     # <div data-complex='{"user": {"name": "John", "age": 30}, "items": ["apple", "banana"], "active": true}'></div>
 
     # Access and parse the JSON data

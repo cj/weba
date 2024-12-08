@@ -119,6 +119,45 @@ class Tag:
         # Attribute does not exist or is None
         raise TagAttributeError(type(self).__name__, name)
 
+    def comment(self, selector: str) -> list["Tag"]:
+        """Find all tags that follow comments matching the given selector.
+
+        Args:
+            selector: The comment text to search for (e.g. "#button" or ".card")
+
+        Returns:
+            A list of Tag objects that immediately follow matching comments
+        """
+        results: list[Tag] = []
+        comments = self.tag.find_all(string=lambda text: isinstance(text, str) and selector in text.strip())
+
+        for comment in comments:
+            next_tag = comment.find_next_sibling()
+
+            if next_tag:
+                results.append(Tag(next_tag))
+
+        return results
+
+    def comment_one(self, selector: str) -> "Tag | None":
+        """Find first tag that follows a comment matching the given selector.
+
+        Args:
+            selector: The comment text to search for (e.g. "#button" or ".card")
+
+        Returns:
+            The first Tag object that immediately follows a matching comment, or None if not found
+        """
+        comments = self.tag.find_all(string=lambda text: isinstance(text, str) and selector in text.strip())
+
+        for comment in comments:
+            next_tag = comment.find_next_sibling()
+
+            if next_tag:
+                return Tag(next_tag)
+
+        return None
+
     def __str__(self) -> str:
         # Handle None content specially to render as empty string
         if self.tag.string == "None":

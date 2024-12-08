@@ -520,3 +520,63 @@ async def test_ui_json_attributes():
     with ui.div(data_empty_obj={}, data_empty_arr=[]) as div:
         assert div["data-empty-obj"] == "{}"
         assert div["data-empty-arr"] == "[]"
+
+
+@pytest.mark.asyncio
+async def test_ui_comment_one():
+    # Test finding a single element after a comment
+    html = """<div>
+    <!-- #button -->
+    <button>click me</button>
+    </div>"""
+
+    container = ui.raw(html)
+    button = container.comment_one("#button")
+    assert button is not None
+    assert str(button) == "<button>click me</button>"
+
+    # Test with no matching comment
+    assert container.comment_one("#nonexistent") is None
+
+    # Test with comment but no following tag
+    html = "<div><!-- #empty --></div>"
+    container = ui.raw(html)
+    assert container.comment_one("#empty") is None
+
+
+@pytest.mark.asyncio
+async def test_ui_comment():
+    # Test finding multiple elements after comments
+    html = """<div>
+    <!-- .button -->
+    <button>first</button>
+    <!-- .button -->
+    <button>second</button>
+    <!-- .button -->
+    <button>third</button>
+    </div>"""
+
+    container = ui.raw(html)
+    buttons = container.comment(".button")
+    assert len(buttons) == 3
+    assert str(buttons[0]) == "<button>first</button>"
+    assert str(buttons[1]) == "<button>second</button>"
+    assert str(buttons[2]) == "<button>third</button>"
+
+    # Test with no matching comments
+    assert container.comment(".nonexistent") == []
+
+    # Test with mixed content
+    html = """<div>
+    <!-- .item -->
+    <button>a button</button>
+    <p>not matched</p>
+    <!-- .item -->
+    <span>a span</span>
+    </div>"""
+
+    container = ui.raw(html)
+    items = container.comment(".item")
+    assert len(items) == 2
+    assert str(items[0]) == "<button>a button</button>"
+    assert str(items[1]) == "<span>a span</span>"
