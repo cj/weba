@@ -183,16 +183,16 @@ class Tag:
             while next_node:  # Iterate over siblings until a valid node is found
                 if isinstance(next_node, Bs4Tag):
                     return Tag(next_node)
-                elif isinstance(next_node, str):
-                    # Wrap plain text nodes and return
-                    text = next_node.strip()
 
-                    if text:  # Only create node if non-empty after stripping
-                        text_node = NavigableString(text)
+                # Wrap plain text nodes and return
+                text = next_node.strip()
 
-                        return Tag(text_node)  # pyright: ignore[reportArgumentType]
+                if text:  # Only create node if non-empty after stripping
+                    text_node = NavigableString(text)
 
-                next_node = cast(Any, next_node.next_sibling)  # Move to the next sibling
+                    return Tag(text_node)  # pyright: ignore[reportArgumentType]
+
+                next_node = next_node.next_sibling  # Move to the next sibling
 
         return None
 

@@ -596,6 +596,15 @@ async def test_ui_comment():
     assert next_node is not None
     assert str(next_node) == "#another"
 
+    # Test with comment at the end of its parent (no next sibling)
+    html = """<div>
+    <p>Some content</p>
+    <!-- #last -->
+    </div>"""
+    container = ui.raw(html)
+    next_node = container.comment_one("#last")
+    assert next_node is None
+
     # Test with mixed content
     html = """<div>
     <!-- .item -->
