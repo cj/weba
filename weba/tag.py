@@ -331,7 +331,12 @@ class Tag(PageElement):
             tag.parent = self
 
     def clear(self) -> None:
-        """Remove all children from this tag."""
+        """Wipe out all children of this PageElement by calling extract()
+           on them.
+
+        :param decompose: If this is True, decompose() (a more
+            destructive method) will be called instead of extract().
+        """
         self.tag.clear()
 
         for child in self._children:
