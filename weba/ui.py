@@ -22,6 +22,9 @@ class Ui:
         Returns:
             Tag: A new Tag object containing the parsed HTML
         """
+        if html is None:
+            html = ""
+
         text_node = self.soup.new_string(str(html))  # pyright: ignore[reportUnknownMemberType, reportUnknownVariableType]
 
         parent = current_parent.get()

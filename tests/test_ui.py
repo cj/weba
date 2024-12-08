@@ -512,7 +512,7 @@ async def test_ui_text():
     assert str(ui.text(42)) == "42"
     assert str(ui.text(3.14)) == "3.14"
     assert str(ui.text(True)) == "True"
-    assert str(ui.text(None)) == "None"
+    assert not str(ui.text(None))
 
     # Test in context
     with ui.div() as container:
