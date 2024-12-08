@@ -2421,6 +2421,7 @@ version = "0.0.1"
 source = { editable = "." }
 dependencies = [
     { name = "beautifulsoup4" },
+    { name = "types-beautifulsoup4" },
 ]
 
 [package.dev-dependencies]
@@ -2438,7 +2439,6 @@ docs = [
 lint = [
     { name = "pyright" },
     { name = "ruff" },
-    { name = "types-beautifulsoup4" },
 ]
 test = [
     { name = "pytest" },
@@ -2448,7 +2448,10 @@ test = [
 ]
 
 [package.metadata]
-requires-dist = [{ name = "beautifulsoup4", specifier = ">=4" }]
+requires-dist = [
+    { name = "beautifulsoup4", specifier = ">=4" },
+    { name = "types-beautifulsoup4", specifier = ">=4" },
+]
 
 [package.metadata.requires-dev]
 dev = [
@@ -2465,7 +2468,6 @@ docs = [
 lint = [
     { name = "pyright" },
     { name = "ruff", specifier = ">=0.8.2" },
-    { name = "types-beautifulsoup4", specifier = ">=4.12.0.20241020" },
 ]
 test = [
     { name = "pytest", specifier = ">=7.2.0" },
