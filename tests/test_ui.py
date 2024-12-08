@@ -766,6 +766,40 @@ async def test_ui_replace_with():
 
 
 @pytest.mark.asyncio
+async def test_ui_insert_before_multiple():
+    # Test inserting multiple tags before an existing tag
+    with ui.div() as container:
+        existing = ui.p("Existing")
+        ui.span("After")
+
+    new1 = ui.h1("First")
+    new2 = ui.h2("Second")
+    new3 = ui.h3("Third")
+    existing.insert_before(new1, new2, new3)
+
+    assert str(container) == "<div><h1>First</h1><h2>Second</h2><h3>Third</h3><p>Existing</p><span>After</span></div>"
+    assert all(tag.parent == container for tag in [new1, new2, new3])
+    assert all(tag in container._children for tag in [new1, new2, new3])  # pyright: ignore[reportPrivateUsage]
+
+
+@pytest.mark.asyncio
+async def test_ui_insert_after_multiple():
+    # Test inserting multiple tags after an existing tag
+    with ui.div() as container:
+        ui.span("Before")
+        existing = ui.p("Existing")
+
+    new1 = ui.h1("First")
+    new2 = ui.h2("Second")
+    new3 = ui.h3("Third")
+    existing.insert_after(new1, new2, new3)
+
+    assert str(container) == "<div><span>Before</span><p>Existing</p><h1>First</h1><h2>Second</h2><h3>Third</h3></div>"
+    assert all(tag.parent == container for tag in [new1, new2, new3])
+    assert all(tag in container._children for tag in [new1, new2, new3])  # pyright: ignore[reportPrivateUsage]
+
+
+@pytest.mark.asyncio
 async def test_ui_insert_before_no_parent():
     # Create tags without a parent
     existing = Tag(ui.raw("<p>Existing content</p>").tag)

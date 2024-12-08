@@ -283,35 +283,39 @@ class Tag(PageElement):
 
         new_tag.parent = self
 
-    def insert_before(self, new_tag: "Tag") -> None:  # pyright: ignore[reportIncompatibleMethodOverride]
+    def insert_before(self, *args: "Tag") -> None:  # pyright: ignore[reportIncompatibleMethodOverride]
         """Makes the given element(s) the immediate predecessor of this one.
 
         All the elements will have the same parent, and the given elements
         will be immediately before this one.
 
-        :param args: One or more PageElements.
+        Args:
+            *args: One or more Tag elements.
         """
-        self.tag.insert_before(new_tag.tag)
+        self.tag.insert_before(*(arg.tag for arg in args))
 
         if self._parent:
             idx = self._parent._children.index(self)
-            self._parent._children.insert(idx, new_tag)
-            new_tag.parent = self._parent
+            for i, arg in enumerate(args):
+                self._parent._children.insert(idx + i, arg)
+                arg.parent = self._parent
 
-    def insert_after(self, new_tag: "Tag") -> None:  # pyright: ignore[reportIncompatibleMethodOverride]
+    def insert_after(self, *args: "Tag") -> None:  # pyright: ignore[reportIncompatibleMethodOverride]
         """Makes the given element(s) the immediate successor of this one.
 
         The elements will have the same parent, and the given elements
         will be immediately after this one.
 
-        :param args: One or more PageElements.
+        Args:
+            *args: One or more Tag elements.
         """
-        self.tag.insert_after(new_tag.tag)
+        self.tag.insert_after(*(arg.tag for arg in args))
 
         if self._parent:
             idx = self._parent._children.index(self)
-            self._parent._children.insert(idx + 1, new_tag)
-            new_tag.parent = self._parent
+            for i, arg in enumerate(args):
+                self._parent._children.insert(idx + i + 1, arg)
+                arg.parent = self._parent
 
     def extend(self, tags: list["Tag"]) -> None:  # pyright: ignore[reportIncompatibleMethodOverride]
         """Appends the given PageElements to this one's contents.
