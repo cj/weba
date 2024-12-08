@@ -211,6 +211,17 @@ with ui.div() as container:
     ui.text(" last")
 
 print(str(container))  # <div>First <strong>important</strong> last</div>
+
+# Complex text layout
+
+with ui.article() as article:
+    ui.text("Start of article. ")
+    with ui.em():
+        ui.text("Emphasized text. ")
+    ui.text("Regular text. ")
+    with ui.strong():
+        ui.text("Strong text.")
+    ui.text(" End of article.")
 ```
 
 ## JSON Attributes
@@ -247,16 +258,42 @@ with ui.div(data_complex=complex_data) as div:
     print(stored_data["active"])        # True
 ```
 
-## Complex text layout
+## Comment Selectors
+
+Find elements that follow HTML comments:
 
 ```python
-with ui.article() as article:
-    ui.text("Start of article. ")
-    with ui.em():
-        ui.text("Emphasized text. ")
-    ui.text("Regular text. ")
-    with ui.strong():
-        ui.text("Strong text.")
-    ui.text(" End of article.")
+# HTML with comments
+html = """
+<div>
+    <!-- #submit-button -->
+    <button>Submit</button>
+    
+    <!-- .card -->
+    <div class="card">Card 1</div>
+    <!-- .card -->
+    <div class="card">Card 2</div>
+</div>
+"""
 
+container = ui.raw(html)
+
+# Find first button after #submit-button comment
+button = container.comment_one("#submit-button")
+print(str(button))  # <button>Submit</button>
+
+# Find all cards after .card comments
+cards = container.comment(".card")
+for card in cards:
+    print(str(card))
+# <div class="card">Card 1</div>
+# <div class="card">Card 2</div>
+
+# No match returns None for comment_one
+no_match = container.comment_one("#nonexistent")
+print(no_match)  # None
+
+# No match returns empty list for comment
+no_matches = container.comment("#nonexistent") 
+print(no_matches)  # []
 ```
