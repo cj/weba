@@ -2,8 +2,9 @@ import asyncio
 import json
 
 import pytest
+from bs4 import NavigableString
 
-from weba import Tag, TagAttributeError, ui
+from weba import Tag, TagAttributeError, TagKeyError, ui
 
 
 @pytest.mark.asyncio
@@ -299,6 +300,13 @@ async def test_ui_tag_attributes():
     assert isinstance(div["class"], list)
     assert len(div["class"]) == 0
 
+    # Test NavigableString key access
+    text_node = Tag(NavigableString("test"))  # pyright: ignore[reportArgumentType]
+    with pytest.raises(TagKeyError) as exc_info:
+        text_node["class"]
+    assert "NavigableString" in str(exc_info.value)
+    assert "class" in str(exc_info.value)
+
 
 @pytest.mark.asyncio
 async def test_ui_wrap_tag():
@@ -528,6 +536,8 @@ async def test_ui_comment_one():
     html = """<div>
     <!-- #button -->
     <button>click me</button>
+    <!-- .some-text -->
+    Some Text
     </div>"""
 
     container = ui.raw(html)
@@ -542,6 +552,16 @@ async def test_ui_comment_one():
     html = "<div><!-- #empty --></div>"
     container = ui.raw(html)
     assert container.comment_one("#empty") is None
+
+    # Test with comment followed by plain text
+    html = """<div>
+    <!-- .some-text -->
+    Some Text
+    </div>"""
+    container = ui.raw(html)
+    text_node = container.comment_one(".some-text")
+    assert text_node is not None
+    assert str(text_node) == "Some Text"
 
 
 @pytest.mark.asyncio
@@ -566,6 +586,16 @@ async def test_ui_comment():
     # Test with no matching comments
     assert container.comment(".nonexistent") == []
 
+    # Test with comment followed by another comment
+    html = """<div>
+    <!-- #button -->
+    <!-- #another -->
+    </div>"""
+    container = ui.raw(html)
+    next_node = container.comment_one("#button")
+    assert next_node is not None
+    assert str(next_node) == "#another"
+
     # Test with mixed content
     html = """<div>
     <!-- .item -->
@@ -573,6 +603,8 @@ async def test_ui_comment():
     <p>not matched</p>
     <!-- .item -->
     <span>a span</span>
+    <!-- non-tag content -->
+    This is some text.
     </div>"""
 
     container = ui.raw(html)
@@ -580,3 +612,15 @@ async def test_ui_comment():
     assert len(items) == 2
     assert str(items[0]) == "<button>a button</button>"
     assert str(items[1]) == "<span>a span</span>"
+
+    # Test with a non-tag sibling
+    html = """<div>
+    <!-- .ignored -->
+    This is some text.
+    <!-- .ignored -->
+    Another piece of text.
+    </div>"""
+
+    container = ui.raw(html)
+    ignored = container.comment(".ignored")
+    assert ignored == []

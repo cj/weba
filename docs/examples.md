@@ -224,7 +224,7 @@ with ui.article() as article:
     ui.text(" End of article.")
 
 print(str(article))
-# <article>Start of article. <em>Emphasized text. </em>Regular text. <strong>Strong text.</strong> 
+# <article>Start of article. <em>Emphasized text. </em>Regular text. <strong>Strong text.</strong>
 # End of article.</article>
 ```
 
@@ -272,7 +272,7 @@ html = """
 <div>
     <!-- #submit-button -->
     <button>Submit</button>
-    
+
     <!-- .card -->
     <div class="card">Card 1</div>
     <!-- .card -->
@@ -298,6 +298,6 @@ no_match = container.comment_one("#nonexistent")
 print(no_match)  # None
 
 # No match returns empty list for comment
-no_matches = container.comment("#nonexistent") 
+no_matches = container.comment("#nonexistent")
 print(no_matches)  # []
 ```

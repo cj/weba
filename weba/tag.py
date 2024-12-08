@@ -1,7 +1,8 @@
 import json
 from contextvars import ContextVar, Token
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, cast
 
+from bs4 import NavigableString
 from bs4 import Tag as Bs4Tag
 
 if TYPE_CHECKING:  # pragma: no cover
@@ -22,8 +23,21 @@ class TagAttributeError(AttributeError):
         return f"'{self.tag_name}' object has no attribute or method '{self.attribute_name}'"
 
 
+class TagKeyError(KeyError):
+    """Custom exception for invalid key access in Tag objects."""
+
+    def __init__(self, tag_type: str, key: str):
+        self.tag_type = tag_type
+        self.key = key
+        super().__init__(self._generate_message())
+
+    def _generate_message(self) -> str:
+        return f"'{self.tag_type}' does not support attribute access: {self.key}"
+
+
 class Tag:
     def __init__(self, tag: Bs4Tag, parent: "Tag | None" = None):
+        # If it's a NavigableString, wrap it in a new Tag
         self.tag = tag
         self.parent = parent
         self._children: list[Tag] = []
@@ -50,14 +64,20 @@ class Tag:
 
     def __getitem__(self, key: str) -> Any:
         """Allow accessing tag attributes like tag['class']."""
+
+        # NavigableString doesn't support item access
+        if isinstance(self.tag, NavigableString):
+            raise TagKeyError("NavigableString", key)
+
         if key != "class":
             value = self.tag[key]
             # Convert objects/arrays to JSON string representation
             return json.dumps(value) if isinstance(value, dict | list) else value
+
         # Initialize class as empty list if it doesn't exist
         if "class" not in self.tag.attrs:
             self.tag.attrs["class"] = []
-            return self.tag.attrs["class"]
+            return cast(list[str], self.tag.attrs["class"])
 
         # Get the current value
         current_value = self.tag.attrs.get("class", [])
@@ -120,46 +140,65 @@ class Tag:
         raise TagAttributeError(type(self).__name__, name)
 
     def comment(self, selector: str) -> list["Tag"]:
-        """Find all tags that follow comments matching the given selector.
+        """Find all tags or text nodes that follow comments matching the given selector.
 
         Args:
-            selector: The comment text to search for (e.g. "#button" or ".card")
+            selector: The comment text to search for (e.g., "#button" or ".card")
 
         Returns:
-            A list of Tag objects that immediately follow matching comments
+            A list of Tag objects that immediately follow matching comments.
         """
         results: list[Tag] = []
+
+        # Find all comment nodes matching the selector
         comments = self.tag.find_all(string=lambda text: isinstance(text, str) and selector in text.strip())
 
         for comment in comments:
-            next_tag = comment.find_next_sibling()
+            # Get the next sibling of the comment
+            next_node = comment.find_next_sibling()
 
-            if next_tag:
-                results.append(Tag(next_tag))
+            # Wrap both BeautifulSoup tags and plain strings
+            if isinstance(next_node, Bs4Tag):
+                results.append(Tag(next_node))
 
         return results
 
     def comment_one(self, selector: str) -> "Tag | None":
-        """Find first tag that follows a comment matching the given selector.
+        """Find the first tag or text node that follows a comment matching the given selector.
 
         Args:
-            selector: The comment text to search for (e.g. "#button" or ".card")
+            selector: The comment text to search for (e.g., "#button" or ".card")
 
         Returns:
-            The first Tag object that immediately follows a matching comment, or None if not found
+            The first Tag object that immediately follows a matching comment, or None if not found.
         """
+
+        # Find all comment nodes matching the selector
         comments = self.tag.find_all(string=lambda text: isinstance(text, str) and selector in text.strip())
 
         for comment in comments:
-            next_tag = comment.find_next_sibling()
+            # Get the next sibling of the comment
+            next_node = comment.next_sibling  # Includes all sibling nodes, not just tags
 
-            if next_tag:
-                return Tag(next_tag)
+            while next_node:  # Iterate over siblings until a valid node is found
+                if isinstance(next_node, Bs4Tag):
+                    return Tag(next_node)
+                elif isinstance(next_node, str):
+                    # Wrap plain text nodes and return
+                    text = next_node.strip()
+
+                    if text:  # Only create node if non-empty after stripping
+                        text_node = NavigableString(text)
+
+                        return Tag(text_node)  # pyright: ignore[reportArgumentType]
+
+                next_node = cast(Any, next_node.next_sibling)  # Move to the next sibling
 
         return None
 
     def __str__(self) -> str:
         # Handle None content specially to render as empty string
-        if self.tag.string == "None":
+        if not isinstance(self.tag, NavigableString) and self.tag.string == "None":
             self.tag.string = ""
+
         return str(self.tag)

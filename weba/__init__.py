@@ -1,5 +1,5 @@
 from .context import current_parent
-from .tag import Tag, TagAttributeError
+from .tag import Tag, TagAttributeError, TagKeyError
 from .ui import ui
 
-__all__ = ["Tag", "TagAttributeError", "current_parent", "ui"]
+__all__ = ["Tag", "TagAttributeError", "TagKeyError", "current_parent", "ui"]
