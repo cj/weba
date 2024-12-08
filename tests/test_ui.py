@@ -4,7 +4,7 @@ import json
 import pytest
 from bs4 import NavigableString
 
-from weba import Tag, TagAttributeError, TagKeyError, ui
+from weba import Tag, TagAttributeError, TagIndexError, TagKeyError, ui
 
 
 @pytest.mark.asyncio
@@ -332,6 +332,45 @@ async def test_ui_card_component():
         "</div>"
     )
     assert expected3 in str(card3)
+
+
+@pytest.mark.asyncio
+async def test_ui_list_operations():
+    # Test extend
+    with ui.ul() as list_tag:
+        items = [ui.li(f"Item {i}") for i in range(3)]
+        list_tag.extend(items)
+
+    assert str(list_tag) == "<ul><li>Item 0</li><li>Item 1</li><li>Item 2</li></ul>"
+    assert all(item.parent == list_tag for item in items)
+    assert all(item in list_tag._children for item in items)  # pyright: ignore[reportPrivateUsage]
+
+    # Test clear
+    list_tag.clear()
+    assert str(list_tag) == "<ul></ul>"
+    assert len(list_tag._children) == 0  # pyright: ignore[reportPrivateUsage]
+    assert all(item.parent is None for item in items)
+
+    # Test pop
+    with ui.ul() as list_tag:
+        for i in range(3):
+            ui.li(f"Item {i}")
+
+    # Pop from end
+    last = list_tag.pop()
+    assert str(last) == "<li>Item 2</li>"
+    assert last.parent is None
+    assert last not in list_tag._children  # pyright: ignore[reportPrivateUsage]
+
+    # Pop from beginning
+    first = list_tag.pop(0)
+    assert str(first) == "<li>Item 0</li>"
+    assert str(list_tag) == "<ul><li>Item 1</li></ul>"
+
+    # Pop from empty list
+    list_tag.clear()
+    with pytest.raises(TagIndexError):
+        list_tag.pop()
 
 
 @pytest.mark.asyncio

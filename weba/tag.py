@@ -23,6 +23,13 @@ class TagAttributeError(AttributeError):
         return f"'{self.tag_name}' object has no attribute or method '{self.attribute_name}'"
 
 
+class TagIndexError(IndexError):
+    """Custom exception for invalid index operations in Tag objects."""
+
+    def __init__(self, message: str):
+        super().__init__(message)
+
+
 class TagKeyError(KeyError):
     """Custom exception for invalid key access in Tag objects."""
 
@@ -241,6 +248,30 @@ class Tag(PageElement):
             idx = self._parent._children.index(self)
             self._parent._children.insert(idx + 1, new_tag)
             new_tag.parent = self._parent
+
+    def extend(self, tags: list["Tag"]) -> None:  # pyright: ignore[reportIncompatibleMethodOverride]
+        """Extend this tag's children with a list of tags."""
+        for tag in tags:
+            self.tag.append(tag.tag)
+            self._children.append(tag)
+            tag.parent = self
+
+    def clear(self) -> None:
+        """Remove all children from this tag."""
+        self.tag.clear()
+        for child in self._children:
+            child.parent = None
+        self._children.clear()
+
+    def pop(self, index: int = -1) -> "Tag":
+        """Remove and return the tag at the given index."""
+        if not self._children:
+            raise TagIndexError("pop from empty tag")
+
+        child = self._children.pop(index)
+        child.tag.extract()  # Remove from BeautifulSoup tree
+        child.parent = None
+        return child
 
     def __str__(self) -> str:
         # Handle None content specially to render as empty string
