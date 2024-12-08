@@ -88,7 +88,7 @@ class Tag(PageElement):
         """Add a child tag to this tag."""
         if child not in self._children:
             self._children.append(child)
-            child.parent = self
+            child._parent = self
             # Always ensure BS4 tag structure is correct
             self.tag.append(child.tag)
 
@@ -169,6 +169,19 @@ class Tag(PageElement):
 
         # Attribute does not exist or is None
         raise TagAttributeError(type(self).__name__, name)
+
+    def __setattr__(self, name: str, value: Any) -> None:
+        """Proxy attribute setting to the underlying BeautifulSoup tag."""
+        # Special case for our internal attributes
+        if name in {"tag", "_parent", "_children", "_token", "parent"}:
+            super().__setattr__(name, value)
+            return
+
+        # Check if this is a legitimate BeautifulSoup Tag attribute
+        if name in type(self.tag).__dict__ or name in {"string", "name", "attrs"}:
+            setattr(self.tag, name, value)
+        else:
+            raise TagAttributeError(type(self).__name__, name)
 
     def comment(self, selector: str) -> list["Tag"]:
         """Find all tags or text nodes that follow comments matching the given selector.
@@ -322,7 +335,7 @@ class Tag(PageElement):
         else:
             self._children.append(new_tag)
 
-        new_tag.parent = self
+        new_tag._parent = self
 
     def insert_before(self, *args: "Tag") -> None:  # pyright: ignore[reportIncompatibleMethodOverride]
         """Makes the given element(s) the immediate predecessor of this one.
@@ -339,7 +352,7 @@ class Tag(PageElement):
             idx = self._parent._children.index(self)
             for i, arg in enumerate(args):
                 self._parent._children.insert(idx + i, arg)
-                arg.parent = self._parent
+                arg._parent = self._parent
 
     def insert_after(self, *args: "Tag") -> None:  # pyright: ignore[reportIncompatibleMethodOverride]
         """Makes the given element(s) the immediate successor of this one.
@@ -356,7 +369,7 @@ class Tag(PageElement):
             idx = self._parent._children.index(self)
             for i, arg in enumerate(args):
                 self._parent._children.insert(idx + i + 1, arg)
-                arg.parent = self._parent
+                arg._parent = self._parent
 
     def extend(self, tags: list["Tag"]) -> None:  # pyright: ignore[reportIncompatibleMethodOverride]
         """Appends the given PageElements to this one's contents.
@@ -369,7 +382,7 @@ class Tag(PageElement):
         for tag in tags:
             self.tag.append(tag.tag)
             self._children.append(tag)
-            tag.parent = self
+            tag._parent = self
 
     def clear(self) -> None:
         """Wipe out all children of this PageElement by calling extract()
@@ -381,7 +394,7 @@ class Tag(PageElement):
         self.tag.clear()
 
         for child in self._children:
-            child.parent = None
+            child._parent = None
 
         self._children.clear()
 
@@ -392,7 +405,7 @@ class Tag(PageElement):
 
         child = self._children.pop(index)
         child.tag.extract()  # Remove from BeautifulSoup tree
-        child.parent = None
+        child._parent = None
 
         return child
 

@@ -915,3 +915,40 @@ async def test_ui_extract():
     extracted = orphan.extract()
     assert extracted is orphan
     assert orphan.parent is None
+
+
+@pytest.mark.asyncio
+async def test_ui_setting_tag_attributes():
+    button_tag = ui.button("Test")
+
+    # Test direct attribute access
+    button_tag.string = "Foo"
+    assert str(button_tag) == "<button>Foo</button>"
+
+    # Test changing tag name
+    button_tag.name = "input"
+    assert str(button_tag) == "<input>Foo</input>"
+
+    # Test attrs property
+    button_tag.attrs["class"] = "primary"
+    assert str(button_tag) == '<input class="primary">Foo</input>'
+
+    # Test attrs with multiple classes
+    button_tag.attrs["class"] = ["primary", "large"]
+    assert str(button_tag) == '<input class="primary large">Foo</input>'
+
+    # Test other attributes
+    button_tag.attrs["data-test"] = "value"
+    assert 'data-test="value"' in str(button_tag)
+
+    # Test NavigableString attrs access
+    text_node = ui.text("test")
+
+    with pytest.raises(TagAttributeError):
+        text_node.attrs["class"] = "test"
+
+    # Test setting invalid attribute
+    with pytest.raises(TagAttributeError) as exc_info:
+        button_tag.nonexistent = "value"
+
+    assert "nonexistent" in str(exc_info.value)
