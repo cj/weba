@@ -155,11 +155,18 @@ class Tag:
 
         for comment in comments:
             # Get the next sibling of the comment
-            next_node = comment.find_next_sibling()
+            next_node = comment.next_sibling
 
-            # Wrap both BeautifulSoup tags and plain strings
-            if isinstance(next_node, Bs4Tag):
-                results.append(Tag(next_node))
+            while next_node and isinstance(next_node, NavigableString) and not next_node.strip():
+                next_node = next_node.next_sibling
+
+            if next_node:
+                if isinstance(next_node, Bs4Tag):
+                    results.append(Tag(next_node))
+                elif isinstance(next_node, NavigableString):
+                    text = next_node.strip()
+                    if text:
+                        results.append(Tag(NavigableString(text)))  # pyright: ignore[reportArgumentType]
 
         return results
 

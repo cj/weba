@@ -622,14 +622,20 @@ async def test_ui_comment():
     assert str(items[0]) == "<button>a button</button>"
     assert str(items[1]) == "<span>a span</span>"
 
-    # Test with a non-tag sibling
+    # Test with a mixed
     html = """<div>
-    <!-- .ignored -->
+    <!-- .mixed -->
     This is some text.
-    <!-- .ignored -->
+    <!-- .mixed -->
     Another piece of text.
+    <!-- .mixed -->
+    <span>in a span</span>
     </div>"""
 
     container = ui.raw(html)
-    ignored = container.comment(".ignored")
-    assert ignored == []
+    mixed = container.comment(".mixed")
+
+    assert len(mixed) == 3
+    assert str(mixed[0]) == "This is some text."
+    assert str(mixed[1]) == "Another piece of text."
+    assert str(mixed[2]) == "<span>in a span</span>"
