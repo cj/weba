@@ -656,18 +656,25 @@ async def test_ui_comment():
     next_node = container.comment_one("#last")
     assert next_node is None
 
-    # Test with mixed content
+    # Test with mixed content and empty nodes
     html = """<div>
     <!-- .item -->
+
+
     <button>a button</button>
     <p>not matched</p>
     <!-- .item -->
+
     <span>a span</span>
     <!-- non-tag content -->
     This is some text.
     </div>"""
 
     container = ui.raw(html)
+
+    # Test a method that returns a direct result
+    assert container.tag.name == "div"
+
     items = container.comment(".item")
     assert len(items) == 2
     assert str(items[0]) == "<button>a button</button>"

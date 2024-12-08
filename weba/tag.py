@@ -136,13 +136,10 @@ class Tag(PageElement):
                     converted_kwargs = {k: v.tag if isinstance(v, Tag) else v for k, v in kwargs.items()}
                     result = attr(*converted_args, **converted_kwargs)
 
-                    # Wrap the result if it is a BeautifulSoup tag
-                    if name in {"select_one", "find", "find_next", "find_previous"}:
-                        return self.wrap_tag(result)  # pyright: ignore[reportArgumentType]
-                    elif name in {"select", "find_all"}:
+                    if isinstance(result, list):
                         return [self.wrap_tag(t) for t in result if t is not None]  # pyright: ignore[reportGeneralTypeIssues, reportUnknownVariableType, reportUnknownArgumentType]
 
-                    return result
+                    return self.wrap_tag(result)  # pyright: ignore[reportArgumentType]
 
                 return wrapped
 
