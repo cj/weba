@@ -34,6 +34,16 @@ class TagIndexError(IndexError):
         return f"'{self.tag_name}' from empty tag"
 
 
+class TagValueError(ValueError):
+    """Custom exception for invalid value operations in Tag objects."""
+
+    NO_PARENT_ERROR = "Cannot replace one element with another when the element to be replaced is not part of a tree."
+    PARENT_REPLACEMENT_ERROR = "Cannot replace a Tag with its parent."
+
+    def __init__(self, message: str):
+        super().__init__(message)
+
+
 class TagKeyError(KeyError):
     """Custom exception for invalid key access in Tag objects."""
 
@@ -219,41 +229,97 @@ class Tag(PageElement):
 
         return None
 
-    def replace_with(self, new_tag: "Tag") -> None:  # pyright: ignore[reportIncompatibleMethodOverride]
-        """Replace this tag with another tag."""
-        self.tag.replace_with(new_tag.tag)
-        if self._parent:
-            # Update the parent's children list
-            idx = self._parent._children.index(self)
-            self._parent._children[idx] = new_tag
-            new_tag.parent = self._parent
+    def replace_with(self, *args: "Tag") -> "Tag":  # pyright: ignore[reportIncompatibleMethodOverride]
+        """Replace this tag with one or more tags.
+
+        Args:
+            *args: One or more Tag objects to replace this tag with.
+
+        Returns:
+            self: The removed tag, no longer part of the tree.
+
+        Raises:
+            ValueError: If tag has no parent or if trying to replace with parent.
+        """
+        if self._parent is None:
+            raise TagValueError(TagValueError.NO_PARENT_ERROR)
+
+        if len(args) == 1 and args[0] is self:
+            return self
+
+        if any(x is self._parent for x in args):
+            raise TagValueError(TagValueError.PARENT_REPLACEMENT_ERROR)
+
+        # Update our parent-child relationships
+        old_parent = self._parent
+        old_parent._children.remove(self)
+        self._parent = None
+
+        # Let BeautifulSoup handle the DOM manipulation
+        self.tag.replace_with(*(arg.tag for arg in args))
+
+        # Update parent relationships for new tags
+        for arg in args:
+            old_parent._children.append(arg)
+            arg.parent = old_parent
+
+        return self
 
     def insert(self, position: int, new_tag: "Tag") -> None:  # pyright: ignore[reportIncompatibleMethodOverride]
-        """Insert a new tag at the given position."""
+        """Insert a new PageElement in the list of this PageElement's children.
+
+        This works the same way as `list.insert`.
+
+        :param position: The numeric position that should be occupied
+           in `self.children` by the new PageElement.
+        :param new_child: A PageElement.
+        """
         self.tag.insert(position, new_tag.tag)
+
         if position < len(self._children):
             self._children.insert(position, new_tag)
         else:
             self._children.append(new_tag)
+
         new_tag.parent = self
 
     def insert_before(self, new_tag: "Tag") -> None:  # pyright: ignore[reportIncompatibleMethodOverride]
-        """Insert a new tag before this tag."""
+        """Makes the given element(s) the immediate predecessor of this one.
+
+        All the elements will have the same parent, and the given elements
+        will be immediately before this one.
+
+        :param args: One or more PageElements.
+        """
         self.tag.insert_before(new_tag.tag)
+
         if self._parent:
             idx = self._parent._children.index(self)
             self._parent._children.insert(idx, new_tag)
             new_tag.parent = self._parent
 
     def insert_after(self, new_tag: "Tag") -> None:  # pyright: ignore[reportIncompatibleMethodOverride]
-        """Insert a new tag after this tag."""
+        """Makes the given element(s) the immediate successor of this one.
+
+        The elements will have the same parent, and the given elements
+        will be immediately after this one.
+
+        :param args: One or more PageElements.
+        """
         self.tag.insert_after(new_tag.tag)
+
         if self._parent:
             idx = self._parent._children.index(self)
             self._parent._children.insert(idx + 1, new_tag)
             new_tag.parent = self._parent
 
     def extend(self, tags: list["Tag"]) -> None:  # pyright: ignore[reportIncompatibleMethodOverride]
+        """Appends the given PageElements to this one's contents.
+
+        :param tags: A list of PageElements. If a single Tag is
+            provided instead, this PageElement's contents will be extended
+            with that Tag's contents.
+        """
         """Extend this tag's children with a list of tags."""
         for tag in tags:
             self.tag.append(tag.tag)
@@ -263,8 +329,10 @@ class Tag(PageElement):
     def clear(self) -> None:
         """Remove all children from this tag."""
         self.tag.clear()
+
         for child in self._children:
             child.parent = None
+
         self._children.clear()
 
     def pop(self, index: int = -1) -> "Tag":
@@ -275,6 +343,7 @@ class Tag(PageElement):
         child = self._children.pop(index)
         child.tag.extract()  # Remove from BeautifulSoup tree
         child.parent = None
+
         return child
 
     def __str__(self) -> str:

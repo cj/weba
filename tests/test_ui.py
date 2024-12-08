@@ -4,7 +4,7 @@ import json
 import pytest
 from bs4 import NavigableString
 
-from weba import Tag, TagAttributeError, TagIndexError, TagKeyError, ui
+from weba import Tag, TagAttributeError, TagIndexError, TagKeyError, TagValueError, ui
 
 
 @pytest.mark.asyncio
@@ -178,27 +178,6 @@ async def test_ui_append_to_existing_element():
     list_tag.append(list_item_tag("Item 3"))
 
     assert "<ul><li>Item 1</li><li>Item 2</li><li>Item 3</li></ul>" in str(list_tag)
-
-
-@pytest.mark.asyncio
-async def test_ui_replace_with():
-    with ui.div() as container:
-        original = ui.p("Original content")
-        ui.div("Other content")
-
-    replacement = ui.h2("New content")
-    original.replace_with(replacement)
-
-    assert "<div><h2>New content</h2><div>Other content</div></div>" in str(container)
-
-    with ui.div() as container:
-        ui.h1("Hello, World!")
-        ui.h2("This is a subtext.")
-
-    container.select_one("h1").replace_with(ui.h3("New heading"))
-
-    assert "<h1>Hello, World!</h1>" not in str(container)
-    assert "<h3>New heading</h3>" in str(container)
 
 
 @pytest.mark.asyncio
@@ -739,17 +718,51 @@ async def test_ui_comment():
 
 
 @pytest.mark.asyncio
-async def test_ui_replace_with_no_parent():
-    # Create tags without a parent
-    original = Tag(ui.raw("<p>Original content</p>").tag)
-    replacement = Tag(ui.raw("<h2>Replacement content</h2>").tag)
+async def test_ui_replace_with():
+    # Test basic replacement
+    with ui.div() as container:
+        original = ui.p("Original")
+        ui.span("Other")
 
-    # Call replace_with when _parent is None
-    original.replace_with(replacement)
+    replacement = ui.h2("New")
+    removed = original.replace_with(replacement)
 
-    # Verify that the replacement occurred in the DOM
-    assert str(original.tag) != str(replacement.tag)
-    assert str(replacement.tag) == "<h2>Replacement content</h2>"
+    assert str(container) == "<div><h2>New</h2><span>Other</span></div>"
+    assert removed is original
+    assert original.parent is None
+    assert replacement.parent is container
+
+    # Test multiple replacements
+    with ui.div() as container:
+        original = ui.p("Original")
+        ui.span("Other")
+
+    new1 = ui.h2("New 1")
+    new2 = ui.h3("New 2")
+    removed = original.replace_with(new1, new2)
+
+    assert str(container) == "<div><h2>New 1</h2><h3>New 2</h3><span>Other</span></div>"
+    assert removed is original
+    assert original.parent is None
+    assert new1.parent is container
+    assert new2.parent is container
+
+    # Test replacing with self (no-op)
+    with ui.div() as container:
+        tag = ui.p("Test")
+
+    result = tag.replace_with(tag)
+    assert result is tag
+    assert str(container) == "<div><p>Test</p></div>"
+
+    # Test error cases
+    with pytest.raises(TagValueError, match="element to be replaced is not part of a tree"):
+        Tag(ui.raw("<p>No parent</p>").tag).replace_with(ui.span("New"))
+
+    with ui.div() as container:
+        child = ui.p("Child")
+        with pytest.raises(TagValueError, match="Cannot replace a Tag with its parent"):
+            child.replace_with(container)
 
 
 @pytest.mark.asyncio
