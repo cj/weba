@@ -26,8 +26,12 @@ class TagAttributeError(AttributeError):
 class TagIndexError(IndexError):
     """Custom exception for invalid index operations in Tag objects."""
 
-    def __init__(self, message: str):
-        super().__init__(message)
+    def __init__(self, tag_name: str):
+        self.tag_name = tag_name
+        super().__init__(self._generate_message())
+
+    def _generate_message(self) -> str:
+        return f"'{self.tag_name}' from empty tag"
 
 
 class TagKeyError(KeyError):
@@ -266,7 +270,7 @@ class Tag(PageElement):
     def pop(self, index: int = -1) -> "Tag":
         """Remove and return the tag at the given index."""
         if not self._children:
-            raise TagIndexError("pop from empty tag")
+            raise TagIndexError("pop")
 
         child = self._children.pop(index)
         child.tag.extract()  # Remove from BeautifulSoup tree
