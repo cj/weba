@@ -136,27 +136,20 @@ class Component(ABC, Tag, metaclass=ComponentMeta):
         # Create root tag
         root_tag = ui.raw(html)
 
-        # Create instance as a Tag with the root tag's properties
+        # Create instance
         instance = super().__new__(cls)
 
-        Tag.__init__(
-            instance,
-            name=root_tag.name,
-            attrs=root_tag.attrs,
-            sourcepos=root_tag.sourcepos,
-            previous=root_tag.previous,
-        )
+        # Initialize the instance with root_tag's properties
+        Tag.__init__(instance, name=root_tag.name, attrs=root_tag.attrs)
 
-        # Initialize the instance first
-        instance.__init__(*args, **kwargs)
+        # Move contents from root_tag to instance
+        instance.extend(root_tag.contents)
 
-        # Copy all contents while preserving context
-        contents = list(root_tag.contents)  # Make a copy of contents
-
-        for content in contents:
-            instance.append(content)
-
+        # Clean up root_tag
         root_tag.decompose()
+
+        # Initialize the instance
+        instance.__init__(*args, **kwargs)
 
         # Add to current parent if exists
         parent = current_parent.get()

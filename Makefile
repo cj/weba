@@ -52,7 +52,7 @@ docs: ## Build and serve the documentation
 
 .PHONY: aider
 aider: ## Start aider with file watching and conventions
-	@uv run aider --watch-files --read CONVENTIONS.md
+	@uv run aider --o1-preview --watch-files --read CONVENTIONS.md
 
 .PHONY: test-watch
 test-watch: ## Watch for changes and run tests automatically
