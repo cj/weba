@@ -47,8 +47,6 @@ class TagDecorator(Generic[T]):
             return response
 
         # Find tag using selector if provided
-        tag: Tag | None = None
-
         if self.selector.startswith("<!--"):
             # Strip HTML comment markers and whitespace
             stripped_selector = self.selector[4:-3].strip()
@@ -59,20 +57,19 @@ class TagDecorator(Generic[T]):
         # Call the decorated method
         argcount = self.method.__code__.co_argcount  # type: ignore[attr-defined]
 
-        result = self.method(instance, tag) if argcount == 2 else self.method(instance) or tag  # pyright: ignore[reportArgumentType, reportCallIssue]
+        result = cast(Tag, (self.method(instance, tag) if argcount == 2 else self.method(instance)) or tag)  # pyright: ignore[reportArgumentType, reportCallIssue]
 
         # Handle extraction and clearing if requested
-        if tag:
-            if self.extract:
-                tag.extract()
+        if self.extract:
+            result.extract()
 
-            if self.clear:
-                tag.clear()
+        if self.clear:
+            result.clear()
 
         # Cache the result
         setattr(instance, self._cache_name, result)
 
-        return cast(Tag, result)
+        return result
 
 
 @overload

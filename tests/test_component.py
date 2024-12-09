@@ -163,17 +163,69 @@ def test_component_empty():
     assert str(UiList()) == "<ul></ul>"
 
 
-def test_component_with_children():
-    class List(Component):
-        html = "<ul></ul>"
+def test_component_with_extract():
+    class Button(Component):
+        html = "<div><button class='btn'>Example</button></div>"
 
-    assert str(List()) == "<ul></ul>"
+        def __init__(self, msg: str):
+            self.msg = msg
 
-    with List() as html:
-        ui.li("item 1")
-        ui.li("item 2")
+        @tag("button", extract=True)
+        def button_tag(self, t: Tag):
+            t.string = self.msg
 
-    assert str(html) == "<ul><li>item 1</li><li>item 2</li></ul>"
+        def add_button(self):
+            self.append(self.button_tag)
+
+    button = Button("Extracted")
+
+    assert str(button) == "<div></div>"
+
+    button.add_button()
+
+    assert str(button) == '<div><button class="btn">Extracted</button></div>'
+
+
+# def test_component_with_clear():
+#     class Button(Component):
+#         html = "<div><button class='btn'>Example</button></div>"
+#
+#         @tag("button", clear=True)
+#         def button_tag(self):
+#             pass
+#
+#     with ui.div() as container:
+#         Button()
+#
+#     assert str(container) == '<div><button class="btn"></button></div>'
+#
+#
+# def test_component_with_extract_and_clear():
+#     class Button(Component):
+#         html = "<div><button class='btn'>Example</button></div>"
+#
+#         def __init__(self, msg: str):
+#             self.msg = msg
+#
+#         @tag("button", extract=True, clear=True)
+#         def button_tag(self, t: Tag):
+#             t.string = self.msg
+#
+#     with ui.div() as container:
+#         Button("Extracted and Cleared")
+#
+#     assert str(container) == "<div></div>"
+#
+#     class List(Component):
+#         html = "<ul></ul>"
+#
+#     assert str(List()) == "<ul></ul>"
+#
+#     with List() as html:
+#         ui.li("item 1")
+#         ui.li("item 2")
+#
+#     assert str(html) == "<ul><li>item 1</li><li>item 2</li></ul>"
 
 
 # def test_missing_html_attribute():
