@@ -105,6 +105,7 @@ def component_tag(
         Either a TagDecorator directly (if called with method) or a decorator.
     """
 
+    # NOTE: REMOVE THIS?
     if callable(selector):
         # Decorator used without parameters directly on the method
         method = selector
@@ -191,3 +192,6 @@ class Component(ABC, Tag, metaclass=ComponentMeta):
 
     def __setattr__(self, name: str, value: Any) -> None:
         setattr(self._root_tag, name, value)
+
+    def __init__(self):
+        pass

@@ -150,8 +150,30 @@ def test_component_from_file():
 
     with ui.div() as container:
         Button("Save")
+        Button("Edit")
+        Button("Delete")
 
-    assert str(container) == "<div><button>Save</button></div>"
+    assert str(container) == "<div><button>Save</button><button>Edit</button><button>Delete</button></div>"
+
+
+def test_component_empty():
+    class UiList(Component):
+        html = "<ul></ul>"
+
+    assert str(UiList()) == "<ul></ul>"
+
+
+def test_component_with_children():
+    class List(Component):
+        html = "<ul></ul>"
+
+    assert str(List()) == "<ul></ul>"
+
+    with List() as html:
+        ui.li("item 1")
+        ui.li("item 2")
+
+    assert str(html) == "<ul><li>item 1</li><li>item 2</li></ul>"
 
 
 # def test_missing_html_attribute():

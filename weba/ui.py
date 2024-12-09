@@ -50,9 +50,9 @@ class Ui:
         """
         parsed = BeautifulSoup(html, "html.parser", preserve_whitespace_tags=["*"])
 
-        if parsed.contents:
+        if contents := parsed.contents:
             # Find the first Tag in parsed.contents
-            for element in parsed.contents:
+            for element in contents:
                 if isinstance(element, BeautifulSoupTag):
                     # Wrap this existing BeautifulSoupTag in our Tag class
                     tag_obj = Tag.from_existing_bs4tag(element)
