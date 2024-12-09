@@ -30,7 +30,7 @@ class TagDecorator(Generic[T]):
     def __init__(
         self,
         method: Callable[[T, Tag], Tag | None] | Callable[[T], Tag | None],
-        selector: str | None = None,
+        selector: str,
         extract: bool = False,
         clear: bool = False,
     ) -> None:
@@ -49,26 +49,17 @@ class TagDecorator(Generic[T]):
         # Find tag using selector if provided
         tag: Tag | None = None
 
-        if self.selector:
-            if self.selector.startswith("<!--"):
-                # Strip HTML comment markers and whitespace
-                stripped_selector = self.selector[4:-3].strip()
-                tag = instance._root_tag.comment_one(stripped_selector)  # type: ignore[attr-defined]
-            else:
-                tag = instance._root_tag.select_one(self.selector)  # type: ignore[attr-defined]
+        if self.selector.startswith("<!--"):
+            # Strip HTML comment markers and whitespace
+            stripped_selector = self.selector[4:-3].strip()
+            tag = instance._root_tag.comment_one(stripped_selector)  # type: ignore[attr-defined]
+        else:
+            tag = instance._root_tag.select_one(self.selector)  # type: ignore[attr-defined]
 
         # Call the decorated method
         argcount = self.method.__code__.co_argcount  # type: ignore[attr-defined]
 
-        if argcount == 2:
-            # Method expects (self, tag)
-            result = self.method(instance, tag)  # pyright: ignore[reportArgumentType, reportCallIssue]
-        else:
-            # Method expects only self
-            result = self.method(instance)  # pyright: ignore[reportCallIssue, reportArgumentType]
-            # If method returns None, use the found tag
-            if result is None:
-                result = tag
+        result = self.method(instance, tag) if argcount == 2 else self.method(instance) or tag  # pyright: ignore[reportArgumentType, reportCallIssue]
 
         # Handle extraction and clearing if requested
         if tag and self.extract:
