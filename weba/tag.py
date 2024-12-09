@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import json
 from contextvars import ContextVar, Token
 from typing import TYPE_CHECKING, Any, cast
@@ -8,7 +10,7 @@ from bs4 import Tag as Bs4Tag
 if TYPE_CHECKING:  # pragma: no cover
     from contextvars import Token
 
-current_parent: ContextVar["Tag | None"] = ContextVar("current_parent", default=None)
+current_parent: ContextVar[Tag | None] = ContextVar("current_parent", default=None)
 
 
 class TagAttributeError(AttributeError):
@@ -57,7 +59,7 @@ class TagKeyError(KeyError):
 
 
 class Tag(PageElement):
-    def __init__(self, tag: Bs4Tag, parent: "Tag | None" = None):
+    def __init__(self, tag: Bs4Tag, parent: Tag | None = None):
         super().__init__()
         # If it's a NavigableString, wrap it in a new Tag
         self.tag = tag
@@ -66,14 +68,14 @@ class Tag(PageElement):
         self._token: Token[Tag | None] | None = None
 
     @property
-    def parent(self) -> "Tag | None":
+    def parent(self) -> Tag | None:
         return self._parent
 
     @parent.setter
-    def parent(self, value: "Tag | None") -> None:  # pyright: ignore[reportIncompatibleVariableOverride]
+    def parent(self, value: Tag | None) -> None:  # pyright: ignore[reportIncompatibleVariableOverride]
         self._parent = value
 
-    def __enter__(self) -> "Tag":
+    def __enter__(self) -> Tag:
         self._token = current_parent.set(self)
 
         return self
@@ -84,7 +86,7 @@ class Tag(PageElement):
         if self._parent is not None and self not in self._parent._children:
             self._parent._children.append(self)
 
-    def add_child(self, child: "Tag") -> None:
+    def add_child(self, child: Tag) -> None:
         """Add a child tag to this tag."""
         if child not in self._children:
             self._children.append(child)
@@ -120,10 +122,10 @@ class Tag(PageElement):
 
         return self.tag.attrs["class"]
 
-    def append(self, content: "Tag") -> None:  # pyright: ignore[reportIncompatibleMethodOverride]
+    def append(self, content: Tag) -> None:  # pyright: ignore[reportIncompatibleMethodOverride]
         self.add_child(content)
 
-    def wrap_tag(self, tag: Bs4Tag | None) -> "Tag | None":
+    def wrap_tag(self, tag: Bs4Tag | None) -> Tag | None:
         """Wrap a BeautifulSoup tag in a Tag instance."""
         if tag is None:
             return None
@@ -183,7 +185,7 @@ class Tag(PageElement):
         else:
             raise TagAttributeError(type(self).__name__, name)
 
-    def comment(self, selector: str) -> list["Tag"]:
+    def comment(self, selector: str) -> list[Tag]:
         """Find all tags or text nodes that follow comments matching the given selector.
 
         This method searches for HTML comments containing the selector text and returns
@@ -233,7 +235,7 @@ class Tag(PageElement):
 
         return results
 
-    def comment_one(self, selector: str) -> "Tag | None":
+    def comment_one(self, selector: str) -> Tag | None:
         """Find the first tag or text node that follows a comment matching the given selector.
 
         This method searches for the first HTML comment containing the selector text and returns
@@ -283,7 +285,7 @@ class Tag(PageElement):
 
         return None
 
-    def replace_with(self, *args: "Tag") -> "Tag":  # pyright: ignore[reportIncompatibleMethodOverride]
+    def replace_with(self, *args: Tag) -> Tag:  # pyright: ignore[reportIncompatibleMethodOverride]
         """Replace this tag with one or more tags.
 
         Args:
@@ -319,7 +321,7 @@ class Tag(PageElement):
 
         return self
 
-    def insert(self, position: int, new_tag: "Tag") -> None:  # pyright: ignore[reportIncompatibleMethodOverride]
+    def insert(self, position: int, new_tag: Tag) -> None:  # pyright: ignore[reportIncompatibleMethodOverride]
         """Insert a new PageElement in the list of this PageElement's children.
 
         This works the same way as `list.insert`.
@@ -337,7 +339,7 @@ class Tag(PageElement):
 
         new_tag._parent = self
 
-    def insert_before(self, *args: "Tag") -> None:  # pyright: ignore[reportIncompatibleMethodOverride]
+    def insert_before(self, *args: Tag) -> None:  # pyright: ignore[reportIncompatibleMethodOverride]
         """Makes the given element(s) the immediate predecessor of this one.
 
         All the elements will have the same parent, and the given elements
@@ -354,7 +356,7 @@ class Tag(PageElement):
                 self._parent._children.insert(idx + i, arg)
                 arg._parent = self._parent
 
-    def insert_after(self, *args: "Tag") -> None:  # pyright: ignore[reportIncompatibleMethodOverride]
+    def insert_after(self, *args: Tag) -> None:  # pyright: ignore[reportIncompatibleMethodOverride]
         """Makes the given element(s) the immediate successor of this one.
 
         The elements will have the same parent, and the given elements
@@ -371,7 +373,7 @@ class Tag(PageElement):
                 self._parent._children.insert(idx + i + 1, arg)
                 arg._parent = self._parent
 
-    def extend(self, tags: list["Tag"]) -> None:  # pyright: ignore[reportIncompatibleMethodOverride]
+    def extend(self, tags: list[Tag]) -> None:  # pyright: ignore[reportIncompatibleMethodOverride]
         """Appends the given PageElements to this one's contents.
 
         :param tags: A list of PageElements. If a single Tag is
@@ -398,7 +400,7 @@ class Tag(PageElement):
 
         self._children.clear()
 
-    def pop(self, index: int = -1) -> "Tag":
+    def pop(self, index: int = -1) -> Tag:
         """Remove and return the tag at the given index."""
         if not self._children:
             raise TagIndexError("pop")
@@ -409,7 +411,7 @@ class Tag(PageElement):
 
         return child
 
-    def extract(self, index: int | None = None) -> "Tag":
+    def extract(self, index: int | None = None) -> Tag:
         """Destructively rips this element out of the tree.
 
         :param index: The location of this element in its parent's

@@ -1,10 +1,14 @@
-from collections.abc import Callable, Sequence
-from typing import Any
+from __future__ import annotations
+
+from typing import TYPE_CHECKING, Any
 
 from bs4 import BeautifulSoup
 from bs4 import Tag as BeautifulSoupTag
 
 from .tag import Tag, current_parent
+
+if TYPE_CHECKING:
+    from collections.abc import Callable, Sequence
 
 
 class Ui:
