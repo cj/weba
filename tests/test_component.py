@@ -25,15 +25,6 @@ def test_basic_component():
     assert str(container) == "<div><button>Click me</button></div>"
 
 
-def test_basic_component_root_tag():
-    with ui.div() as container:
-        button = Button("Click me")
-
-    button._root_tag.name = "span"  # pyright: ignore[reportPrivateUsage]
-
-    assert str(container) == "<div><span>Click me</span></div>"
-
-
 def test_component_with_tag_decorator_passing_tag():
     class Button(Component):
         html = "<div><button class='btn'>Example</button></div>"
@@ -187,46 +178,42 @@ def test_component_with_extract():
     assert str(button) == '<div><button class="btn">Extracted</button></div>'
 
 
-# def test_component_with_clear():
-#     class Button(Component):
-#         html = "<div><button class='btn'>Example</button></div>"
-#
-#         @tag("button", clear=True)
-#         def button_tag(self):
-#             pass
-#
-#     with ui.div() as container:
-#         Button()
-#
-#     assert str(container) == '<div><button class="btn"></button></div>'
-#
-#
-# def test_component_with_extract_and_clear():
-#     class Button(Component):
-#         html = "<div><button class='btn'>Example</button></div>"
-#
-#         def __init__(self, msg: str):
-#             self.msg = msg
-#
-#         @tag("button", extract=True, clear=True)
-#         def button_tag(self, t: Tag):
-#             t.string = self.msg
-#
-#     with ui.div() as container:
-#         Button("Extracted and Cleared")
-#
-#     assert str(container) == "<div></div>"
-#
-#     class List(Component):
-#         html = "<ul></ul>"
-#
-#     assert str(List()) == "<ul></ul>"
-#
-#     with List() as html:
-#         ui.li("item 1")
-#         ui.li("item 2")
-#
-#     assert str(html) == "<ul><li>item 1</li><li>item 2</li></ul>"
+def test_component_with_clear():
+    class Button(Component):
+        html = "<div><button class='btn'>Example</button></div>"
+
+        @tag("button", clear=True)
+        def button_tag(self):
+            pass
+
+    assert str(Button()) == '<div><button class="btn"></button></div>'
+
+
+def test_component_with_extract_and_clear():
+    class Button(Component):
+        html = "<div><button class='btn'>Example</button></div>"
+
+        @tag("button", extract=True, clear=True)
+        def button_tag(self):
+            pass
+
+    button = Button()
+
+    assert str(button) == "<div></div>"
+    assert str(button.button_tag) == '<button class="btn"></button>'
+
+
+def test_component_context_manager():
+    class List(Component):
+        html = "<ul></ul>"
+
+    assert str(List()) == "<ul></ul>"
+
+    with List() as html:
+        ui.li("item 1")
+        ui.li("item 2")
+
+    assert str(html) == "<ul><li>item 1</li><li>item 2</li></ul>"
 
 
 # def test_missing_html_attribute():

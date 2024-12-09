@@ -50,9 +50,9 @@ class TagDecorator(Generic[T]):
         if self.selector.startswith("<!--"):
             # Strip HTML comment markers and whitespace
             stripped_selector = self.selector[4:-3].strip()
-            tag = instance._root_tag.comment_one(stripped_selector)  # type: ignore[attr-defined]
+            tag = instance.comment_one(stripped_selector)  # type: ignore[attr-defined]
         else:
-            tag = instance._root_tag.select_one(self.selector)  # type: ignore[attr-defined]
+            tag = instance.select_one(self.selector)  # type: ignore[attr-defined]
 
         # Call the decorated method
         argcount = self.method.__code__.co_argcount  # type: ignore[attr-defined]
@@ -72,21 +72,8 @@ class TagDecorator(Generic[T]):
         return result
 
 
-@overload
-def component_tag(selector: Callable[[T, Tag], Tag | T | None]) -> TagDecorator[T]: ...
-
-
-@overload
 def component_tag(
     selector: str,
-    *,
-    extract: bool = False,
-    clear: bool = False,
-) -> Callable[[Callable[[T, Tag], Tag | T | None] | Callable[[T], Tag | T | None]], TagDecorator[T]]: ...
-
-
-def component_tag(
-    selector: str | Callable[[T, Tag], Tag | T | None],
     *,
     extract: bool = False,
     clear: bool = False,
@@ -101,13 +88,6 @@ def component_tag(
     Returns:
         Either a TagDecorator directly (if called with method) or a decorator.
     """
-
-    # NOTE: REMOVE THIS?
-    if callable(selector):
-        # Decorator used without parameters directly on the method
-        method = selector
-
-        return TagDecorator(method)
 
     # Decorator used with parameters
     def decorator(method: Callable[[T, Tag], Tag | T | None] | Callable[[T], Tag | T | None]) -> TagDecorator[T]:
@@ -142,7 +122,6 @@ class Component(ABC, Tag, metaclass=ComponentMeta):
     """Base class for UI components."""
 
     html: ClassVar[str]
-    _root_tag: Tag
     _tag_methods: ClassVar[list[str]]
 
     def __new__(cls, *args: Any, **kwargs: Any):
@@ -155,21 +134,38 @@ class Component(ABC, Tag, metaclass=ComponentMeta):
 
             html = path.read_text()
 
-        instance = super().__new__(cls)
-
+        # Create root tag
         root_tag = ui.raw(html)
 
-        object.__setattr__(instance, "_root_tag", root_tag)
+        # Create instance as a Tag with the root tag's properties
+        instance = super().__new__(cls)
 
+        Tag.__init__(
+            instance,
+            name=root_tag.name,
+            attrs=root_tag.attrs,
+            sourcepos=root_tag.sourcepos,
+            previous=root_tag.previous,
+        )
+
+        # Initialize the instance first
         instance.__init__(*args, **kwargs)
+
+        # Copy all contents while preserving context
+        contents = list(root_tag.contents)  # Make a copy of contents
+
+        for content in contents:
+            instance.append(content)
+
+        root_tag.decompose()
 
         # Add to current parent if exists
         parent = current_parent.get()
 
         if parent is not None:
-            parent.append(root_tag)
+            parent.append(instance)
 
-        # Execute all tag-decorated methods before render
+        # Execute tag decorators after contents are copied
         for method_name in getattr(cls, "_tag_methods", []):
             getattr(instance, method_name)
 
@@ -180,15 +176,6 @@ class Component(ABC, Tag, metaclass=ComponentMeta):
     def render(self) -> None:
         """Override this method to customize component rendering."""
         pass
-
-    def __str__(self) -> str:
-        return str(self._root_tag)
-
-    def __getattr__(self, name: str):
-        return getattr(self._root_tag, name)
-
-    def __setattr__(self, name: str, value: Any) -> None:
-        setattr(self._root_tag, name, value)
 
     def __init__(self):
         pass
