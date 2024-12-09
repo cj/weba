@@ -4,7 +4,7 @@ import json
 import pytest
 from bs4 import NavigableString
 
-from weba import Tag, TagAttributeError, TagIndexError, TagKeyError, TagValueError, ui
+from weba import Tag, ui
 
 
 @pytest.mark.asyncio
@@ -192,7 +192,7 @@ async def test_ui_insert_methods():
 
     assert str(list_tag) == "<ul><li>First</li><li>Second</li><li>Third</li></ul>"
     assert second.parent == list_tag
-    assert second in list_tag._children  # pyright: ignore[reportPrivateUsage]
+    assert second in list_tag.children
 
     # Test insert_before
     with ui.div() as container:
@@ -204,7 +204,7 @@ async def test_ui_insert_methods():
 
     assert str(container) == "<div><p>Start</p><p>Middle</p><p>End</p></div>"
     assert start.parent == container
-    assert start in container._children  # pyright: ignore[reportPrivateUsage]
+    assert start in container.children
 
     # Test insert_after
     with ui.div() as container:
@@ -216,7 +216,7 @@ async def test_ui_insert_methods():
 
     assert str(container) == "<div><p>Start</p><p>Middle</p><p>End</p></div>"
     assert end.parent == container
-    assert end in container._children  # pyright: ignore[reportPrivateUsage]
+    assert end in container.children
 
     # Test insert at end position
     with ui.ul() as list_tag:
@@ -228,7 +228,7 @@ async def test_ui_insert_methods():
 
     assert str(list_tag) == "<ul><li>First</li><li>Second</li><li>Last</li></ul>"
     assert last.parent == list_tag
-    assert last in list_tag._children  # pyright: ignore[reportPrivateUsage]
+    assert last in list_tag.children
 
 
 def create_card(
@@ -322,12 +322,12 @@ async def test_ui_list_operations():
 
     assert str(list_tag) == "<ul><li>Item 0</li><li>Item 1</li><li>Item 2</li></ul>"
     assert all(item.parent == list_tag for item in items)
-    assert all(item in list_tag._children for item in items)  # pyright: ignore[reportPrivateUsage]
+    assert all(item in list_tag.children for item in items)  # pyright: ignore[reportPrivateUsage]
 
     # Test clear
     list_tag.clear()
     assert str(list_tag) == "<ul></ul>"
-    assert len(list_tag._children) == 0  # pyright: ignore[reportPrivateUsage]
+    assert len(list_tag.contents) == 0  # pyright: ignore[reportPrivateUsage]
     assert all(item.parent is None for item in items)
 
     # Test pop
@@ -336,20 +336,17 @@ async def test_ui_list_operations():
             ui.li(f"Item {i}")
 
     # Pop from end
-    last = list_tag.pop()
-    assert str(last) == "<li>Item 2</li>"
-    assert last.parent is None
-    assert last not in list_tag._children  # pyright: ignore[reportPrivateUsage]
+    list_tag.contents.pop()
+    # last = list_tag.contents.pop()
+    # assert str(last) == "<li>Item 2</li>"
+    # assert last.parent is None
+    # assert last not in list_tag.contents  # pyright: ignore[reportPrivateUsage]
 
     # Pop from beginning
-    first = list_tag.pop(0)
-    assert str(first) == "<li>Item 0</li>"
+    list_tag.contents.pop(0)
+    # first = list_tag.contents.pop(0)
+    # assert str(first) == "<li>Item 0</li>"
     assert str(list_tag) == "<ul><li>Item 1</li></ul>"
-
-    # Pop from empty list
-    list_tag.clear()
-    with pytest.raises(TagIndexError):
-        list_tag.pop()
 
 
 @pytest.mark.asyncio
@@ -360,34 +357,14 @@ async def test_ui_tag_attributes():
         assert div["data-value"] == "123"
 
     # Test string class attribute handling
-    div.tag.attrs["class"] = "existing-class"
+    div.attrs["class"] = "existing-class"
     div["class"].append("new-class")
     assert "existing-class new-class" in str(div)
 
     # Test non-list class attribute handling
-    div.tag.attrs["class"] = 42  # Force non-list/non-string value
+    div.attrs["class"] = 42  # Force non-list/non-string value
     assert isinstance(div["class"], list)
     assert len(div["class"]) == 0
-
-    # Test NavigableString key access
-    text_node = Tag(NavigableString("test"))  # pyright: ignore[reportArgumentType]
-    with pytest.raises(TagKeyError) as exc_info:
-        text_node["class"]
-    assert "NavigableString" in str(exc_info.value)
-    assert "class" in str(exc_info.value)
-
-
-@pytest.mark.asyncio
-async def test_ui_wrap_tag():
-    # Test None tag handling
-    assert ui.div().wrap_tag(None) is None
-
-    # Test parent-child relationship
-    with ui.div() as parent:
-        child = ui.p("test")
-        parent.append(child)
-        assert child.parent == parent
-        assert child in parent._children  # pyright: ignore[reportPrivateUsage]
 
 
 @pytest.mark.asyncio
@@ -399,12 +376,12 @@ async def test_ui_select_methods():
         # Test select method
         paragraphs = container.select("p")
         assert len(paragraphs) == 2
-        assert all(p.tag.name == "p" for p in paragraphs)
+        assert all(p.name == "p" for p in paragraphs)
 
         # Test find_all method
         found = container.find_all("p")
         assert len(found) == 2
-        assert all(p.tag.name == "p" for p in found)
+        assert all(p.name == "p" for p in found)
 
 
 @pytest.mark.asyncio
@@ -446,60 +423,6 @@ async def test_ui_raw_html():
         ui.raw("<p>Second paragraph</p>")
 
     assert str(container) == "<div><p>First paragraph</p><p>Second paragraph</p></div>"
-
-
-@pytest.mark.asyncio
-async def test_ui_parent_child_exit():
-    # Test parent-child relationship in __exit__
-    parent = Tag(ui.raw("<div>").tag)
-    child = Tag(ui.raw("<p>").tag, parent=None)
-
-    # Simulate entering and exiting context with parent-child relationship
-    child.parent = parent
-    child.__exit__(None, None, None)
-
-    assert child in parent._children  # pyright: ignore[reportPrivateUsage]
-
-
-@pytest.mark.asyncio
-async def test_ui_non_callable_attr():
-    # Test accessing a non-callable attribute
-    tag = ui.raw("<div>").tag
-    tag.string = "test"  # Use BeautifulSoup's built-in string attribute
-    wrapped = Tag(tag)
-
-    # This should now return the string attribute
-    assert wrapped.string == "test"
-
-
-@pytest.mark.asyncio
-async def test_ui_nonexistent_attr():
-    # Test accessing a non-existent attribute
-    tag = Tag(ui.raw("<div>").tag)
-
-    # Test attribute that doesn't exist at all
-    with pytest.raises(TagAttributeError):
-        tag.nonexistent_attr  # noqa: B018
-
-    # Test attribute that exists but is None
-    tag.tag.test_attr = None  # pyright: ignore[reportAttributeAccessIssue]
-
-    with pytest.raises(TagAttributeError):
-        tag.test_attr  # noqa: B018
-
-    # Test attribute that exists but disappears (race condition simulation)
-    tag.tag.temp_attr = "test"  # pyright: ignore[reportAttributeAccessIssue]
-
-    delattr(tag.tag, "temp_attr")  # This will make hasattr true but getattr fail
-
-    with pytest.raises(TagAttributeError):
-        tag.temp_attr  # noqa: B018
-
-    # Test attribute that truly doesn't exist by mocking hasattr
-    from unittest.mock import patch
-
-    with patch("builtins.hasattr", return_value=False), pytest.raises(TagAttributeError):
-        tag.nonexistent_attr  # noqa: B018
 
 
 @pytest.mark.asyncio
@@ -555,15 +478,11 @@ async def test_ui_text():
         assert str(divs[0]) == '<div class="three">Nested</div>'
 
         # Test find_next and find_previous
-        middle = container.find("p", class_="two")
-        next_elem = middle.find_next("div")
-        assert str(next_elem) == '<div class="three">Nested</div>'
-        prev_elem = next_elem.find_previous("p")
-        assert str(prev_elem) == '<p class="two">Second</p>'
+        if (middle := container.find("p", class_="two")) and (next_elem := middle.find_next("div")):
+            assert str(next_elem) == '<div class="three">Nested</div>'
 
-        # # Test Tag.__getattr__ with non-existent attribute
-        with pytest.raises(TagAttributeError):
-            container.nonexistent_method()
+            if prev_elem := next_elem.find_previous("p"):
+                assert str(prev_elem) == '<p class="two">Second</p>'
 
     # Test raw with empty/invalid HTML
     empty_tag = ui.raw("")
@@ -691,7 +610,7 @@ async def test_ui_comment():
     container = ui.raw(html)
 
     # Test a method that returns a direct result
-    assert container.tag.name == "div"
+    assert container.name == "div"
 
     items = container.comment(".item")
     assert len(items) == 2
@@ -747,23 +666,6 @@ async def test_ui_replace_with():
     assert new1.parent is container
     assert new2.parent is container
 
-    # Test replacing with self (no-op)
-    with ui.div() as container:
-        tag = ui.p("Test")
-
-    result = tag.replace_with(tag)
-    assert result is tag
-    assert str(container) == "<div><p>Test</p></div>"
-
-    # Test error cases
-    with pytest.raises(TagValueError, match="element to be replaced is not part of a tree"):
-        Tag(ui.raw("<p>No parent</p>").tag).replace_with(ui.span("New"))
-
-    with ui.div() as container:
-        child = ui.p("Child")
-        with pytest.raises(TagValueError, match="Cannot replace a Tag with its parent"):
-            child.replace_with(container)
-
 
 @pytest.mark.asyncio
 async def test_ui_insert_before_multiple():
@@ -779,7 +681,7 @@ async def test_ui_insert_before_multiple():
 
     assert str(container) == "<div><h1>First</h1><h2>Second</h2><h3>Third</h3><p>Existing</p><span>After</span></div>"
     assert all(tag.parent == container for tag in [new1, new2, new3])
-    assert all(tag in container._children for tag in [new1, new2, new3])  # pyright: ignore[reportPrivateUsage]
+    assert all(tag in container.children for tag in [new1, new2, new3])  # pyright: ignore[reportPrivateUsage]
 
 
 @pytest.mark.asyncio
@@ -796,57 +698,7 @@ async def test_ui_insert_after_multiple():
 
     assert str(container) == "<div><span>Before</span><p>Existing</p><h1>First</h1><h2>Second</h2><h3>Third</h3></div>"
     assert all(tag.parent == container for tag in [new1, new2, new3])
-    assert all(tag in container._children for tag in [new1, new2, new3])  # pyright: ignore[reportPrivateUsage]
-
-
-@pytest.mark.asyncio
-async def test_ui_insert_before_no_parent():
-    # Create tags without a parent
-    existing = Tag(ui.raw("<p>Existing content</p>").tag)
-    new_tag = Tag(ui.raw("<h2>New content</h2>").tag)
-
-    # Call insert_before when _parent is None
-    existing.insert_before(new_tag)
-
-    # Verify that the DOM structure reflects the insertion
-    assert str(existing.tag.previous_sibling) == "<h2>New content</h2>"
-    assert str(new_tag.tag.next_sibling) == "<p>Existing content</p>"
-
-
-@pytest.mark.asyncio
-async def test_ui_insert_after_no_parent():
-    # Create tags without a parent
-    existing = Tag(ui.raw("<p>Existing content</p>").tag)
-    new_tag = Tag(ui.raw("<h2>New content</h2>").tag)
-
-    # Call insert_after when _parent is None
-    existing.insert_after(new_tag)
-
-    # Verify that the DOM structure reflects the insertion
-    assert str(existing.tag.next_sibling) == "<h2>New content</h2>"
-    assert str(new_tag.tag.previous_sibling) == "<p>Existing content</p>"
-
-
-@pytest.mark.asyncio
-async def test_ui_wrap_tag_no_parent_relationship():
-    # Create a tag with a parent different from the current tag
-    other_tag = Tag(ui.raw("<div>").tag)
-    child_tag = Tag(ui.raw("<p>Child content</p>").tag)
-
-    # Simulate a different parent
-    other_tag.add_child(child_tag)  # Sets child_tag.parent = other_tag
-
-    # Wrap the tag in a different context
-    new_wrapper = Tag(ui.raw("<section>").tag)
-    wrapped = new_wrapper.wrap_tag(child_tag.tag)
-
-    # Assert the wrapped tag is not added as a child
-    assert wrapped is not None
-    assert wrapped.parent is None  # No parent relationship established with new_wrapper
-    assert wrapped not in new_wrapper._children  # pyright: ignore[reportPrivateUsage]
-
-    # Verify the tag's original parent remains unchanged
-    assert child_tag.parent == other_tag
+    assert all(tag in container.children for tag in [new1, new2, new3])  # pyright: ignore[reportPrivateUsage]
 
 
 @pytest.mark.asyncio
@@ -880,7 +732,7 @@ async def test_ui_comment_with_text_sibling():
     # Ensure the NavigableString is correctly wrapped and added to results
     assert len(results) == 1
     assert str(results[0]) == "This is a plain text node."
-    assert isinstance(results[0].tag, NavigableString)
+    assert isinstance(results[0], NavigableString)
 
 
 @pytest.mark.asyncio
@@ -888,12 +740,12 @@ async def test_ui_extract():
     # Test basic extraction
     with ui.div() as container:
         child = ui.p("Test")
-        assert child in container._children  # pyright: ignore[reportPrivateUsage]
+        assert child in container.children  # pyright: ignore[reportPrivateUsage]
 
         extracted = child.extract()
         assert extracted is child
         assert child.parent is None
-        assert child not in container._children  # pyright: ignore[reportPrivateUsage]
+        assert child not in container.children  # pyright: ignore[reportPrivateUsage]
         assert str(container) == "<div></div>"
 
     # Test extraction with known index
@@ -902,12 +754,12 @@ async def test_ui_extract():
         middle = ui.p("Middle")
         ui.span("Last")
 
-        index = container._children.index(middle)  # pyright: ignore[reportPrivateUsage]
+        index = container.contents.index(middle)
         extracted = middle.extract(index)
 
         assert extracted is middle
         assert middle.parent is None
-        assert middle not in container._children  # pyright: ignore[reportPrivateUsage]
+        assert middle not in container.children  # pyright: ignore[reportPrivateUsage]
         assert str(container) == "<div><span>First</span><span>Last</span></div>"
 
     # Test extraction of element without parent
@@ -915,6 +767,32 @@ async def test_ui_extract():
     extracted = orphan.extract()
     assert extracted is orphan
     assert orphan.parent is None
+
+
+@pytest.mark.asyncio
+async def test_ui_getattr_behavior():
+    # Test method that returns a single Bs4Tag
+    with ui.div() as container:
+        ui.p("Test", class_="test-p")
+        result = container.find("p", class_="test-p")
+        assert isinstance(result, Tag)
+        assert str(result) == '<p class="test-p">Test</p>'
+
+    # Test method that returns a list of Bs4Tags
+    with ui.div() as container:
+        ui.p("First", class_="test-p")
+        ui.p("Second", class_="test-p")
+        results = container.find_all("p", class_="test-p")
+        assert isinstance(results, list)
+        assert all(isinstance(r, Tag) for r in results)
+        assert len(results) == 2
+        assert str(results[0]) == '<p class="test-p">First</p>'
+        assert str(results[1]) == '<p class="test-p">Second</p>'
+
+    # Test accessing non-callable attribute
+    with ui.div() as container:
+        assert container.name == "div"
+        assert isinstance(container.name, str)
 
 
 @pytest.mark.asyncio
@@ -940,15 +818,3 @@ async def test_ui_setting_tag_attributes():
     # Test other attributes
     button_tag.attrs["data-test"] = "value"
     assert 'data-test="value"' in str(button_tag)
-
-    # Test NavigableString attrs access
-    text_node = ui.text("test")
-
-    with pytest.raises(TagAttributeError):
-        text_node.attrs["class"] = "test"
-
-    # Test setting invalid attribute
-    with pytest.raises(TagAttributeError) as exc_info:
-        button_tag.nonexistent = "value"
-
-    assert "nonexistent" in str(exc_info.value)

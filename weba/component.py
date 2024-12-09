@@ -2,15 +2,22 @@ from __future__ import annotations
 
 from abc import ABC, ABCMeta
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, ClassVar, Generic, TypeVar, cast, overload
+from typing import (
+    TYPE_CHECKING,
+    Any,
+    ClassVar,
+    Generic,
+    TypeVar,
+    cast,
+    overload,
+)
 
 from .context import current_parent
 from .tag import Tag
 from .ui import ui
 
-if TYPE_CHECKING:
+if TYPE_CHECKING:  # pragma: no cover
     from collections.abc import Callable
-
 
 T = TypeVar("T", bound="Component")
 
@@ -20,11 +27,11 @@ class TagDecorator(Generic[T]):
 
     def __init__(
         self,
-        method: Callable[[T, Tag | None], Tag],
+        method: Callable[[T, Tag], Tag | None] | Callable[[T], Tag | None],
         selector: str | None = None,
         extract: bool = False,
         clear: bool = False,
-    ):
+    ) -> None:
         self.method = method
         self.selector = selector
         self.extract = extract
@@ -33,28 +40,30 @@ class TagDecorator(Generic[T]):
         self.__name__ = method.__name__
 
     def __get__(self, instance: T | None, owner: type[T]) -> Tag:
-        if instance is None:
-            raise AttributeError(f"can't access attribute {self.__name__} on class")  # noqa: TRY003
-
         # Return cached result if it exists
-        if hasattr(instance, self._cache_name):
-            return getattr(instance, self._cache_name)
+        if response := getattr(instance, self._cache_name):
+            return response
 
         # Find tag using selector if provided
-        tag = None
+        tag: Tag | None = None
 
         if self.selector:
             if self.selector.startswith("<!--"):
-                tag = instance._root_tag.comment_one(self.selector)  # pyright: ignore[reportPrivateUsage]
+                # Strip HTML comment markers and whitespace
+                stripped_selector = self.selector[4:-3].strip()
+                tag = instance._root_tag.comment_one(stripped_selector)  # type: ignore[attr-defined]
             else:
-                tag = instance._root_tag.select_one(self.selector)  # pyright: ignore[reportPrivateUsage]
+                tag = instance._root_tag.select_one(self.selector)  # type: ignore[attr-defined]
 
-        # Call method with found tag if it accepts two arguments, otherwise just call with self
-        if self.method.__code__.co_argcount == 2:
-            result = self.method(instance, tag)
+        # Call the decorated method
+        argcount = self.method.__code__.co_argcount  # type: ignore[attr-defined]
+        if argcount == 2:
+            # Method expects (self, tag)
+            result = self.method(instance, tag)  # pyright: ignore[reportArgumentType, reportCallIssue]
         else:
-            result = self.method(instance)  # pyright: ignore[reportCallIssue, reportUnknownVariableType]
-            # If method returns None, return the found tag instead
+            # Method expects only self
+            result = self.method(instance)  # pyright: ignore[reportCallIssue, reportArgumentType]
+            # If method returns None, use the found tag
             if result is None:
                 result = tag
 
@@ -71,7 +80,7 @@ class TagDecorator(Generic[T]):
 
 
 @overload
-def component_tag(selector: Callable[[T, Tag], Tag]) -> TagDecorator[T]: ...
+def component_tag(selector: Callable[[T, Tag], Tag | None]) -> TagDecorator[T]: ...
 
 
 @overload
@@ -80,18 +89,15 @@ def component_tag(
     *,
     extract: bool = False,
     clear: bool = False,
-) -> Callable[
-    [Callable[[T, Tag], Any] | Callable[[T], Any]],
-    TagDecorator[T],
-]: ...
+) -> Callable[[Callable[[T, Tag], Tag | None] | Callable[[T], Tag | None]], TagDecorator[T]]: ...
 
 
 def component_tag(
-    selector: str | Callable[[T, Tag], Any],
+    selector: str | Callable[[T, Tag], Tag | None],
     *,
     extract: bool = False,
     clear: bool = False,
-) -> TagDecorator[T] | Callable[[Callable[[T, Tag], Any]], TagDecorator[T]]:
+) -> TagDecorator[T] | Callable[[Callable[[T, Tag], Tag | None] | Callable[[T], Tag | None]], TagDecorator[T]]:
     """Decorator factory for component tag methods.
 
     Args:
@@ -100,22 +106,19 @@ def component_tag(
         clear: Whether to clear the matched tag
 
     Returns:
-        Either a TagFunction directly (if called with method) or a decorator
+        Either a TagDecorator directly (if called with method) or a decorator.
     """
-    # Handle case where decorator is used without parameters
+
     if callable(selector):
+        # Decorator used without parameters directly on the method
         method = selector
 
-        Component._tag_methods.append(method.__name__)  # pyright: ignore[reportPrivateUsage]
+        return TagDecorator(method)
 
-        return TagDecorator(method)  # pyright: ignore[reportArgumentType]
-
-    # Handle case where decorator is used with parameters
-    def decorator(method: Callable[[T, Tag], Any]) -> TagDecorator[T]:
-        Component._tag_methods.append(method.__name__)  # pyright: ignore[reportPrivateUsage]
-
+    # Decorator used with parameters
+    def decorator(method: Callable[[T, Tag], Tag | None] | Callable[[T], Tag | None]) -> TagDecorator[T]:
         return TagDecorator(
-            method,  # pyright: ignore[reportArgumentType]
+            method,
             selector=selector,
             extract=extract,
             clear=clear,
@@ -127,21 +130,28 @@ def component_tag(
 class ComponentMeta(ABCMeta):
     """Metaclass for Component to handle automatic rendering."""
 
-    def __call__(cls, *args: Any, **kwargs: Any) -> Any:
+    def __new__(cls, name: str, bases: tuple[type, ...], namespace: dict[str, Any]) -> type:
+        cls = super().__new__(cls, name, bases, namespace)
+
+        tag_methods: list[str] = [
+            attr_value.__name__ for attr_value in namespace.values() if isinstance(attr_value, TagDecorator)
+        ]
+        cls._tag_methods = tag_methods  # pyright: ignore[reportAttributeAccessIssue]
+
+        return cls
+
+    def __call__(cls, *args: Any, **kwargs: Any):
         return super().__call__(*args, **kwargs)
 
 
-class Component(ABC, metaclass=ComponentMeta):
+class Component(ABC, Tag, metaclass=ComponentMeta):
     """Base class for UI components."""
 
     html: ClassVar[str]
     _root_tag: Tag
-    _tag_methods: ClassVar[list[Any]] = []
+    _tag_methods: ClassVar[list[str]]
 
-    def __new__(cls, *args: Any, **kwargs: Any) -> Any:
-        if not hasattr(cls, "html"):
-            raise ValueError("Component must define 'html' class variable")  # noqa: TRY003
-
+    def __new__(cls, *args: Any, **kwargs: Any) -> Component:
         html = cls.html
 
         if html.endswith(".html"):
@@ -149,33 +159,26 @@ class Component(ABC, metaclass=ComponentMeta):
             path = Path(html)
 
             if not path.exists():
-                raise FileNotFoundError(f"Template file not found: {html}")  # noqa: TRY003
+                raise FileNotFoundError(f"Template file not found: {html}")
 
             html = path.read_text()
 
-        # Create component instance
         instance = super().__new__(cls)
-
-        # Create and store the root tag
         root_tag = ui.raw(html)
 
         object.__setattr__(instance, "_root_tag", root_tag)
 
-        # Initialize the instance
         instance.__init__(*args, **kwargs)
 
         # Add to current parent if exists
         parent = current_parent.get()
-
         if parent is not None:
-            parent.add_child(root_tag)
+            parent.append(root_tag)
 
         # Execute all tag-decorated methods before render
-        if hasattr(cls, "_tag_methods"):
-            for method_name in cls._tag_methods:
-                getattr(instance, method_name)
+        for method_name in getattr(cls, "_tag_methods", []):
+            getattr(instance, method_name)
 
-        # Call render after initialization
         instance.render()
 
         return instance
@@ -187,24 +190,8 @@ class Component(ABC, metaclass=ComponentMeta):
     def __str__(self) -> str:
         return str(self._root_tag)
 
-    def __getattr__(self, name: str) -> Any:
-        """Forward attribute access to the underlying Tag."""
-        # First check if it's a tag method
-        if name in self.__class__._tag_methods:
-            for _key, value in self.__class__.__dict__.items():
-                if isinstance(value, TagDecorator) and value.__name__ == name:
-                    return value.__get__(self, self.__class__)  # pyright: ignore[reportUnknownMemberType]
-
-        # Then check root tag
-        if hasattr(self._root_tag, name):
-            return getattr(self._root_tag, name)
-
-        raise AttributeError(f"'{self.__class__.__name__}' object has no attribute '{name}'")  # noqa: TRY003
+    def __getattr__(self, name: str):
+        return getattr(self._root_tag, name)
 
     def __setattr__(self, name: str, value: Any) -> None:
-        """Handle attribute setting for both component and root tag."""
-
-        if name == "_root_tag" or not hasattr(self._root_tag, name):
-            object.__setattr__(self, name, value)
-        else:
-            setattr(self._root_tag, name, value)
+        setattr(self._root_tag, name, value)
