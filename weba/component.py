@@ -150,45 +150,42 @@ class Component(ABC, Tag, metaclass=ComponentMeta):
         # Create root tag
         root_tag = ui.raw(html)
 
-        # Create instance as a Tag with the root tag's properties
+        # Create instance
         instance = super().__new__(cls)
 
-        Tag.__init__(
-            instance,
-            name=root_tag.name,
-            attrs=root_tag.attrs,
-            sourcepos=root_tag.sourcepos,
-            previous=root_tag.previous,
-        )
+        # Initialize the instance with root_tag's properties
+        Tag.__init__(instance, name=root_tag.name, attrs=root_tag.attrs)
 
-        # Initialize the instance first
-        instance.__init__(*args, **kwargs)
+        # Move contents from root_tag to instance
+        instance.extend(root_tag.contents)
 
-        # Copy all contents while preserving context
-        contents = list(root_tag.contents)  # Make a copy of contents
-
-        for content in contents:
-            instance.append(content)
-
+        # Clean up root_tag
         root_tag.decompose()
 
-        # Add to current parent if exists
-        parent = current_parent.get()
+        # Initialize the instance
+        instance.__init__(*args, **kwargs)
 
-        if parent is not None:
+        if parent := current_parent.get():
             parent.append(instance)
 
         # Execute tag decorators after contents are copied
         for method_name in getattr(cls, "_tag_methods", []):
             getattr(instance, method_name)
 
-        instance.render()
+        # Call render if it's not asynchronous
+        if not inspect.iscoroutinefunction(instance.render) and callable(instance.render):
+            instance.render()
 
         return instance
 
-    def render(self) -> None:
-        """Override this method to customize component rendering."""
-        pass
+    def __await__(self):
+        async def _coro():
+            if inspect.iscoroutinefunction(self.render):
+                await self.render()
+
+            return self
+
+        return _coro().__await__()
 
     def __init__(self):
         pass

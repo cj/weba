@@ -237,3 +237,78 @@ def test_multiple_components_in_list():
     expected = "<ul><li><button>first</button></li><li><button>second</button><button>third</button></li></ul>"
 
     assert str(button_list) == expected
+
+
+@pytest.mark.asyncio
+async def test_async_component_context_isolation():
+    """Test that async components maintain proper context isolation."""
+
+    class AsyncCard(Component):
+        html = '<div class="card"><h2></h2><p></p></div>'
+
+        def __init__(self, title: str, content: str):
+            self.title = title
+            self.content = content
+
+        async def render(self):
+            await asyncio.sleep(0.01)
+            self.header_tag.string = self.title
+            self.paragraph_tag.string = self.content
+
+        @tag("h2")
+        def header_tag(self):
+            pass
+
+        @tag("p")
+        def paragraph_tag(self):
+            pass
+
+    async def task1():
+        with ui.div() as div1:
+            await AsyncCard("Task 1 Title", "Task 1 Content")
+            await AsyncCard("Task 1 Second", "Task 1 More Content")
+        return div1
+
+    async def task2():
+        with ui.div() as div2:
+            await AsyncCard("Task 2 Title", "Task 2 Content")
+            await AsyncCard("Task 2 Second", "Task 2 More Content")
+        return div2
+
+    # Run both tasks concurrently
+    div1, div2 = await asyncio.gather(task1(), task2())
+
+    # Verify each task maintained its own context
+    expected1 = (
+        "<div>"
+        '<div class="card"><h2>Task 1 Title</h2><p>Task 1 Content</p></div>'
+        '<div class="card"><h2>Task 1 Second</h2><p>Task 1 More Content</p></div>'
+        "</div>"
+    )
+    expected2 = (
+        "<div>"
+        '<div class="card"><h2>Task 2 Title</h2><p>Task 2 Content</p></div>'
+        '<div class="card"><h2>Task 2 Second</h2><p>Task 2 More Content</p></div>'
+        "</div>"
+    )
+    assert str(div1) == expected1
+    assert str(div2) == expected2
+
+
+@pytest.mark.asyncio
+async def test_async_component():
+    class AsyncButton(Component):
+        html = "<button></button>"
+
+        def __init__(self, msg: str):
+            self.msg = msg
+
+        async def render(self):
+            await asyncio.sleep(0.01)  # Simulate an async operation
+            self.string = self.msg
+
+    with ui.div() as container:
+        await AsyncButton("Async Click Me")
+        await AsyncButton("Async Click Me!")
+
+    assert str(container) == "<div><button>Async Click Me</button><button>Async Click Me!</button></div>"
