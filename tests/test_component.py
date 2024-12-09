@@ -175,6 +175,7 @@ def test_component_with_extract():
             t.string = self.msg
 
         def add_button(self):
+            """Button that adds a button to the component."""
             self.append(self.button_tag)
 
     button = Button("Extracted")

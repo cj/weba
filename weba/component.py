@@ -29,7 +29,7 @@ class TagDecorator(Generic[T]):
 
     def __init__(
         self,
-        method: Callable[[T, Tag], Tag | None] | Callable[[T], Tag | None],
+        method: Callable[[T, Tag], Tag | T | None] | Callable[[T], Tag | T | None],
         selector: str,
         extract: bool = False,
         clear: bool = False,
@@ -41,7 +41,7 @@ class TagDecorator(Generic[T]):
         self._cache_name = f"_{method.__name__}_result"
         self.__name__ = method.__name__
 
-    def __get__(self, instance: T | None, owner: type[T]) -> Tag:
+    def __get__(self, instance: T | None, owner: type[T]):
         # Return cached result if it exists
         if response := getattr(instance, self._cache_name):
             return response
@@ -73,7 +73,7 @@ class TagDecorator(Generic[T]):
 
 
 @overload
-def component_tag(selector: Callable[[T, Tag], Tag | None]) -> TagDecorator[T]: ...
+def component_tag(selector: Callable[[T, Tag], Tag | T | None]) -> TagDecorator[T]: ...
 
 
 @overload
@@ -82,15 +82,15 @@ def component_tag(
     *,
     extract: bool = False,
     clear: bool = False,
-) -> Callable[[Callable[[T, Tag], Tag | None] | Callable[[T], Tag | None]], TagDecorator[T]]: ...
+) -> Callable[[Callable[[T, Tag], Tag | T | None] | Callable[[T], Tag | T | None]], TagDecorator[T]]: ...
 
 
 def component_tag(
-    selector: str | Callable[[T, Tag], Tag | None],
+    selector: str | Callable[[T, Tag], Tag | T | None],
     *,
     extract: bool = False,
     clear: bool = False,
-) -> TagDecorator[T] | Callable[[Callable[[T, Tag], Tag | None] | Callable[[T], Tag | None]], TagDecorator[T]]:
+) -> TagDecorator[T] | Callable[[Callable[[T, Tag], Tag | T | None] | Callable[[T], Tag | T | None]], TagDecorator[T]]:
     """Decorator factory for component tag methods.
 
     Args:
@@ -110,7 +110,7 @@ def component_tag(
         return TagDecorator(method)
 
     # Decorator used with parameters
-    def decorator(method: Callable[[T, Tag], Tag | None] | Callable[[T], Tag | None]) -> TagDecorator[T]:
+    def decorator(method: Callable[[T, Tag], Tag | T | None] | Callable[[T], Tag | T | None]) -> TagDecorator[T]:
         return TagDecorator(
             method,
             selector=selector,
@@ -145,7 +145,7 @@ class Component(ABC, Tag, metaclass=ComponentMeta):
     _root_tag: Tag
     _tag_methods: ClassVar[list[str]]
 
-    def __new__(cls, *args: Any, **kwargs: Any) -> Component:
+    def __new__(cls, *args: Any, **kwargs: Any):
         html = cls.html
 
         if html.endswith(".html") or html.endswith(".svg") or html.endswith(".xml"):
