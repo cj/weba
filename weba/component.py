@@ -62,11 +62,12 @@ class TagDecorator(Generic[T]):
         result = self.method(instance, tag) if argcount == 2 else self.method(instance) or tag  # pyright: ignore[reportArgumentType, reportCallIssue]
 
         # Handle extraction and clearing if requested
-        if tag and self.extract:
-            tag.extract()
+        if tag:
+            if self.extract:
+                tag.extract()
 
-        if tag and self.clear:
-            tag.clear()
+            if self.clear:
+                tag.clear()
 
         # Cache the result
         setattr(instance, self._cache_name, result)
