@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import inspect
+import os
 from abc import ABC, ABCMeta
 from pathlib import Path
 from typing import (
@@ -57,6 +59,7 @@ class TagDecorator(Generic[T]):
 
         # Call the decorated method
         argcount = self.method.__code__.co_argcount  # type: ignore[attr-defined]
+
         if argcount == 2:
             # Method expects (self, tag)
             result = self.method(instance, tag)  # pyright: ignore[reportArgumentType, reportCallIssue]
@@ -70,6 +73,7 @@ class TagDecorator(Generic[T]):
         # Handle extraction and clearing if requested
         if tag and self.extract:
             tag.extract()
+
         if tag and self.clear:
             tag.clear()
 
@@ -154,16 +158,15 @@ class Component(ABC, Tag, metaclass=ComponentMeta):
     def __new__(cls, *args: Any, **kwargs: Any) -> Component:
         html = cls.html
 
-        if html.endswith(".html"):
-            # Load from file
-            path = Path(html)
-
-            if not path.exists():
-                raise FileNotFoundError(f"Template file not found: {html}")
+        if html.endswith(".html") or html.endswith(".svg") or html.endswith(".xml"):
+            cls_path = inspect.getfile(cls)
+            cls_dir = os.path.dirname(cls_path)
+            path = Path(cls_dir, html)
 
             html = path.read_text()
 
         instance = super().__new__(cls)
+
         root_tag = ui.raw(html)
 
         object.__setattr__(instance, "_root_tag", root_tag)
@@ -172,6 +175,7 @@ class Component(ABC, Tag, metaclass=ComponentMeta):
 
         # Add to current parent if exists
         parent = current_parent.get()
+
         if parent is not None:
             parent.append(root_tag)
 

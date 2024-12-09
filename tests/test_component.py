@@ -138,22 +138,22 @@ async def test_component_async_context_isolation():
     assert str(div2) == expected2
 
 
-# def test_component_from_file(tmp_path):
-#     class Button(Component):
-#         html = "./button.html"
-#
-#         def __init__(self, text: str):
-#             self.text = text
-#
-#         def render(self):
-#             self.string = self.text
-#
-#     with ui.div() as container:
-#         Button("Save")
-#
-#     assert str(container) == "<div><button>Save</button></div>"
-#
-#
+def test_component_from_file():
+    class Button(Component):
+        html = "./button.html"
+
+        def __init__(self, msg: str):
+            self.msg = msg
+
+        def render(self):
+            self.string = self.msg
+
+    with ui.div() as container:
+        Button("Save")
+
+    assert str(container) == "<div><button>Save</button></div>"
+
+
 # def test_missing_html_attribute():
 #     class InvalidComponent(Component):
 #         pass
