@@ -11,6 +11,7 @@ from typing import (
     Generic,
     TypeVar,
     cast,
+    overload,
 )
 
 from .context import current_parent
@@ -71,8 +72,21 @@ class TagDecorator(Generic[T]):
         return result
 
 
+@overload
+def component_tag(selector: Callable[[T, Tag], str]) -> TagDecorator[T]: ...
+
+
+@overload
 def component_tag(
     selector: str,
+    *,
+    extract: bool = False,
+    clear: bool = False,
+) -> Callable[[Callable[[T, Tag], Tag | T | None] | Callable[[T], Tag | T | None]], TagDecorator[T]]: ...
+
+
+def component_tag(
+    selector: Any,
     *,
     extract: bool = False,
     clear: bool = False,
@@ -136,20 +150,27 @@ class Component(ABC, Tag, metaclass=ComponentMeta):
         # Create root tag
         root_tag = ui.raw(html)
 
-        # Create instance
+        # Create instance as a Tag with the root tag's properties
         instance = super().__new__(cls)
 
-        # Initialize the instance with root_tag's properties
-        Tag.__init__(instance, name=root_tag.name, attrs=root_tag.attrs)
+        Tag.__init__(
+            instance,
+            name=root_tag.name,
+            attrs=root_tag.attrs,
+            sourcepos=root_tag.sourcepos,
+            previous=root_tag.previous,
+        )
 
-        # Move contents from root_tag to instance
-        instance.extend(root_tag.contents)
-
-        # Clean up root_tag
-        root_tag.decompose()
-
-        # Initialize the instance
+        # Initialize the instance first
         instance.__init__(*args, **kwargs)
+
+        # Copy all contents while preserving context
+        contents = list(root_tag.contents)  # Make a copy of contents
+
+        for content in contents:
+            instance.append(content)
+
+        root_tag.decompose()
 
         # Add to current parent if exists
         parent = current_parent.get()
