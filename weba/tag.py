@@ -105,7 +105,7 @@ class Tag(Bs4Tag):
         )
         self._token: Token[Tag | None] | None = None
 
-    def __enter__(self) -> Tag:
+    def __enter__(self):
         self._token = current_parent.set(self)
         return self
 

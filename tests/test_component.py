@@ -322,6 +322,28 @@ def test_component_with_layout():
         def render(self):
             self.insert(0, Doctype("HTML"))
 
+        @tag("header")
+        def header(self):
+            pass
+
+        @tag("main")
+        def main(self):
+            pass
+
+        @tag("footer")
+        def footer(self):
+            pass
+
     layout = Layout()
 
     assert "DOCTYPE HTML" in str(layout)
+    assert "html" in str(layout)
+    assert "header" in str(layout)
+    assert "main" in str(layout)
+    assert "footer" in str(layout)
+
+    with layout as html:
+        with html.main:
+            ui.h1("Hello, World!")
+
+    assert "<main><h1>Hello, World!</h1></main>" in str(html)

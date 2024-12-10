@@ -41,7 +41,7 @@ class TagDecorator(Generic[T]):
         self._cache_name = f"_{method.__name__}_result"
         self.__name__ = method.__name__
 
-    def __get__(self, instance: T | None, owner: type[T]):
+    def __get__(self, instance: T, owner: type[T]):
         # Return cached result if it exists
         if response := getattr(instance, self._cache_name):
             return response
@@ -76,7 +76,7 @@ class TagDecorator(Generic[T]):
 def component_tag(selector: Callable[[T, Tag], str]) -> TagDecorator[T]: ...
 
 
-@overload  # pragma: no cover NOTE: We have tests for these
+@overload  # pragma: no cover
 def component_tag(
     selector: str,
     *,

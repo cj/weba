@@ -83,8 +83,9 @@ select = [
 ]
 
 ignore = [
-    "E501", # LineTooLong
-    "E731", # DoNotAssignLambda
+    "E501",   # LineTooLong
+    "E731",   # DoNotAssignLambda
+    "SIM117", # Weba uses nested syntax (found out how to ignore ui)
 ]
 
 [tool.ruff.lint.flake8-type-checking]
