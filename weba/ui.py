@@ -48,24 +48,16 @@ class Ui:
         Returns:
             Tag: A new Tag object containing the parsed HTML
         """
-        parsed = BeautifulSoup(html, "html.parser", preserve_whitespace_tags=["*"])
+        parsed = BeautifulSoup(html, "html.parser").find()
 
-        if contents := parsed.contents:
-            # Find the first Tag in parsed.contents
-            for element in contents:
-                if isinstance(element, BeautifulSoupTag):
-                    # Wrap this existing BeautifulSoupTag in our Tag class
-                    tag_obj = Tag.from_existing_bs4tag(element)
+        if isinstance(parsed, BeautifulSoupTag):
+            tag = Tag.from_existing_bs4tag(parsed)
 
-                    if parent := current_parent.get():
-                        parent.append(tag_obj)
+            if parent := current_parent.get():
+                parent.append(tag)
 
-                    return tag_obj
+            return tag
 
-            # If no tags found, treat as text
-            return self.text(html)
-
-        # If nothing parsed, fallback to text
         return self.text(html)
 
     def __getattr__(self, tag_name: str) -> Callable[..., Tag]:

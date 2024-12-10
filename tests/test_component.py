@@ -1,5 +1,6 @@
 import asyncio
 
+from bs4 import Doctype
 import pytest
 
 from weba import Component, Tag, tag, ui
@@ -312,3 +313,15 @@ async def test_async_component():
         await AsyncButton("Async Click Me!")
 
     assert str(container) == "<div><button>Async Click Me</button><button>Async Click Me!</button></div>"
+
+
+def test_component_with_layout():
+    class Layout(Component):
+        html = "./layout.html"
+
+        def render(self):
+            self.insert(0, Doctype("HTML"))
+
+    layout = Layout()
+
+    assert "DOCTYPE HTML" in str(layout)

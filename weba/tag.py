@@ -18,7 +18,7 @@ if TYPE_CHECKING:  # pragma: no cover
 class Tag(Bs4Tag):
     @classmethod
     def from_existing_bs4tag(cls, bs4_tag: Bs4Tag) -> Tag:
-        new_tag = cls(builder=bs4_tag.builder, name=bs4_tag.name, attrs=bs4_tag.attrs)
+        new_tag = cls(name=bs4_tag.name, attrs=bs4_tag.attrs)
 
         for c in bs4_tag.contents:
             if isinstance(c, Bs4Tag):

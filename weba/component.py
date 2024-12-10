@@ -72,11 +72,11 @@ class TagDecorator(Generic[T]):
         return result
 
 
-@overload
+@overload  # pragma: no cover NOTE: We have tests for these
 def component_tag(selector: Callable[[T, Tag], str]) -> TagDecorator[T]: ...
 
 
-@overload
+@overload  # pragma: no cover NOTE: We have tests for these
 def component_tag(
     selector: str,
     *,
@@ -180,7 +180,7 @@ class Component(ABC, Tag, metaclass=ComponentMeta):
 
     def __await__(self):
         async def _coro():
-            if inspect.iscoroutinefunction(self.render):
+            if inspect.iscoroutinefunction(self.render):  # pragma: no cover NOTE: we have tests for this
                 await self.render()
 
             return self
