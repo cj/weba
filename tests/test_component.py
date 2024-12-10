@@ -1,7 +1,7 @@
 import asyncio
 
-from bs4 import Doctype
 import pytest
+from bs4 import Doctype
 
 from weba import Component, Tag, tag, ui
 
@@ -315,7 +315,7 @@ async def test_async_component():
     assert str(container) == "<div><button>Async Click Me</button><button>Async Click Me!</button></div>"
 
 
-def test_component_with_layout():
+def test_component_with_layout():  # sourcery skip: extract-duplicate-method
     class Layout(Component):
         html = "./layout.html"
 
@@ -343,7 +343,17 @@ def test_component_with_layout():
     assert "footer" in str(layout)
 
     with layout as html:
+        with html.header:
+            ui.nav("navbar")
+
         with html.main:
             ui.h1("Hello, World!")
 
-    assert "<main><h1>Hello, World!</h1></main>" in str(html)
+        with html.footer:
+            ui.span("contact us")
+
+    html_str = str(html)
+
+    assert "<header><nav>navbar</nav></header>" in html_str
+    assert "<main><h1>Hello, World!</h1></main>" in html_str
+    assert "<footer><span>contact us</span></footer>" in html_str
