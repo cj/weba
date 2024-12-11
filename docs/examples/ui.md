@@ -11,10 +11,10 @@ with ui.div() as container:
     ui.h1("Hello, World!")
     ui.p("Welcome to weba!")
 
-print(str(container))
+print(container)
 ```
 
-This produces:
+Output:
 
 ```html
 <div>
@@ -32,7 +32,7 @@ with ui.div(class_=["container", "mx-auto", "p-4"]) as container:
     ui.h1("Styled Heading", class_="text-2xl font-bold")
     ui.p("Some content", class_="mt-2", data_testid="content")
 
-print(str(container))
+print(container)
 ```
 
 Output:
@@ -59,6 +59,28 @@ with ui.div(class_="card") as card:
             ui.li("Item 2")
     with ui.div(class_="card-footer"):
         ui.button("Click me!", class_="btn")
+
+print(card)
+```
+
+Output:
+
+```html
+<div class="card">
+    <div class="card-header">
+        <h2>Card Title</h2>
+    </div>
+    <div class="card-body">
+        <p>Card content goes here</p>
+        <ul class="list">
+            <li>Item 1</li>
+            <li>Item 2</li>
+        </ul>
+    </div>
+    <div class="card-footer">
+        <button class="btn">Click me!</button>
+    </div>
+</div>
 ```
 
 ## Dynamic Content
@@ -73,6 +95,19 @@ with ui.div() as content:
     ui.p(3.14159)  # Floats
     ui.p(True)  # Booleans
     ui.p(datetime.now())  # DateTime objects
+
+print(content)
+```
+
+Output:
+
+```html
+<div>
+    <p>42</p>
+    <p>3.14159</p>
+    <p>True</p>
+    <p>2024-02-20 10:30:45</p>
+</div>
 ```
 
 ## HTMX Integration
@@ -90,6 +125,25 @@ with ui.form() as form:
     )
     with ui.div(id="results"):
         ui.p("Results will appear here...")
+
+print(form)
+```
+
+Output:
+
+```html
+<form>
+    <input 
+        type="text" 
+        name="search" 
+        hx-post="/search" 
+        hx-trigger="keyup changed delay:500ms" 
+        hx-target="#results"
+    >
+    <div id="results">
+        <p>Results will appear here...</p>
+    </div>
+</form>
 ```
 
 ## Class Manipulation
@@ -100,62 +154,13 @@ Dynamically modify classes:
 button = ui.button("Toggle")
 button["class"].append("active")
 button["class"].append("highlight")
-print(str(button))  # <button class="active highlight">Toggle</button>
+print(button)
 ```
 
-## Reusable Components
+Output:
 
-Create reusable UI components with flexible configurations:
-
-```python
-def create_card(
-    title: str,
-    content: str,
-    items: list[str] | None = None,
-    button_text: str | None = None,
-    button_class: str = "btn"
-) -> Tag:
-    """Create a card component with customizable content."""
-    with ui.div(class_="card") as card:
-        with ui.div(class_="card-header"):
-            ui.h2(title)
-
-        with ui.div(class_="card-body"):
-            ui.p(content)
-            if items:
-                with ui.ul(class_="list"):
-                    for item in items:
-                        ui.li(item)
-
-        if button_text:
-            with ui.div(class_="card-footer"):
-                ui.button(button_text, class_=button_class)
-
-    return card
-
-# Usage examples:
-# Full card with all features
-card1 = create_card(
-    title="Card Title",
-    content="Card content goes here",
-    items=["Item 1", "Item 2"],
-    button_text="Click me!"
-)
-
-# Simple card without button
-card2 = create_card(
-    title="Simple Card",
-    content="Just some content",
-    items=["Only item"]
-)
-
-# Card without list items
-card3 = create_card(
-    title="No Items",
-    content="A card without a list",
-    button_text="Submit",
-    button_class="btn-primary"
-)
+```html
+<button class="active highlight">Toggle</button>
 ```
 
 ## Tag Manipulation
@@ -168,8 +173,16 @@ with ui.div() as container:
     child = ui.p("Test")
     extracted = child.extract()  # Removes from parent but keeps the tag
     print(extracted.parent)  # None
-    print(str(container))  # <div></div>
+    print(container)
+```
 
+Output:
+
+```html
+<div></div>
+```
+
+```python
 # Replace tags
 with ui.div() as container:
     original = ui.p("Original")
@@ -177,16 +190,39 @@ with ui.div() as container:
 
     # Replace with a single tag
     original.replace_with(ui.h2("New"))
-    print(str(container))  # <div><h2>New</h2><span>Other</span></div>
+    print(container)
+```
 
-    # Replace with multiple tags
+Output:
+
+```html
+<div>
+    <h2>New</h2>
+    <span>Other</span>
+</div>
+```
+
+```python
+# Replace with multiple tags
+with ui.div() as container:
     original = ui.p("Original")
     original.replace_with(
         ui.h2("First"),
         ui.h3("Second")
     )
-    print(str(container))  # <div><h2>First</h2><h3>Second</h3><span>Other</span></div>
+    print(container)
+```
 
+Output:
+
+```html
+<div>
+    <h2>First</h2>
+    <h3>Second</h3>
+</div>
+```
+
+```python
 # Set tag attributes directly
 button = ui.button("Click me")
 button.string = "Submit"  # Change content
@@ -194,12 +230,16 @@ button.name = "input"    # Change tag type
 button.attrs["class"] = ["primary", "large"]  # Set multiple classes
 button.attrs["data-test"] = "value"  # Set custom attribute
 
-print(str(button))
-# <input class="primary large" data-test="value">Submit</input>
+print(button)
+```
 
-# Pass tags as arguments
-button = ui.button(ui.span("Hello, World!"))
-print(str(button))  # <button><span>Hello, World!</span></button>
+Output:
+
+```html
+<input 
+    class="primary large" 
+    data-test="value"
+>Submit</input>
 ```
 
 ## Raw HTML Integration
@@ -210,7 +250,7 @@ Parse and integrate raw HTML strings:
 # Basic raw HTML
 tag = ui.raw("<div>Hello World</div>")
 tag["class"].append("raw")
-print(str(tag))  # <div class="raw">Hello World</div>
+print(tag)  # <div class="raw">Hello World</div>
 
 # Complex nested HTML
 html = """
@@ -239,7 +279,7 @@ Create and manipulate text nodes:
 ```python
 # Basic text nodes
 text = ui.text("Hello World")
-print(str(text))  # Hello World
+print(text)  # Hello World
 
 # Different content types
 ui.text(42)  # "42"
@@ -254,7 +294,7 @@ with ui.div() as container:
         ui.text("important")
     ui.text(" last")
 
-print(str(container))  # <div>First <strong>important</strong> last</div>
+print(container)  # <div>First <strong>important</strong> last</div>
 
 # Complex text layout
 
@@ -267,7 +307,7 @@ with ui.article() as article:
         ui.text("Strong text.")
     ui.text(" End of article.")
 
-print(str(article))
+print(article)
 # <article>Start of article. <em>Emphasized text. </em>Regular text. <strong>Strong text.</strong>
 # End of article.</article>
 ```
@@ -282,12 +322,12 @@ import json
 # Dictionary attributes
 data = {"name": "John", "age": 30}
 with ui.div(data_user=data) as div:
-    print(str(div))  # <div data-user='{"name": "John", "age": 30}'></div>
+    print(div)  # <div data-user='{"name": "John", "age": 30}'></div>
 
 # Array attributes
 items = ["apple", "banana", "orange"]
 with ui.div(data_items=items) as div:
-    print(str(div))  # <div data-items='["apple", "banana", "orange"]'></div>
+    print(div)  # <div data-items='["apple", "banana", "orange"]'></div>
 
 # Nested structures
 complex_data = {
@@ -296,7 +336,7 @@ complex_data = {
     "active": True
 }
 with ui.div(data_complex=complex_data) as div:
-    print(str(div))
+    print(div)
     # <div data-complex='{"user": {"name": "John", "age": 30}, "items": ["apple", "banana"], "active": true}'></div>
 
     # Access and parse the JSON data
@@ -328,12 +368,12 @@ container = ui.raw(html)
 
 # Find first button after #submit-button comment
 button = container.comment_one("#submit-button")
-print(str(button))  # <button>Submit</button>
+print(button)  # <button>Submit</button>
 
 # Find all cards after .card comments
 cards = container.comment(".card")
 for card in cards:
-    print(str(card))
+    print(card)
 # <div class="card">Card 1</div>
 # <div class="card">Card 2</div>
 

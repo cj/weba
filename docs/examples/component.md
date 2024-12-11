@@ -20,7 +20,15 @@ class Button(Component):
 with ui.div() as container:
     Button("Click me")
 
-print(str(container))  # <div><button>Click me</button></div>
+print(container)
+```
+
+Output:
+
+```html
+<div>
+    <button>Click me</button>
+</div>
 ```
 
 ## Using Tag Decorators
@@ -42,7 +50,17 @@ class Button(Component):
 with ui.div() as container:
     Button("Submit")
 
-print(str(container))  # <div><div><button class="btn">Submit</button></div></div>
+print(container)
+```
+
+Output:
+
+```html
+<div>
+    <div>
+        <button class="btn">Submit</button>
+    </div>
+</div>
 ```
 
 ## Comment Selectors
@@ -64,7 +82,18 @@ class Button(Component):
 with ui.div() as container:
     Button("Delete")
 
-print(str(container))  # <div><div><!-- #button --><button>Delete</button></div></div>
+print(container)
+```
+
+Output:
+
+```html
+<div>
+    <div>
+        <!-- #button -->
+        <button>Delete</button>
+    </div>
+</div>
 ```
 
 ## Async Components
@@ -90,57 +119,16 @@ async def main():
         await AsyncButton("Async Click Me")
         await AsyncButton("Another Button")
 
-    print(str(container))
-    # <div><button>Async Click Me</button><button>Another Button</button></div>
+    print(container)
 ```
 
-## Component with Layout
+Output:
 
-Create a layout component with header, main, and footer sections:
-
-```python
-from bs4 import Doctype
-
-class Layout(Component):
-    html = """
-    <!DOCTYPE html>
-    <html>
-        <header></header>
-        <main></main>
-        <footer></footer>
-    </html>
-    """
-
-    def render(self):
-        self.insert(0, Doctype("HTML"))
-
-    @tag("header")
-    def header(self):
-        pass
-
-    @tag("main")
-    def main(self):
-        pass
-
-    @tag("footer")
-    def footer(self):
-        pass
-
-# Usage
-layout = Layout()
-
-with layout as html:
-    with html.header:
-        ui.nav("navbar")
-
-    with html.main:
-        ui.h1("Hello, World!")
-
-    with html.footer:
-        ui.span("contact us")
-
-print(str(html))
-# Output will include DOCTYPE and all sections with content
+```html
+<div>
+    <button>Async Click Me</button>
+    <button>Another Button</button>
+</div>
 ```
 
 ## Extract and Clear Tags
@@ -164,10 +152,19 @@ class Button(Component):
 
 # Usage
 button = Button("Extracted")
-print(str(button))  # <div></div>
+print(button)
 
 button.add_button()
-print(str(button))  # <div><button class="btn">Extracted</button></div>
+print(button)
+```
+
+Output:
+
+```html
+<div></div>
+<div>
+    <button class="btn">Extracted</button>
+</div>
 ```
 
 ## Dynamic List Component
@@ -205,8 +202,17 @@ class ListComponent(Component):
 
 # Usage
 list_comp = ListComponent(["one", "two", "three"])
-print(str(list_comp))
-# <ul><li>one</li><li>two</li><li>three</li></ul>
+print(list_comp)
+```
+
+Output:
+
+```html
+<ul>
+    <li>one</li>
+    <li>two</li>
+    <li>three</li>
+</ul>
 ```
 
 ## Component from File
@@ -229,6 +235,15 @@ with ui.div() as container:
     Button("Edit")
     Button("Delete")
 
-print(str(container))
-# <div><button>Save</button><button>Edit</button><button>Delete</button></div>
+print(container)
+```
+
+Output:
+
+```html
+<div>
+    <button>Save</button>
+    <button>Edit</button>
+    <button>Delete</button>
+</div>
 ```
