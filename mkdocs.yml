@@ -1,11 +1,11 @@
 site_name: weba
 repo_url: https://github.com/cj/weba
-site_url: https://cj.github.io/weba
+site_url: https://weba.cj.io
 site_description: html framework
 site_author: CJ Lazell
 edit_uri: edit/main/docs/
 repo_name: cj/weba
-copyright: Maintained by <a href="https://cj.com">cj</a>.
+copyright: Maintained by <a href="https://www.cj.io">cj</a>.
 
 nav:
     - Home: index.md
