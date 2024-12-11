@@ -6,69 +6,17 @@
 [![Commit activity](https://img.shields.io/github/commit-activity/m/cj/weba)](https://img.shields.io/github/commit-activity/m/cj/weba)
 [![License](https://img.shields.io/github/license/cj/weba)](https://img.shields.io/github/license/cj/weba)
 
-html framework
+Weba is a Python library for building web user interfaces using a declarative,
+component-based approach. It provides a clean API for creating HTML elements and
+components with proper context management and type safety. The library extends
+BeautifulSoup's functionality by adding a custom Tag class that supports modern web
+development patterns, including HTMX integration, class list manipulation, and
+comment-based selectors. It allows developers to create reusable UI components with
+proper isolation, supports both synchronous and asynchronous contexts, and handles
+attribute management (including JSON serialization) elegantly. The library emphasizes
+type safety and follows clean code practices, making it particularly suitable for
+building modern web applications in Python with a focus on maintainability and developer
+experience.
 
 - **Github repository**: <https://github.com/cj/weba/>
 - **Documentation** <https://cj.github.io/weba/>
-
-## Getting started with your project
-
-### 1. Create a New Repository
-
-First, create a repository on GitHub with the same name as this project, and then run the following commands:
-
-```bash
-git init -b main
-git add .
-git commit -m "init commit"
-git remote add origin git@github.com:cj/weba.git
-git push -u origin main
-```
-
-### 2. Set Up Your Development Environment
-
-Then, install the environment and the pre-commit hooks with
-
-```bash
-make install
-```
-
-This will also generate your `uv.lock` file
-
-### 3. Run the pre-commit hooks
-
-Initially, the CI/CD pipeline might be failing due to formatting issues. To resolve those run:
-
-```bash
-uv run pre-commit run -a
-```
-
-### 4. Commit the changes
-
-Lastly, commit the changes made by the two steps above to your repository.
-
-```bash
-git add .
-git commit -m 'Fix formatting issues'
-git push origin main
-```
-
-You are now ready to start development on your project!
-The CI/CD pipeline will be triggered when you open a pull request, merge to main, or when you create a new release.
-
-To finalize the set-up for publishing to PyPI, see [here](https://fpgmaas.github.io/cookiecutter-uv/features/publishing/#set-up-for-pypi).
-For activating the automatic documentation with MkDocs, see [here](https://fpgmaas.github.io/cookiecutter-uv/features/mkdocs/#enabling-the-documentation-on-github).
-To enable the code coverage reports, see [here](https://fpgmaas.github.io/cookiecutter-uv/features/codecov/).
-
-## Releasing a new version
-
-- Create an API Token on [PyPI](https://pypi.org/).
-- Add the API Token to your projects secrets with the name `PYPI_TOKEN` by visiting [this page](https://github.com/cj/weba/settings/secrets/actions/new).
-- Create a [new release](https://github.com/cj/weba/releases/new) on Github.
-- Create a new tag in the form `*.*.*`.
-
-For more details, see [here](https://fpgmaas.github.io/cookiecutter-uv/features/cicd/#how-to-trigger-a-release).
-
----
-
-Repository initiated with [fpgmaas/cookiecutter-uv](https://github.com/fpgmaas/cookiecutter-uv).
