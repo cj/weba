@@ -111,3 +111,6 @@ skip_empty = true
 [tool.coverage.run]
 branch = true
 source = ["weba"]
+
+[tool.ruff.lint.isort]
+required-imports = ["from __future__ import annotations"]

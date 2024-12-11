@@ -1,12 +1,17 @@
+# pyright: reportArgumentType=false, reportOptionalSubscript=false, reportUnknownArgumentType=false
+from __future__ import annotations
+
 import asyncio
 from copy import copy
+from typing import TYPE_CHECKING
 
 import pytest
 from bs4 import Doctype
 
 from weba import Component, Tag, tag, ui
 
-# pyright: reportArgumentType=false, reportOptionalSubscript=false, reportUnknownArgumentType=false
+if TYPE_CHECKING:  # pragma: no cover
+    from weba.ui import Tag
 
 
 class Button(Component):
