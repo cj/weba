@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import json
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, Literal, overload
 
 from bs4 import Comment, NavigableString
 from bs4 import Tag as Bs4Tag
@@ -112,7 +112,17 @@ class Tag(Bs4Tag):
     def __exit__(self, *args: Any) -> None:
         current_parent.reset(self._token)  # pyright: ignore[reportArgumentType]
 
-    def __getitem__(self, key: str) -> Any:
+    @overload
+    def __getitem__(self, key: Literal["class"]) -> list[str]:
+        """Get attribute value, ensuring class returns as list."""
+        ...
+
+    @overload
+    def __getitem__(self, key: str) -> str | list[str]:
+        """Get attribute value for non-class attributes."""
+        ...
+
+    def __getitem__(self, key: str) -> str | list[str]:
         if key not in self.attrs and key == "class":
             self.attrs["class"] = []
             return self.attrs["class"]
