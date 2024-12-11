@@ -23,8 +23,8 @@ Homepage = "https://cj.github.io/weba/"
 Repository = "https://github.com/cj/weba"
 Documentation = "https://cj.github.io/weba/"
 
-[tool.uv]
-default-groups = ["dev", "lint", "test", "docs"]
+# [tool.uv]
+# default-groups = ["dev", "lint", "test", "docs"]
 
 [dependency-groups]
 dev = [

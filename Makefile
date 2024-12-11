@@ -1,7 +1,12 @@
-.PHONY: install
+.PHONY: install install-dev
 install: ## Install the virtual environment and install the pre-commit hooks
 	@echo "🚀 Creating virtual environment using uv"
 	@uv sync
+	@uv run pre-commit install
+
+install-dev: ## Install the virtual environment with all dependency groups and install the pre-commit hooks
+	@echo "🚀 Creating virtual environment using uv (with dev dependencies)"
+	@uv sync --all-groups
 	@uv run pre-commit install
 
 .PHONY: check
