@@ -6,6 +6,8 @@ from bs4 import NavigableString
 
 from weba import Tag, ui
 
+# pyright: reportArgumentType=false, reportOptionalSubscript=false, reportUnknownArgumentType=false
+
 
 def test_ui_hello_world():
     with ui.div() as html:

@@ -6,6 +6,8 @@ from bs4 import Doctype
 
 from weba import Component, Tag, tag, ui
 
+# pyright: reportArgumentType=false, reportOptionalSubscript=false, reportUnknownArgumentType=false
+
 
 class Button(Component):
     html = "<button>Example</button>"

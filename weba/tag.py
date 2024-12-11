@@ -129,7 +129,7 @@ class Tag(Bs4Tag):
 
         return json.dumps(value) if isinstance(value, dict | list) else value
 
-    def comment(self, selector: str):
+    def comment(self, selector: str) -> Tag | None:
         """Find all tags or text nodes that follow comments matching the given selector.
 
         This method searches for HTML comments containing the selector text and returns
@@ -166,7 +166,7 @@ class Tag(Bs4Tag):
 
         return results
 
-    def comment_one(self, selector: str):
+    def comment_one(self, selector: str) -> Tag | None:
         """Find the first tag or text node that follows a comment matching the given selector.
 
         This method searches for the first HTML comment containing the selector text and returns
