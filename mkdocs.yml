@@ -9,7 +9,9 @@ copyright: Maintained by <a href="https://cj.com">cj</a>.
 
 nav:
     - Home: index.md
-    - Examples: examples.md
+    - Examples:
+          - ui: examples/ui.md
+          - component: examples/component.md
     - Modules: modules.md
 plugins:
     - search

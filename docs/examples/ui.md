@@ -158,6 +158,50 @@ card3 = create_card(
 )
 ```
 
+## Tag Manipulation
+
+Extract, replace and modify tags:
+
+```python
+# Extract a tag from its parent
+with ui.div() as container:
+    child = ui.p("Test")
+    extracted = child.extract()  # Removes from parent but keeps the tag
+    print(extracted.parent)  # None
+    print(str(container))  # <div></div>
+
+# Replace tags
+with ui.div() as container:
+    original = ui.p("Original")
+    ui.span("Other")
+    
+    # Replace with a single tag
+    original.replace_with(ui.h2("New"))
+    print(str(container))  # <div><h2>New</h2><span>Other</span></div>
+    
+    # Replace with multiple tags
+    original = ui.p("Original")
+    original.replace_with(
+        ui.h2("First"), 
+        ui.h3("Second")
+    )
+    print(str(container))  # <div><h2>First</h2><h3>Second</h3><span>Other</span></div>
+
+# Set tag attributes directly
+button = ui.button("Click me")
+button.string = "Submit"  # Change content
+button.name = "input"    # Change tag type
+button.attrs["class"] = ["primary", "large"]  # Set multiple classes
+button.attrs["data-test"] = "value"  # Set custom attribute
+
+print(str(button))  
+# <input class="primary large" data-test="value">Submit</input>
+
+# Pass tags as arguments
+button = ui.button(ui.span("Hello, World!"))
+print(str(button))  # <button><span>Hello, World!</span></button>
+```
+
 ## Raw HTML Integration
 
 Parse and integrate raw HTML strings:
