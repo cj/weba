@@ -17,3 +17,6 @@ attribute management (including JSON serialization) elegantly. The library empha
 type safety and follows clean code practices, making it particularly suitable for
 building modern web applications in Python with a focus on maintainability and developer
 experience.
+
+- **Github repository**: <https://github.com/cj/weba/>
+- **Documentation** <https://weba.cj.io/>

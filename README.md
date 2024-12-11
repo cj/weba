@@ -19,4 +19,4 @@ building modern web applications in Python with a focus on maintainability and d
 experience.
 
 - **Github repository**: <https://github.com/cj/weba/>
-- **Documentation** <https://cj.github.io/weba/>
+- **Documentation** <https://weba.cj.io/>

@@ -1,14 +1,14 @@
 site_name: weba
 repo_url: https://github.com/cj/weba
 site_url: https://weba.cj.io
-site_description: html framework
+site_description: A Python library for building web UIs with a declarative, component-based approach. Features type-safe HTML elements, HTMX integration, and reusable components with both sync and async support.
 site_author: CJ Lazell
 edit_uri: edit/main/docs/
 repo_name: cj/weba
 copyright: Maintained by <a href="https://www.cj.io">cj</a>.
 
 nav:
-    - Home: index.md
+    - Home: README.md
     - Examples:
           - ui: examples/ui.md
           - component: examples/component.md
