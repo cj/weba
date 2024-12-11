@@ -170,7 +170,7 @@ def test_ui_append_to_existing_element():
     assert "<ul><li>Item 1</li><li>Item 2</li><li>Item 3</li></ul>" in str(list_tag)
 
 
-def test_ui_insert_methods():
+def test_ui_insert_methods():  # sourcery skip: extract-duplicate-method
     # Test insert at specific position
     with ui.ul() as list_tag:
         ui.li("First")
@@ -301,7 +301,7 @@ def test_ui_card_component():
     assert expected3 in str(card3)
 
 
-def test_ui_list_operations():
+def test_ui_list_operations():  # sourcery skip: no-loop-in-tests
     # Test extend
     with ui.ul() as list_tag:
         items = [ui.li(f"Item {i}") for i in range(3)]
@@ -409,7 +409,7 @@ def test_ui_raw_html():
     assert str(container) == "<div><p>First paragraph</p><p>Second paragraph</p></div>"
 
 
-def test_ui_text():
+def test_ui_text():  # sourcery skip: extract-method, no-conditionals-in-tests
     # Test basic text node
     text = ui.text("Hello World")
     assert str(text) == "Hello World"
@@ -710,7 +710,7 @@ def test_ui_comment_with_text_sibling():
     assert isinstance(results[0], NavigableString)
 
 
-def test_ui_extract():
+def test_ui_extract():  # sourcery skip: extract-duplicate-method, extract-method
     # Test basic extraction
     with ui.div() as container:
         child = ui.p("Test")
@@ -743,7 +743,7 @@ def test_ui_extract():
     assert orphan.parent is None
 
 
-def test_ui_getattr_behavior():
+def test_ui_getattr_behavior():  # sourcery skip: extract-method
     # Test method that returns a single Bs4Tag
     with ui.div() as container:
         ui.p("Test", class_="test-p")
