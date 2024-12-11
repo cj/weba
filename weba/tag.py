@@ -198,6 +198,14 @@ class Tag(Bs4Tag):
 
         return None
 
+    def copy(self) -> Tag:
+        """Create a copy of this tag.
+
+        Returns:
+            A new Tag instance that is a copy of this tag
+        """
+        return Tag.from_existing_bs4tag(self)
+
     def __str__(self) -> str:
         if self.string == "None":
             self.string = ""

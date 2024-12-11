@@ -2,7 +2,6 @@
 from __future__ import annotations
 
 import asyncio
-from copy import copy
 from typing import TYPE_CHECKING
 
 import pytest
@@ -383,7 +382,7 @@ def test_component_select_root_tag():
         def render(self):
             # sourcery skip: no-loop-in-tests
             for item in self.list_items:
-                list_item = copy(self.list_item_tag)
+                list_item = self.list_item_tag.copy()
                 list_item.string = item
 
                 self.append(list_item)

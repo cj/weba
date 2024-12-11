@@ -133,13 +133,7 @@ Output:
 
 ```html
 <form>
-    <input 
-        type="text" 
-        name="search" 
-        hx-post="/search" 
-        hx-trigger="keyup changed delay:500ms" 
-        hx-target="#results"
-    >
+    <input type="text" name="search" hx-post="/search" hx-trigger="keyup changed delay:500ms" hx-target="#results" />
     <div id="results">
         <p>Results will appear here...</p>
     </div>
@@ -236,8 +230,8 @@ print(button)
 Output:
 
 ```html
-<input 
-    class="primary large" 
+<input
+    class="primary large"
     data-test="value"
 >Submit</input>
 ```
