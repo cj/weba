@@ -2457,7 +2457,6 @@ dependencies = [
 dev = [
     { name = "aider-chat" },
     { name = "deptry" },
-    { name = "pre-commit" },
     { name = "reload" },
     { name = "sourcery" },
     { name = "tox-uv" },
@@ -2468,6 +2467,7 @@ docs = [
     { name = "mkdocstrings", extra = ["python"] },
 ]
 lint = [
+    { name = "pre-commit" },
     { name = "pyright" },
     { name = "ruff" },
 ]
@@ -2488,7 +2488,6 @@ requires-dist = [
 dev = [
     { name = "aider-chat", specifier = ">=0.68.0" },
     { name = "deptry", specifier = ">=0.20.0" },
-    { name = "pre-commit", specifier = ">=2.20.0" },
     { name = "reload", specifier = ">=0.9" },
     { name = "sourcery", specifier = ">=1.26.0" },
     { name = "tox-uv", specifier = ">=1.11.3" },
@@ -2499,6 +2498,7 @@ docs = [
     { name = "mkdocstrings", extras = ["python"] },
 ]
 lint = [
+    { name = "pre-commit", specifier = ">=2.20.0" },
     { name = "pyright" },
     { name = "ruff", specifier = ">=0.8.2" },
 ]

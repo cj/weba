@@ -28,7 +28,6 @@ default-groups = ["lint", "test", "docs"]
 
 [dependency-groups]
 dev = [
-    "pre-commit>=2.20.0",
     "tox-uv>=1.11.3",
     "deptry>=0.20.0",
     "aider-chat>=0.68.0",
@@ -36,7 +35,7 @@ dev = [
     "sourcery>=1.26.0",
 ]
 docs = ["mkdocs", "mkdocs-material", "mkdocstrings[python]"]
-lint = ["ruff>=0.8.2", "pyright"]
+lint = ["ruff>=0.8.2", "pyright", "pre-commit>=2.20.0"]
 test = [
     "pytest-asyncio>=0.24.0",
     "pytest>=7.2.0",
