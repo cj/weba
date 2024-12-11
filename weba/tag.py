@@ -112,12 +112,12 @@ class Tag(Bs4Tag):
     def __exit__(self, *args: Any) -> None:
         current_parent.reset(self._token)  # pyright: ignore[reportArgumentType]
 
-    @overload
+    @overload  # pragma: no cover # NOTE: We have tests that cover this case
     def __getitem__(self, key: Literal["class"]) -> list[str]:
         """Get attribute value, ensuring class returns as list."""
         ...
 
-    @overload
+    @overload  # pragma: no cover # NOTE: We have tests that cover this case
     def __getitem__(self, key: str) -> str | list[str]:
         """Get attribute value for non-class attributes."""
         ...
