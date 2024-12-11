@@ -1,4 +1,5 @@
 import asyncio
+from copy import copy
 
 import pytest
 from bs4 import Doctype
@@ -357,3 +358,37 @@ def test_component_with_layout():  # sourcery skip: extract-duplicate-method
     assert "<header><nav>navbar</nav></header>" in html_str
     assert "<main><h1>Hello, World!</h1></main>" in html_str
     assert "<footer><span>contact us</span></footer>" in html_str
+
+
+def test_component_select_root_tag():
+    class ListC(Component):
+        html = """
+        <ul>
+            <li>Item 1</li>
+            <li>Item 2</li>
+            <li>Item 3</li>
+        </ul>
+        """
+
+        def __init__(self, list_items: list[str]):
+            self.list_items = list_items
+
+        def render(self):
+            # sourcery skip: no-loop-in-tests
+            for item in self.list_items:
+                list_item = copy(self.list_item_tag)
+                list_item.string = item
+
+                self.append(list_item)
+
+        @tag("li", extract=True)
+        def list_item_tag(self):
+            pass
+
+        @tag(clear=True)
+        def list_tag(self):
+            pass
+
+    list_c = ListC(["one", "two", "three"])
+
+    assert str(list_c) == "<ul><li>one</li><li>two</li><li>three</li></ul>"

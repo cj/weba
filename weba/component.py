@@ -46,8 +46,10 @@ class TagDecorator(Generic[T]):
         if response := getattr(instance, self._cache_name):
             return response
 
+        if not self.selector:
+            tag = instance
         # Find tag using selector if provided
-        if self.selector.startswith("<!--"):
+        elif self.selector.startswith("<!--"):
             # Strip HTML comment markers and whitespace
             stripped_selector = self.selector[4:-3].strip()
             tag = instance.comment_one(stripped_selector)  # type: ignore[attr-defined]
@@ -57,14 +59,14 @@ class TagDecorator(Generic[T]):
         # Call the decorated method
         argcount = self.method.__code__.co_argcount  # type: ignore[attr-defined]
 
-        result = cast(Tag, (self.method(instance, tag) if argcount == 2 else self.method(instance)) or tag)  # pyright: ignore[reportArgumentType, reportCallIssue]
-
         # Handle extraction and clearing if requested
-        if self.extract:
-            result.extract()
+        if self.extract and tag is not None:
+            tag.extract()
 
-        if self.clear:
-            result.clear()
+        if isinstance(tag, Tag) and self.clear:
+            tag.clear()
+
+        result = cast(Tag, (self.method(instance, tag) if argcount == 2 else self.method(instance)) or tag)  # pyright: ignore[reportArgumentType, reportCallIssue]
 
         # Cache the result
         setattr(instance, self._cache_name, result)
@@ -78,7 +80,7 @@ def component_tag(selector: Callable[[T, Tag], str]) -> TagDecorator[T]: ...
 
 @overload  # pragma: no cover
 def component_tag(
-    selector: str,
+    selector: str = "",
     *,
     extract: bool = False,
     clear: bool = False,
@@ -86,7 +88,7 @@ def component_tag(
 
 
 def component_tag(
-    selector: Any,
+    selector: Any = "",
     *,
     extract: bool = False,
     clear: bool = False,

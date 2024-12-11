@@ -7,16 +7,14 @@ from bs4 import NavigableString
 from weba import Tag, ui
 
 
-@pytest.mark.asyncio
-async def test_ui_hello_world():
+def test_ui_hello_world():
     with ui.div() as html:
         ui.h1("Hello, World!")
 
     assert "<div><h1>Hello, World!</h1></div>" in str(html)
 
 
-@pytest.mark.asyncio
-async def test_ui_hello_world_with_subtext():
+def test_ui_hello_world_with_subtext():
     with ui.div() as html:
         ui.h1("Hello, World!")
         ui.h2("This is a subtext.")
@@ -24,8 +22,7 @@ async def test_ui_hello_world_with_subtext():
     assert "<div><h1>Hello, World!</h1><h2>This is a subtext.</h2></div>" in str(html)
 
 
-@pytest.mark.asyncio
-async def test_ui_test_multiple_blocks():
+def test_ui_test_multiple_blocks():
     with ui.div() as html1:
         ui.h1("Hello, World!")
         ui.h2("This is a subtext.")
@@ -39,8 +36,7 @@ async def test_ui_test_multiple_blocks():
     assert "<div><h1>Hello, Two!</h1><h2>This is a subtext two.</h2></div>" in str(html2)
 
 
-@pytest.mark.asyncio
-async def test_ui_context_isolation():
+def test_ui_context_isolation():
     # First block
     with ui.div() as outer:
         ui.p("Outer paragraph")
@@ -82,8 +78,7 @@ async def test_ui_async_context_isolation():
     assert str(div2) == "<div><p>Task 2 paragraph</p><p>Task 2 second paragraph</p></div>"
 
 
-@pytest.mark.asyncio
-async def test_ui_attributes():
+def test_ui_attributes():
     # Test regular attributes
     with ui.div(class_="container", data_test="value") as div1:
         pass
@@ -103,8 +98,7 @@ async def test_ui_attributes():
     assert str(div3) == '<div class="outer"><p class="inner" data-value="test"></p></div>'
 
 
-@pytest.mark.asyncio
-async def test_ui_class_list():
+def test_ui_class_list():
     # Test class attribute accepting a list
     with ui.div(class_=["container", "mt-4", "px-2"]) as div:
         pass
@@ -112,8 +106,7 @@ async def test_ui_class_list():
     assert str(div) == '<div class="container mt-4 px-2"></div>'
 
 
-@pytest.mark.asyncio
-async def test_ui_class_manipulation():
+def test_ui_class_manipulation():
     # Test direct class manipulation
     hello_tag = ui.h1("Hello, World!")
     hello_tag["class"].append("highlight")
@@ -122,8 +115,7 @@ async def test_ui_class_manipulation():
     assert 'class="highlight text-xl"' in str(hello_tag)
 
 
-@pytest.mark.asyncio
-async def test_ui_value_to_string_conversion():
+def test_ui_value_to_string_conversion():
     number_tag = ui.p(123)
     assert str(number_tag) == "<p>123</p>"
 
@@ -143,8 +135,7 @@ async def test_ui_value_to_string_conversion():
     assert str(date_tag) == "<p>2024-12-25 12:00:00</p>"
 
 
-@pytest.mark.asyncio
-async def test_ui_htmx_search_form():
+def test_ui_htmx_search_form():
     with ui.form() as form:
         ui.input_(
             type="text", name="search", hx_post="/search", hx_trigger="keyup changed delay:500ms", hx_target="#results"
@@ -166,8 +157,7 @@ async def test_ui_htmx_search_form():
     assert result.endswith("</form>")
 
 
-@pytest.mark.asyncio
-async def test_ui_append_to_existing_element():
+def test_ui_append_to_existing_element():
     def list_item_tag(text: str) -> Tag:
         return ui.li(text)
 
@@ -180,8 +170,7 @@ async def test_ui_append_to_existing_element():
     assert "<ul><li>Item 1</li><li>Item 2</li><li>Item 3</li></ul>" in str(list_tag)
 
 
-@pytest.mark.asyncio
-async def test_ui_insert_methods():
+def test_ui_insert_methods():
     # Test insert at specific position
     with ui.ul() as list_tag:
         ui.li("First")
@@ -269,8 +258,7 @@ def create_card(
     return card
 
 
-@pytest.mark.asyncio
-async def test_ui_card_component():
+def test_ui_card_component():
     # Test basic card
     card1 = create_card(
         title="Card Title", content="Card content goes here", items=["Item 1", "Item 2"], button_text="Click me!"
@@ -313,8 +301,7 @@ async def test_ui_card_component():
     assert expected3 in str(card3)
 
 
-@pytest.mark.asyncio
-async def test_ui_list_operations():
+def test_ui_list_operations():
     # Test extend
     with ui.ul() as list_tag:
         items = [ui.li(f"Item {i}") for i in range(3)]
@@ -349,8 +336,7 @@ async def test_ui_list_operations():
     assert str(list_tag) == "<ul><li>Item 1</li></ul>"
 
 
-@pytest.mark.asyncio
-async def test_ui_tag_attributes():
+def test_ui_tag_attributes():
     # Test non-class attribute access
     with ui.div(id="test", data_value="123") as div:
         assert div["id"] == "test"
@@ -367,8 +353,7 @@ async def test_ui_tag_attributes():
     assert len(div["class"]) == 0
 
 
-@pytest.mark.asyncio
-async def test_ui_select_methods():
+def test_ui_select_methods():
     with ui.div() as container:
         ui.p("First", class_="one")
         ui.p("Second", class_="two")
@@ -384,8 +369,7 @@ async def test_ui_select_methods():
         assert all(p.name == "p" for p in found)
 
 
-@pytest.mark.asyncio
-async def test_ui_raw_html():
+def test_ui_raw_html():
     # Test basic HTML parsing
     tag = ui.raw("<div>Hello World</div>")
     tag["class"].append("raw")
@@ -425,8 +409,7 @@ async def test_ui_raw_html():
     assert str(container) == "<div><p>First paragraph</p><p>Second paragraph</p></div>"
 
 
-@pytest.mark.asyncio
-async def test_ui_text():
+def test_ui_text():
     # Test basic text node
     text = ui.text("Hello World")
     assert str(text) == "Hello World"
@@ -494,8 +477,7 @@ async def test_ui_text():
     assert str(whitespace_tag) == "   "
 
 
-@pytest.mark.asyncio
-async def test_ui_json_attributes():
+def test_ui_json_attributes():
     # Test dictionary attribute
     data = {"name": "John", "age": 30}
     with ui.div(data_user=data) as div:
@@ -518,8 +500,7 @@ async def test_ui_json_attributes():
         assert div["data-empty-arr"] == "[]"
 
 
-@pytest.mark.asyncio
-async def test_ui_comment_one():
+def test_ui_comment_one():
     # Test finding a single element after a comment
     html = """<div>
     <!-- #button -->
@@ -552,8 +533,7 @@ async def test_ui_comment_one():
     assert str(text_node) == "Some Text"
 
 
-@pytest.mark.asyncio
-async def test_ui_comment():
+def test_ui_comment():
     # Test finding multiple elements after comments
     html = """<div>
     <!-- .button -->
@@ -636,8 +616,7 @@ async def test_ui_comment():
     assert str(mixed[2]) == "<span>in a span</span>"
 
 
-@pytest.mark.asyncio
-async def test_ui_replace_with():
+def test_ui_replace_with():
     # Test basic replacement
     with ui.div() as container:
         original = ui.p("Original")
@@ -667,8 +646,7 @@ async def test_ui_replace_with():
     assert new2.parent is container
 
 
-@pytest.mark.asyncio
-async def test_ui_insert_before_multiple():
+def test_ui_insert_before_multiple():
     # Test inserting multiple tags before an existing tag
     with ui.div() as container:
         existing = ui.p("Existing")
@@ -684,8 +662,7 @@ async def test_ui_insert_before_multiple():
     assert all(tag in container.children for tag in [new1, new2, new3])  # pyright: ignore[reportPrivateUsage]
 
 
-@pytest.mark.asyncio
-async def test_ui_insert_after_multiple():
+def test_ui_insert_after_multiple():
     # Test inserting multiple tags after an existing tag
     with ui.div() as container:
         ui.span("Before")
@@ -701,8 +678,7 @@ async def test_ui_insert_after_multiple():
     assert all(tag in container.children for tag in [new1, new2, new3])  # pyright: ignore[reportPrivateUsage]
 
 
-@pytest.mark.asyncio
-async def test_ui_comment_no_sibling():
+def test_ui_comment_no_sibling():
     # HTML with a comment but no following sibling
     html = """<div>
     <!-- .button -->
@@ -715,8 +691,7 @@ async def test_ui_comment_no_sibling():
     assert results == []
 
 
-@pytest.mark.asyncio
-async def test_ui_comment_with_text_sibling():
+def test_ui_comment_with_text_sibling():
     # HTML with a comment followed by plain text (NavigableString)
     html = """<div>
     <!-- .text -->
@@ -735,8 +710,7 @@ async def test_ui_comment_with_text_sibling():
     assert isinstance(results[0], NavigableString)
 
 
-@pytest.mark.asyncio
-async def test_ui_extract():
+def test_ui_extract():
     # Test basic extraction
     with ui.div() as container:
         child = ui.p("Test")
@@ -769,8 +743,7 @@ async def test_ui_extract():
     assert orphan.parent is None
 
 
-@pytest.mark.asyncio
-async def test_ui_getattr_behavior():
+def test_ui_getattr_behavior():
     # Test method that returns a single Bs4Tag
     with ui.div() as container:
         ui.p("Test", class_="test-p")
@@ -795,8 +768,7 @@ async def test_ui_getattr_behavior():
         assert isinstance(container.name, str)
 
 
-@pytest.mark.asyncio
-async def test_ui_setting_tag_attributes():
+def test_ui_setting_tag_attributes():
     button_tag = ui.button("Test")
 
     # Test direct attribute access
@@ -818,3 +790,9 @@ async def test_ui_setting_tag_attributes():
     # Test other attributes
     button_tag.attrs["data-test"] = "value"
     assert 'data-test="value"' in str(button_tag)
+
+
+def test_ui_passing_tag_as_argument():
+    button_tag = ui.button(ui.span("Hello, World!"))
+
+    assert str(button_tag) == "<button><span>Hello, World!</span></button>"

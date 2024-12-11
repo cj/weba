@@ -98,10 +98,13 @@ class Ui:
             if parent:
                 parent.append(tag_obj)
 
-            # Set string content if provided
+            # Handle content
             if args:
-                # If the first argument is something renderable as string
-                tag_obj.string = str(args[0])
+                arg = args[0]
+                if isinstance(arg, Tag):
+                    tag_obj.append(arg)
+                else:
+                    tag_obj.string = str(arg)
 
             return tag_obj
 
