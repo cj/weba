@@ -101,6 +101,9 @@ extraPaths = [".venv/lib/python3.12/site-packages"]
 [tool.ruff.lint.per-file-ignores]
 "tests/*" = ["S101"]
 
+[tool.deptry.per_rule_ignores]
+DEP002 = ["types-beautifulsoup4"]
+
 [tool.ruff.format]
 preview = true
 
