@@ -174,15 +174,15 @@ with ui.div() as container:
 with ui.div() as container:
     original = ui.p("Original")
     ui.span("Other")
-    
+
     # Replace with a single tag
     original.replace_with(ui.h2("New"))
     print(str(container))  # <div><h2>New</h2><span>Other</span></div>
-    
+
     # Replace with multiple tags
     original = ui.p("Original")
     original.replace_with(
-        ui.h2("First"), 
+        ui.h2("First"),
         ui.h3("Second")
     )
     print(str(container))  # <div><h2>First</h2><h3>Second</h3><span>Other</span></div>
@@ -194,7 +194,7 @@ button.name = "input"    # Change tag type
 button.attrs["class"] = ["primary", "large"]  # Set multiple classes
 button.attrs["data-test"] = "value"  # Set custom attribute
 
-print(str(button))  
+print(str(button))
 # <input class="primary large" data-test="value">Submit</input>
 
 # Pass tags as arguments

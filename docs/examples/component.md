@@ -89,7 +89,7 @@ async def main():
     with ui.div() as container:
         await AsyncButton("Async Click Me")
         await AsyncButton("Another Button")
-    
+
     print(str(container))
     # <div><button>Async Click Me</button><button>Another Button</button></div>
 ```
