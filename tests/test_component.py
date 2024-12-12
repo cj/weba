@@ -7,7 +7,7 @@ from typing import TYPE_CHECKING
 import pytest
 from bs4 import Doctype
 
-from weba import Component, Tag, tag, ui
+from weba import Component, ComponentTypeError, Tag, tag, ui
 
 if TYPE_CHECKING:  # pragma: no cover
     from weba.ui import Tag
@@ -398,3 +398,50 @@ def test_component_select_root_tag():
     list_c = ListC(["one", "two", "three"])
 
     assert str(list_c) == "<ul><li>one</li><li>two</li><li>three</li></ul>"
+
+
+def test_component_tag_decorator_cache():
+    class CachedComponent(Component):
+        html = "<div><span>Original</span></div>"
+
+        def __init__(self):
+            self.counter = 0
+
+        @tag("span")
+        def span_tag(self):
+            self.counter += 1
+            return ui.span(f"Called {self.counter} times")
+
+    component = CachedComponent()
+    # First call should modify the content
+    assert str(component.span_tag) == "<span>Called 1 times</span>"
+    # Subsequent calls should return cached result
+    assert str(component.span_tag) == "<span>Called 1 times</span>"
+    assert str(component.span_tag) == "<span>Called 1 times</span>"
+
+
+def test_component_tag_render_return():
+    class Render(Component):
+        html = "<div>Original</div>"
+
+        def render(self):
+            return ui.h1("Hello, World!")
+
+    component = Render()
+
+    assert str(component) == "<h1>Hello, World!</h1>"
+
+
+def test_component_type_error():
+    """Test that ComponentTypeError is raised with correct message when non-Tag is returned."""
+
+    class BadComponent(Component):
+        html = "<div>Original</div>"
+
+        def render(self):
+            return "not a tag"  # This should raise ComponentTypeError
+
+    with pytest.raises(ComponentTypeError) as exc_info:
+        BadComponent()
+
+    assert "Expected Tag, got <class 'str'>" in str(exc_info)

@@ -18,6 +18,14 @@ from .context import current_parent
 from .tag import Tag
 from .ui import ui
 
+
+class ComponentTypeError(TypeError):
+    """Raised when a component receives an invalid type."""
+
+    def __init__(self, received_type: Any) -> None:
+        super().__init__(f"Expected Tag, got {type(received_type)}")
+
+
 if TYPE_CHECKING:  # pragma: no cover
     from collections.abc import Callable
 
@@ -175,15 +183,19 @@ class Component(ABC, Tag, metaclass=ComponentMeta):
             getattr(instance, method_name)
 
         # Call render if it's not asynchronous
-        if not inspect.iscoroutinefunction(instance.render) and callable(instance.render):
-            instance.render()
+        if not inspect.iscoroutinefunction(instance.render) and callable(instance.render):  # noqa: SIM102
+            if response := instance.render():
+                instance._update_from_response(response)
 
         return instance
 
     def __await__(self):
         async def _coro():
-            if inspect.iscoroutinefunction(self.render):  # pragma: no cover NOTE: we have tests for this
-                await self.render()
+            if inspect.iscoroutinefunction(  # noqa: SIM102
+                self.render
+            ):  # pragma: no cover NOTE: we have tests for this
+                if response := await self.render():
+                    self._update_from_response(response)
 
             return self
 
@@ -191,3 +203,17 @@ class Component(ABC, Tag, metaclass=ComponentMeta):
 
     def __init__(self):
         pass
+
+    def _update_from_response(self, response: Any) -> None:
+        """Update this component's content and attributes from a response tag.
+
+        Args:
+            response: The tag to copy content and attributes from
+        """
+        if not isinstance(response, Tag):
+            raise ComponentTypeError(response)
+
+        self.clear()
+        self.extend(response.contents)
+        self.name = response.name
+        self.attrs = response.attrs
