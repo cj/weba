@@ -53,7 +53,7 @@ serve-coverage: ## Serve the coverage report
 
 .PHONY: docs
 docs: ## Build and serve the documentation
-	@uv run mkdocs serve
+	@uv run mkdocs serve -a 'localhost:8111'
 
 .PHONY: aider
 aider: ## Start aider with file watching and conventions
