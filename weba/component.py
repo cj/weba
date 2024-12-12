@@ -11,6 +11,12 @@ from .tag import Tag
 from .tag_decorator import TagDecorator
 from .ui import ui
 
+if TYPE_CHECKING:  # pragma: no cover
+    from collections.abc import Callable
+    from types import TracebackType
+
+T = TypeVar("T", bound="Component")
+
 
 class ComponentTypeError(TypeError):
     """Raised when a component receives an invalid type."""
@@ -19,19 +25,25 @@ class ComponentTypeError(TypeError):
         super().__init__(f"Expected Tag, got {type(received_type)}")
 
 
-if TYPE_CHECKING:  # pragma: no cover
-    from collections.abc import Callable
+class ComponentAfterRenderError(RuntimeError):
+    """Raised when after_render is called in a synchronous context."""
 
-T = TypeVar("T", bound="Component")
+    def __init__(self) -> None:
+        super().__init__(
+            "after_render cannot be called in a synchronous context manager. "
+            "Either make the context manager async or remove after_render."
+        )
 
 
 @overload  # pragma: no cover NOTE: We have tests for these
-def component_tag(selector: Callable[[T, Tag], str]) -> TagDecorator[T]: ...
+def component_tag(
+    selector_or_method: Callable[[T, Tag], Tag | T | None] | Callable[[T], Tag | T | None],
+) -> TagDecorator[T]: ...
 
 
 @overload  # pragma: no cover
 def component_tag(
-    selector: str = "",
+    selector_or_method: str = "",
     *,
     extract: bool = False,
     clear: bool = False,
@@ -39,7 +51,7 @@ def component_tag(
 
 
 def component_tag(
-    selector: Any = "",
+    selector_or_method: str | Callable[[T, Tag], Tag | T | None] | Callable[[T], Tag | T | None] = "",
     *,
     extract: bool = False,
     clear: bool = False,
@@ -47,19 +59,22 @@ def component_tag(
     """Decorator factory for component tag methods.
 
     Args:
-        selector: Either a CSS selector string or the decorated method
+        selector_or_method: Either a CSS selector string, or the decorated method directly
         extract: Whether to extract the matched tag
         clear: Whether to clear the matched tag
 
     Returns:
         Either a TagDecorator directly (if called with method) or a decorator.
     """
+    if callable(selector_or_method):
+        # Decorator used without parameters
+        return TagDecorator(selector_or_method, selector="", extract=False, clear=False)
 
     # Decorator used with parameters
     def decorator(method: Callable[[T, Tag], Tag | T | None] | Callable[[T], Tag | T | None]) -> TagDecorator[T]:
         return TagDecorator(
             method,
-            selector=selector,
+            selector=str(selector_or_method),
             extract=extract,
             clear=clear,
         )
@@ -80,8 +95,10 @@ class ComponentMeta(ABCMeta):
 
         return cls
 
+    # NOTE: This prevents the default __init__ method from being called
     def __call__(cls, *args: Any, **kwargs: Any):
-        return super().__call__(*args, **kwargs)
+        # sourcery skip: instance-method-first-arg-name
+        return cls.__new__(cls, *args, **kwargs)  # pyright: ignore[reportArgumentType]
 
 
 class Component(ABC, Tag, metaclass=ComponentMeta):
@@ -89,6 +106,7 @@ class Component(ABC, Tag, metaclass=ComponentMeta):
 
     html: ClassVar[str]
     _tag_methods: ClassVar[list[str]]
+    _called_with_context: bool
 
     def __new__(cls, *args: Any, **kwargs: Any):
         html = cls.html
@@ -106,6 +124,8 @@ class Component(ABC, Tag, metaclass=ComponentMeta):
         # Create instance
         instance = super().__new__(cls)
 
+        instance._called_with_context = False
+
         # Initialize the instance with root_tag's properties
         Tag.__init__(instance, name=root_tag.name, attrs=root_tag.attrs)
 
@@ -121,28 +141,77 @@ class Component(ABC, Tag, metaclass=ComponentMeta):
         if parent := current_parent.get():
             parent.append(instance)
 
-        # Execute tag decorators after contents are copied
-        for method_name in getattr(cls, "_tag_methods", []):
-            getattr(instance, method_name)
+        # Check if any hooks are async
+        has_async_hooks = any(
+            inspect.iscoroutinefunction(getattr(instance, hook, None))
+            for hook in ["before_render", "render", "after_render"]
+        )
 
         # Call render if it's not asynchronous
-        if not inspect.iscoroutinefunction(instance.render) and callable(instance.render):  # noqa: SIM102
-            if response := instance.render():
+        if not has_async_hooks:
+            if callable(instance.before_render):
+                instance.before_render()
+
+            instance._load_tag_methods()
+
+            if callable(instance.render) and (response := instance.render()):
                 instance._update_from_response(response)
+
+            if callable(instance.after_render):
+                instance.after_render()
 
         return instance
 
     def __await__(self):
         async def _coro():
-            if inspect.iscoroutinefunction(  # noqa: SIM102
-                self.render
-            ):  # pragma: no cover NOTE: we have tests for this
-                if response := await self.render():
-                    self._update_from_response(response)
+            if callable(self.before_render):
+                await self.before_render() if inspect.iscoroutinefunction(self.before_render) else self.before_render()
+
+            self._load_tag_methods()
+
+            if callable(self.render) and (
+                response := await self.render() if inspect.iscoroutinefunction(self.render) else self.render()
+            ):
+                self._update_from_response(response)
+
+            if not self._called_with_context and callable(self.after_render):
+                await self.after_render() if inspect.iscoroutinefunction(self.after_render) else self.after_render()
 
             return self
 
         return _coro().__await__()
+
+    def __enter__(self):
+        if (
+            hasattr(self, "after_render")
+            and callable(self.after_render)
+            and not inspect.iscoroutinefunction(self.after_render)
+        ):
+            raise ComponentAfterRenderError()
+
+        return super().__enter__()
+
+    async def __aenter__(self):
+        self._called_with_context = True
+
+        await self
+        return self
+
+    async def __aexit__(
+        self,
+        exc_type: type[BaseException] | None,
+        exc_val: BaseException | None,
+        exc_tb: TracebackType | None,
+    ) -> None:
+        if callable(self.after_render):
+            await self.after_render() if inspect.iscoroutinefunction(self.after_render) else self.after_render()
+
+        return None
+
+    def _load_tag_methods(self) -> None:
+        # Execute tag decorators after contents are copied
+        for method_name in getattr(self.__class__, "_tag_methods", []):
+            getattr(self, method_name)
 
     def __init__(self):
         pass
@@ -155,6 +224,9 @@ class Component(ABC, Tag, metaclass=ComponentMeta):
         """
         if not isinstance(response, Tag):
             raise ComponentTypeError(response)
+
+        if response == self:
+            response = response.copy()
 
         self.clear()
         self.extend(response.contents)

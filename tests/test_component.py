@@ -7,7 +7,7 @@ from typing import TYPE_CHECKING
 import pytest
 from bs4 import Doctype
 
-from weba import Component, ComponentTypeError, Tag, tag, ui
+from weba import Component, ComponentAfterRenderError, ComponentTypeError, Tag, tag, ui
 
 if TYPE_CHECKING:  # pragma: no cover
     from weba.ui import Tag
@@ -445,3 +445,425 @@ def test_component_type_error():
         BadComponent()
 
     assert "Expected Tag, got <class 'str'>" in str(exc_info)
+
+
+def test_component_before_render_sync():
+    """Test that synchronous before_render hook is called and can modify the component."""
+
+    class BeforeRenderComponent(Component):
+        html = "<div>Original</div>"
+
+        def before_render(self):
+            self.msg = "Modified in before_render"
+
+        def render(self):
+            self.string = self.msg
+
+    component = BeforeRenderComponent()
+    assert str(component) == "<div>Modified in before_render</div>"
+
+
+@pytest.mark.asyncio
+async def test_component_async_before_render():
+    """Test that asynchronous before_render hook is called and can modify the component."""
+
+    class AsyncBeforeRenderComponent(Component):
+        html = "<div>Original</div>"
+
+        async def before_render(self):
+            await asyncio.sleep(0.01)  # Simulate async operation
+            self.msg = "Modified in before_render"
+
+        async def render(self):
+            return ui.h1(self.msg)
+
+    component = await AsyncBeforeRenderComponent()
+    assert str(component) == "<h1>Modified in before_render</h1>"
+
+
+def test_component_before_render_only():
+    """Test that before_render hook works without a render method."""
+
+    class BeforeRenderOnlyComponent(Component):
+        html = "<div>Original</div>"
+
+        def before_render(self):
+            self.string = "Modified in before_render"
+
+    component = BeforeRenderOnlyComponent()
+
+    assert str(component) == "<div>Modified in before_render</div>"
+
+
+@pytest.mark.asyncio
+async def test_component_async_before_render_sync_render():
+    """Test that asynchronous before_render hook is called and can modify the component."""
+
+    class AsyncBeforeRenderComponent(Component):
+        html = "<div>Original</div>"
+
+        async def before_render(self):
+            await asyncio.sleep(0.01)  # Simulate async operation
+            self.msg = "Modified in before_render"
+
+        def render(self):
+            return ui.h1(self.msg)
+
+    component = await AsyncBeforeRenderComponent()
+    assert str(component) == "<h1>Modified in before_render</h1>"
+
+
+@pytest.mark.asyncio
+async def test_component_async_before_render_sync_render_with_context():
+    """Test that asynchronous before_render hook is called and can modify the component."""
+
+    class AsyncBeforeRenderComponent(Component):
+        html = "<div>Original</div>"
+
+        async def before_render(self):
+            await asyncio.sleep(0.01)  # Simulate async operation
+            self.msg = "Modified in before_render"
+
+        def render(self):
+            return ui.h1(self.msg)
+
+    async with AsyncBeforeRenderComponent() as component:
+        assert str(component) == "<h1>Modified in before_render</h1>"
+
+    async with AsyncBeforeRenderComponent() as component:
+        component.string = f"{component.string}!"
+
+    assert str(component) == "<h1>Modified in before_render!</h1>"
+
+
+@pytest.mark.asyncio
+async def test_component_async_before_render_async_render_with_context():
+    """Test that asynchronous before_render hook is called and can modify the component."""
+
+    class AsyncBeforeRenderComponent(Component):
+        html = "<div>Original</div>"
+
+        async def before_render(self):
+            await asyncio.sleep(0.01)  # Simulate async operation
+            self.msg = "Modified in before_render"
+
+        async def render(self):
+            return ui.h1(self.msg)
+
+    async with AsyncBeforeRenderComponent() as component:
+        assert str(component) == "<h1>Modified in before_render</h1>"
+
+    async with AsyncBeforeRenderComponent() as component:
+        component.string = f"{component.string}!"
+
+    assert str(component) == "<h1>Modified in before_render!</h1>"
+
+
+def test_component_async_before_render_sync_with_context():
+    """Test that asynchronous before_render hook is called and can modify the component."""
+
+    class SyncBeforeRenderComponent(Component):
+        html = "<div>Original</div>"
+
+        def before_render(self):
+            self.msg = "Modified in before_render"
+
+        def render(self):
+            return ui.h1(self.msg)
+
+    with SyncBeforeRenderComponent() as component:
+        assert str(component) == "<h1>Modified in before_render</h1>"
+
+    with SyncBeforeRenderComponent() as component:
+        component.string = f"{component.string}!"
+
+    assert str(component) == "<h1>Modified in before_render!</h1>"
+
+
+def test_component_async_before_render_sync_with_context_with_tag():
+    """Test that asynchronous before_render hook is called and can modify the component."""
+
+    class SyncBeforeRenderComponent(Component):
+        html = "<div>Original</div>"
+
+        def before_render(self):
+            self.msg = "Modified in before_render"
+
+        def render(self):
+            return self.h1_tag
+
+        @tag()
+        def h1_tag(self, t: Tag):
+            t.name = "h1"
+            t.string = self.msg
+
+    with SyncBeforeRenderComponent() as component:
+        assert str(component) == "<h1>Modified in before_render</h1>"
+
+    with SyncBeforeRenderComponent() as component:
+        component.string = f"{component.string}!"
+
+    assert str(component) == "<h1>Modified in before_render!</h1>"
+
+
+@pytest.mark.asyncio
+async def test_component_async_before_render_async_with_context_with_tag():
+    """Test that asynchronous before_render hook is called and can modify the component."""
+
+    class SyncBeforeRenderComponent(Component):
+        html = "<div>Original</div>"
+
+        async def before_render(self):
+            self.msg = "Modified in before_render"
+
+        async def render(self):
+            return self.h1_tag
+
+        @tag
+        def h1_tag(self, t: Tag):
+            t.name = "h1"
+            t.string = self.msg
+
+    async with SyncBeforeRenderComponent() as component:
+        assert str(component) == "<h1>Modified in before_render</h1>"
+
+    async with SyncBeforeRenderComponent() as component:
+        component.string = f"{component.string}!"
+
+        async with SyncBeforeRenderComponent() as component2:
+            component2.string = f"{component2.string}!!!"
+
+    assert str(component) == "<h1>Modified in before_render!</h1>"
+    assert str(component2) == "<h1>Modified in before_render!!!</h1>"
+
+
+def test_component_after_render():
+    """Test that after_render is called when not using context manager."""
+
+    class AfterRenderComponent(Component):
+        html = "<div>Original</div>"
+
+        def __init__(self):
+            self.steps: list[str] = []
+
+        def before_render(self):
+            self.steps.append("before")
+
+        def render(self):
+            self.steps.append("render")
+
+        def after_render(self):
+            self.steps.append("after")
+            self.string = "after render"
+
+    component = AfterRenderComponent()
+
+    assert component.steps == ["before", "render", "after"]
+    assert str(component) == "<div>after render</div>"
+
+
+def test_component_after_render_called_before_exit():
+    """Test that after_render raises error in sync context."""
+
+    class AfterRenderComponent(Component):
+        html = "<div>Original</div>"
+
+        def __init__(self):
+            self.steps: list[str] = []
+
+        def before_render(self):
+            self.steps.append("before")
+
+        def render(self):
+            self.steps.append("render")
+
+        def after_render(self):
+            self.steps.append("after")
+
+    with pytest.raises(ComponentAfterRenderError) as exc_info:
+        with AfterRenderComponent() as component:
+            component.append(ui.text("!"))
+
+    assert "after_render cannot be called in a synchronous context manager" in str(exc_info.value)
+
+
+@pytest.mark.asyncio
+async def test_component_async_after_render_called_before_exit_():
+    """Test that after_render is called when not using context manager."""
+
+    class AfterRenderComponent(Component):
+        html = "<div>Original</div>"
+
+        def __init__(self):
+            self.steps: list[str] = []
+
+        async def before_render(self):
+            self.steps.append("before")
+
+        async def render(self):
+            self.steps.append("render")
+
+        async def after_render(self):
+            self.steps.append("after")
+            assert "!" in str(self)
+
+    async with AfterRenderComponent() as component:
+        component.append(ui.text("!"))
+
+    assert component.steps == ["before", "render", "after"]
+    assert str(component) == "<div>Original!</div>"
+
+
+@pytest.mark.asyncio
+async def test_component_async_after_render():
+    """Test that after_render is called when not using context manager."""
+
+    class AfterRenderComponent(Component):
+        html = "<div>Original</div>"
+
+        def __init__(self):
+            self.steps: list[str] = []
+
+        async def before_render(self):
+            self.steps.append("before")
+
+        async def render(self):
+            self.steps.append("render")
+
+        async def after_render(self):
+            self.steps.append("after")
+            self.string = "after render"
+
+    component = await AfterRenderComponent()
+
+    async with AfterRenderComponent() as component2:
+        pass
+
+    assert component.steps == ["before", "render", "after"]
+    assert str(component) == "<div>after render</div>"
+    assert component2.steps == ["before", "render", "after"]
+    assert str(component2) == "<div>after render</div>"
+
+
+def test_component_sync_after_render_error_explanation():
+    """Test that sync after_render in sync context raises clear error."""
+
+    class SyncAfterRenderComponent(Component):
+        html = "<div>Original</div>"
+
+        def after_render(self):
+            self.string = "after render"
+
+    # This raises because sync after_render in sync context would be inconsistent
+    # with async behavior where after_render runs at context exit
+    with pytest.raises(ComponentAfterRenderError) as exc_info:
+        with SyncAfterRenderComponent():
+            pass
+
+    assert "after_render cannot be called in a synchronous context manager" in str(exc_info.value)
+    assert "Either make the context manager async or remove after_render" in str(exc_info.value)
+
+
+def test_component_sync_after_render_without_context():
+    """Test that sync after_render works fine outside context manager."""
+
+    class SyncAfterRenderComponent(Component):
+        html = "<div>Original</div>"
+
+        def after_render(self):
+            self.string = "after render"
+
+    # Without context manager, sync after_render runs immediately after render
+    component = SyncAfterRenderComponent()
+    assert str(component) == "<div>after render</div>"
+
+
+@pytest.mark.asyncio
+async def test_component_mixed_sync_async_hooks():
+    """Test component with mix of sync and async lifecycle hooks."""
+
+    class MixedComponent(Component):
+        html = "<div>Original</div>"
+
+        def __init__(self):
+            self.steps: list[str] = []
+
+        def before_render(self):
+            self.steps.append("sync before")
+
+        async def render(self):
+            await asyncio.sleep(0.01)
+            self.steps.append("async render")
+
+        async def after_render(self):
+            self.steps.append("async after")
+            self.string = "all done"
+
+    async with MixedComponent() as component:
+        assert "sync before" in component.steps
+        assert "async render" in component.steps
+        component.append(ui.text("!"))
+
+    assert component.steps == ["sync before", "async render", "async after"]
+    assert str(component) == "<div>all done</div>"
+
+
+#
+# def test_component_after_render_with_context():
+#     """Test that after_render is called at context exit."""
+#
+#     class ContextComponent(Component):
+#         html = "<div>Original</div>"
+#
+#         def __init__(self):
+#             self.steps: list[str] = []
+#
+#         def before_render(self):
+#             self.steps.append("before")
+#
+#         def render(self):
+#             self.steps.append("render")
+#             self.string = "rendered"
+#
+#         def after_render(self):
+#             self.steps.append("after")
+#             self.string = "after render"
+#
+#     with ContextComponent() as component:
+#         assert component.steps == ["before", "render"]
+#         assert str(component) == "<div>rendered</div>"
+#
+#     assert component.steps == ["before", "render", "after"]
+#     assert str(component) == "<div>after render</div>"
+#
+#
+# @pytest.mark.asyncio
+# async def test_component_async_after_render():
+#     """Test that async after_render is called correctly."""
+#
+#     class AsyncComponent(Component):
+#         html = "<div>Original</div>"
+#
+#         def __init__(self):
+#             self.steps: list[str] = []
+#
+#         async def before_render(self):
+#             await asyncio.sleep(0.01)
+#             self.steps.append("before")
+#
+#         async def render(self):
+#             await asyncio.sleep(0.01)
+#             self.steps.append("render")
+#             self.string = "rendered"
+#
+#         async def after_render(self):
+#             await asyncio.sleep(0.01)
+#             self.steps.append("after")
+#             self.string = "after render"
+#
+#     async with AsyncComponent() as component:
+#         assert component.steps == ["before", "render"]
+#         assert str(component) == "<div>rendered</div>"
+#
+#     assert component.steps == ["before", "render", "after"]
+#     assert str(component) == "<div>after render</div>"
