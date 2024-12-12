@@ -172,8 +172,6 @@ Output:
 Create a component that dynamically generates list items:
 
 ```python
-from copy import copy
-
 class ListComponent(Component):
     html = """
     <ul>
@@ -188,9 +186,9 @@ class ListComponent(Component):
 
     def render(self):
         for item in self.list_items:
-            list_item = copy(self.list_item_tag)
+            list_item = self.list_item_tag.copy()
             list_item.string = item
-            self.append(list_item)
+            self.list_tag.append(list_item)
 
     @tag("li", extract=True)
     def list_item_tag(self):

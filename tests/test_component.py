@@ -385,7 +385,7 @@ def test_component_select_root_tag():
                 list_item = self.list_item_tag.copy()
                 list_item.string = item
 
-                self.append(list_item)
+                self.list_tag.append(list_item)
 
         @tag("li", extract=True)
         def list_item_tag(self):
