@@ -57,7 +57,7 @@ docs: ## Build and serve the documentation
 
 .PHONY: aider
 aider: ## Start aider with file watching and conventions
-	@uv run aider --watch-files --lint-cmd 'make check' --read CONVENTIONS.md
+	@uv run aider --watch-files --lint-cmd 'make check' --read CONVENTIONS.md weba/__init__.py
 
 .PHONY: test-watch
 test-watch: ## Watch for changes and run tests automatically
