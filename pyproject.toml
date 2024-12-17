@@ -24,6 +24,7 @@ Repository = "https://github.com/cj/weba"
 Documentation = "https://cj.github.io/weba/"
 
 [tool.uv]
+package = true
 default-groups = ["lint", "test", "docs"]
 
 [dependency-groups]
@@ -47,7 +48,7 @@ requires = ["setuptools >= 61.0"]
 build-backend = "setuptools.build_meta"
 
 [tool.setuptools]
-py-modules = ["weba"]
+packages = ['weba']
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
