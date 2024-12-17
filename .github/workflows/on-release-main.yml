@@ -47,6 +47,9 @@ jobs:
               with:
                   name: pyproject-toml
 
+            - name: Add stubs (types)
+              run: uvx pyright --createstub weba
+
             - name: Build package
               run: uvx --from build pyproject-build --installer uv
 
