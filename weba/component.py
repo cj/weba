@@ -114,24 +114,24 @@ class Component(ABC, Tag, metaclass=ComponentMeta):
 
         return instance
 
+    async def _async_render_hooks(self):
+        if callable(self.before_render):
+            await self.before_render() if inspect.iscoroutinefunction(self.before_render) else self.before_render()
+
+        self._load_tag_methods()
+
+        if callable(self.render) and (
+            response := await self.render() if inspect.iscoroutinefunction(self.render) else self.render()
+        ):
+            self._update_from_response(response)
+
+        if not self._called_with_context and callable(self.after_render):
+            await self.after_render() if inspect.iscoroutinefunction(self.after_render) else self.after_render()
+
+        return self
+
     def __await__(self):
-        async def _coro():
-            if callable(self.before_render):
-                await self.before_render() if inspect.iscoroutinefunction(self.before_render) else self.before_render()
-
-            self._load_tag_methods()
-
-            if callable(self.render) and (
-                response := await self.render() if inspect.iscoroutinefunction(self.render) else self.render()
-            ):
-                self._update_from_response(response)
-
-            if not self._called_with_context and callable(self.after_render):
-                await self.after_render() if inspect.iscoroutinefunction(self.after_render) else self.after_render()
-
-            return self
-
-        return _coro().__await__()
+        return self._async_render_hooks().__await__()
 
     def __enter__(self):
         if (
@@ -146,8 +146,9 @@ class Component(ABC, Tag, metaclass=ComponentMeta):
     async def __aenter__(self):
         self._called_with_context = True
 
-        await self
-        return self
+        await self._async_render_hooks()
+
+        return super().__enter__()
 
     async def __aexit__(
         self,
@@ -158,7 +159,7 @@ class Component(ABC, Tag, metaclass=ComponentMeta):
         if callable(self.after_render):
             await self.after_render() if inspect.iscoroutinefunction(self.after_render) else self.after_render()
 
-        return None
+        return super().__exit__()
 
     def _load_tag_methods(self) -> None:
         # Execute tag decorators after contents are copied

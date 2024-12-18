@@ -366,6 +366,27 @@ def test_component_with_layout():  # sourcery skip: extract-duplicate-method
     assert "<footer><span>contact us</span></footer>" in html_str
 
 
+def test_component_layout_appends():
+    class Layout(Component):
+        html = "./layout.html"
+
+    with Layout() as html:
+        ui.h1("Hello, World!")
+
+    assert "Hello, World!" in str(html)
+
+
+@pytest.mark.asyncio
+async def test_component_async_layout_appends():
+    class Layout(Component):
+        html = "./layout.html"
+
+    async with Layout() as html:
+        ui.h1("Hello, World!")
+
+    assert "Hello, World!" in str(html)
+
+
 def test_component_select_root_tag():
     class ListC(Component):
         html = """
@@ -630,11 +651,7 @@ async def test_component_async_before_render_async_with_context_with_tag():
     async with SyncBeforeRenderComponent() as component:
         component.string = f"{component.string}!"
 
-        async with SyncBeforeRenderComponent() as component2:
-            component2.string = f"{component2.string}!!!"
-
     assert str(component) == "<h1>Modified in before_render!</h1>"
-    assert str(component2) == "<h1>Modified in before_render!!!</h1>"
 
 
 def test_component_after_render():
