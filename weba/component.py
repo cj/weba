@@ -20,17 +20,30 @@ T = TypeVar("T", bound="Component")
 class ComponentTypeError(TypeError):
     """Raised when a component receives an invalid type."""
 
-    def __init__(self, received_type: Any) -> None:
-        super().__init__(f"Expected Tag, got {type(received_type)}")
+    def __init__(self, received_type: Any, component: type[Component]) -> None:
+        name = component.__name__
+        super().__init__(f"Component ({name}): Expected Tag, got {type(received_type)}")
 
 
 class ComponentAfterRenderError(RuntimeError):
     """Raised when after_render is called in a synchronous context."""
 
-    def __init__(self) -> None:
+    def __init__(self, component: type[Component]) -> None:
+        name = component.__name__
         super().__init__(
-            "after_render cannot be called in a synchronous context manager. "
+            f"Component ({name}): after_render cannot be called in a synchronous context manager. "
             "Either make the context manager async or remove after_render."
+        )
+
+
+class ComponentAsyncError(RuntimeError):
+    """Raised when async component is called synchronously."""
+
+    def __init__(self, component: type[Component]) -> None:
+        name = component.__name__
+        super().__init__(
+            f"Component ({name}): has async hooks but was called synchronously. "
+            "Use 'await component' or 'async with component' instead."
         )
 
 
@@ -59,6 +72,7 @@ class Component(ABC, Tag, metaclass=ComponentMeta):
     html: ClassVar[str]
     _tag_methods: ClassVar[list[str]]
     _called_with_context: bool
+    _has_async_hooks: bool = False
 
     def __new__(cls, *args: Any, **kwargs: Any):
         html = cls.html
@@ -94,13 +108,13 @@ class Component(ABC, Tag, metaclass=ComponentMeta):
             parent.append(instance)
 
         # Check if any hooks are async
-        has_async_hooks = any(
+        instance._has_async_hooks = any(
             inspect.iscoroutinefunction(getattr(instance, hook, None))
             for hook in ["before_render", "render", "after_render"]
         )
 
-        # Call render if it's not asynchronous
-        if not has_async_hooks:
+        # For non-async components, run hooks immediately
+        if not instance._has_async_hooks:
             if callable(instance.before_render):
                 instance.before_render()
 
@@ -134,12 +148,17 @@ class Component(ABC, Tag, metaclass=ComponentMeta):
         return self._async_render_hooks().__await__()
 
     def __enter__(self):
+        if self._has_async_hooks:
+            raise ComponentAsyncError(self.__class__)
+
         if (
             hasattr(self, "after_render")
             and callable(self.after_render)
             and not inspect.iscoroutinefunction(self.after_render)
         ):
-            raise ComponentAfterRenderError()
+            raise ComponentAfterRenderError(self.__class__)
+
+        self._called_with_context = True
 
         return super().__enter__()
 
@@ -176,7 +195,7 @@ class Component(ABC, Tag, metaclass=ComponentMeta):
             response: The tag to copy content and attributes from
         """
         if not isinstance(response, Tag):
-            raise ComponentTypeError(response)
+            raise ComponentTypeError(response, self.__class__)
 
         if response == self:
             response = response.copy()

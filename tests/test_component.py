@@ -7,7 +7,7 @@ from typing import TYPE_CHECKING
 import pytest
 from bs4 import Doctype
 
-from weba import Component, ComponentAfterRenderError, ComponentTypeError, Tag, tag, ui
+from weba import Component, ComponentAfterRenderError, ComponentAsyncError, ComponentTypeError, Tag, tag, ui
 
 if TYPE_CHECKING:  # pragma: no cover
     from weba.ui import Tag
@@ -793,6 +793,27 @@ def test_component_sync_after_render_without_context():
     # Without context manager, sync after_render runs immediately after render
     component = SyncAfterRenderComponent()
     assert str(component) == "<div>after render</div>"
+
+
+def test_sync_call_async_component_error():
+    """Test that using a sync call with an async component raises an error."""
+
+    class AsyncComponent(Component):
+        html = "<div>Original</div>"
+
+        async def render(self):
+            return ui.h1("Hello")
+
+    with pytest.raises(ComponentAsyncError) as exc_info:
+        with AsyncComponent():  # This should raise because it's an async component called synchronously
+            pass
+
+    assert "Component (AsyncComponent): has async hooks but was called synchronously" in str(exc_info.value)
+
+    # with pytest.raises(ComponentAsyncError) as exc_info:
+    #     AsyncComponent()  # This should raise because it's an async component called synchronously
+    #
+    # assert "Component has async hooks but was called synchronously" in str(exc_info.value)
 
 
 @pytest.mark.asyncio
