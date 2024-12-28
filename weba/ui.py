@@ -18,26 +18,28 @@ class Ui:
     def __init__(self):
         self.soup = BeautifulSoup("", "html.parser")
 
-    def text(self, html: str | int | float | Sequence[Any] | None) -> Tag:
+    def text(self, html: str | int | float | Sequence[Any] | None) -> str:
         """Create a raw text node from a string.
 
         Args:
             html: Raw text to insert
 
         Returns:
-            A NavigableString containing the text.
+            A string containing the text.
         """
         if html is None:
             html = ""
 
-        text_node = self.soup.new_string(str(html))  # pyright: ignore[reportUnknownVariableType, reportUnknownMemberType]
+        text = str(html)
 
+        # Only append to parent if we're creating a new text node
+        # This prevents double-appending when the text is used in other operations
         if parent := current_parent.get():
-            # Append the text node directly to the parent
-            parent.append(text_node)  # pyright: ignore[reportUnknownArgumentType]
+            parent.append(text)
+            return ""  # Return empty string since content is already appended
 
-        # Return the raw NavigableString node
-        return text_node  # pyright: ignore[reportUnknownVariableType]
+        # Return the raw string only when no parent (for direct usage)
+        return text
 
     def raw(self, html: str) -> Tag:
         """Create a Tag from a raw HTML string.
@@ -48,17 +50,39 @@ class Ui:
         Returns:
             Tag: A new Tag object containing the parsed HTML
         """
-        parsed = BeautifulSoup(html, "html.parser").find()
+        parsed = BeautifulSoup(html, "html.parser")
 
-        if isinstance(parsed, BeautifulSoupTag):
-            tag = Tag.from_existing_bs4tag(parsed)
+        # Count root elements
+        root_elements = [child for child in parsed.children if isinstance(child, BeautifulSoupTag)]
 
-            if parent := current_parent.get():
+        if len(root_elements) == 1:
+            # Single root element - return it directly
+            tag = Tag.from_existing_bs4tag(root_elements[0])
+        else:
+            # Multiple root elements or text only - handle as fragments
+            tag = Tag(name="fragment")
+            tag.string = ""
+
+            if root_elements:
+                # Add all root elements
+                for child in root_elements:
+                    tag.append(Tag.from_existing_bs4tag(child))
+            else:
+                # Text only content
+                tag.string = html
+
+            # Ensure fragment tag doesn't render
+            tag.hidden = True
+
+        if parent := current_parent.get():
+            if tag.name == "fragment" and tag.hidden:
+                # For fragments, append children directly to parent
+                for child in tag.children:
+                    parent.append(child)
+            else:
                 parent.append(tag)
 
-            return tag
-
-        return self.text(html)
+        return tag
 
     def __getattr__(self, tag_name: str) -> Callable[..., Tag]:
         def create_tag(*args: Any, **kwargs: str | int | float | Sequence[Any]) -> Tag:

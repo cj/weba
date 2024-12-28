@@ -413,6 +413,13 @@ def test_ui_raw_html():
     assert str(container) == "<div><p>First paragraph</p><p>Second paragraph</p></div>"
 
 
+def test_ui_raw_multiple_root_elments():
+    tag_string = "<div>First</div><div>Second</div>"
+    tag = ui.raw(tag_string)
+
+    assert str(tag) == tag_string
+
+
 def test_ui_text():  # sourcery skip: extract-method, no-conditionals-in-tests
     # Test basic text node
     text = ui.text("Hello World")

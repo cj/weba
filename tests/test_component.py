@@ -366,6 +366,23 @@ def test_component_with_layout():  # sourcery skip: extract-duplicate-method
     assert "<footer><span>contact us</span></footer>" in html_str
 
 
+def test_component_with_layout_append_to_body():  # sourcery skip: extract-duplicate-method
+    append_text = "<span>one</span><span>two</span>"
+
+    class Layout(Component):
+        html = "./layout.html"
+
+        @tag("body")
+        def body(self):
+            pass
+
+        def render(self):
+            self.body.append(ui.raw(append_text))
+
+    assert append_text in str(Layout())
+    assert "</>" not in str(Layout())
+
+
 def test_component_layout_appends():
     class Layout(Component):
         html = "./layout.html"
@@ -705,7 +722,7 @@ def test_component_after_render_called_before_exit():
 
 
 @pytest.mark.asyncio
-async def test_component_async_after_render_called_before_exit_():
+async def test_component_async_after_render_called_before_exit():
     """Test that after_render is called when not using context manager."""
 
     class AfterRenderComponent(Component):

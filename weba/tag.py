@@ -220,4 +220,8 @@ class Tag(Bs4Tag):
         if self.string == "None":
             self.string = ""
 
-        return self.string or "" if self.name == "" else super().__str__()
+        # For empty name or document tags, just concatenate children
+        if not self.name or self.name == "[document]":
+            return "".join(str(child) for child in self.children)
+
+        return super().__str__()
