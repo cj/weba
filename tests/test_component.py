@@ -5,7 +5,6 @@ import asyncio
 from typing import TYPE_CHECKING
 
 import pytest
-from bs4 import Doctype
 
 from weba import Component, ComponentAfterRenderError, ComponentAsyncError, ComponentTypeError, Tag, tag, ui
 
@@ -326,9 +325,6 @@ def test_component_with_layout():  # sourcery skip: extract-duplicate-method
     class Layout(Component):
         html = "./layout.html"
 
-        def render(self):
-            self.insert(0, Doctype("HTML"))
-
         @tag("header")
         def header(self):
             pass
@@ -343,7 +339,7 @@ def test_component_with_layout():  # sourcery skip: extract-duplicate-method
 
     layout = Layout()
 
-    assert "DOCTYPE HTML" in str(layout)
+    assert str(layout).startswith("<!doctype html>")
     assert "html" in str(layout)
     assert "header" in str(layout)
     assert "main" in str(layout)

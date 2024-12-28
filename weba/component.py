@@ -73,6 +73,7 @@ class Component(ABC, Tag, metaclass=ComponentMeta):
     _tag_methods: ClassVar[list[str]]
     _called_with_context: bool
     _has_async_hooks: bool = False
+    _doctype: str | None = None
 
     def __new__(cls, *args: Any, **kwargs: Any):
         html = cls.html
@@ -89,6 +90,12 @@ class Component(ABC, Tag, metaclass=ComponentMeta):
 
         # Create instance
         instance = super().__new__(cls)
+
+        doctype = html.split("\n", 1)[0]
+
+        # Handle doctype
+        if "!doctype" in doctype.lower():
+            instance._doctype = doctype
 
         instance._called_with_context = False
 
@@ -204,3 +211,9 @@ class Component(ABC, Tag, metaclass=ComponentMeta):
         self.extend(response.contents)
         self.name = response.name
         self.attrs = response.attrs
+
+    def __str__(self) -> str:
+        if self._doctype:
+            return f"{self._doctype}\n{super().__str__()}"
+
+        return super().__str__()
