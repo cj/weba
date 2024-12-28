@@ -215,13 +215,3 @@ class Tag(Bs4Tag):
             A new Tag instance that is a copy of this tag
         """
         return Tag.from_existing_bs4tag(self)
-
-    def __str__(self) -> str:
-        if self.string == "None":
-            self.string = ""
-
-        # For empty name or document tags, just concatenate children
-        if not self.name or self.name == "[document]":
-            return "".join(str(child) for child in self.children)
-
-        return super().__str__()

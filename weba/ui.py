@@ -27,10 +27,7 @@ class Ui:
         Returns:
             A string containing the text.
         """
-        if html is None:
-            html = ""
-
-        text = str(html)
+        text = "" if html is None else str(html)
 
         # Only append to parent if we're creating a new text node
         # This prevents double-appending when the text is used in other operations
@@ -75,12 +72,7 @@ class Ui:
             tag.hidden = True
 
         if parent := current_parent.get():
-            if tag.name == "fragment" and tag.hidden:
-                # For fragments, append children directly to parent
-                for child in tag.children:
-                    parent.append(child)
-            else:
-                parent.append(tag)
+            parent.append(tag)
 
         return tag
 
@@ -127,6 +119,8 @@ class Ui:
                 arg = args[0]
                 if isinstance(arg, Tag):
                     tag_obj.append(arg)
+                elif arg is None:
+                    tag_obj.string = ""
                 else:
                     tag_obj.string = str(arg)
 
