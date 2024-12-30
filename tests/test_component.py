@@ -107,13 +107,15 @@ async def test_component_async_context_isolation():
     async def task1():
         with ui.div() as div1:
             SimpleCard("Task 1", "First paragraph")
+            await asyncio.sleep(0.1)  # Simulate some async work
             SimpleCard("Task 1", "Second paragraph")
         return div1
 
     async def task2():
         with ui.div() as div2:
-            SimpleCard("Task 2", "First paragraph")
-            SimpleCard("Task 2", "Second paragraph")
+            SimpleCard("Task 2", "First paragraph!")
+            await asyncio.sleep(0.05)  # Different timing to interleave
+            SimpleCard("Task 2", "Second paragraph!")
         return div2
 
     # Run both tasks concurrently
@@ -128,8 +130,8 @@ async def test_component_async_context_isolation():
     )
     expected2 = (
         "<div>"
-        '<div class="card"><!-- #content --><div class="content"><h2>Task 2</h2><p>First paragraph</p></div></div>'
-        '<div class="card"><!-- #content --><div class="content"><h2>Task 2</h2><p>Second paragraph</p></div></div>'
+        '<div class="card"><!-- #content --><div class="content"><h2>Task 2</h2><p>First paragraph!</p></div></div>'
+        '<div class="card"><!-- #content --><div class="content"><h2>Task 2</h2><p>Second paragraph!</p></div></div>'
         "</div>"
     )
     assert str(div1) == expected1
