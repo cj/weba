@@ -106,7 +106,7 @@ class Tag(Bs4Tag):
         self._token: Token[Tag | None] | None = None
 
     def __enter__(self):
-        self._token = current_parent.set(self)
+        self._token = current_parent.set(self)  # pyright: ignore[reportArgumentType, reportAttributeAccessIssue]
         return self
 
     def __exit__(self, *args: Any) -> None:
