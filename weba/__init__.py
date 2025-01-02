@@ -1,6 +1,12 @@
 from __future__ import annotations
 
-from .component import Component, ComponentAfterRenderError, ComponentAsyncError, ComponentTypeError
+from .component import (
+    Component,
+    ComponentAfterRenderError,
+    ComponentAsyncError,
+    ComponentAttributeError,
+    ComponentTypeError,
+)
 from .component_tag import component_tag
 from .context import Context, current_parent
 from .tag import Tag
@@ -12,6 +18,7 @@ __all__ = [
     "Component",
     "ComponentAfterRenderError",
     "ComponentAsyncError",
+    "ComponentAttributeError",
     "ComponentTypeError",
     "Context",
     "Tag",

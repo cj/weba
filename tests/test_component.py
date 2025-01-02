@@ -6,7 +6,16 @@ from typing import TYPE_CHECKING
 
 import pytest
 
-from weba import Component, ComponentAfterRenderError, ComponentAsyncError, ComponentTypeError, Tag, tag, ui
+from weba import (
+    Component,
+    ComponentAfterRenderError,
+    ComponentAsyncError,
+    ComponentAttributeError,
+    ComponentTypeError,
+    Tag,
+    tag,
+    ui,
+)
 
 if TYPE_CHECKING:  # pragma: no cover
     from weba.ui import Tag
@@ -808,6 +817,18 @@ def test_component_sync_after_render_without_context():
     # Without context manager, sync after_render runs immediately after render
     component = SyncAfterRenderComponent()
     assert str(component) == "<div>after render</div>"
+
+
+def test_component_missing_src_attribute():
+    """Test that ComponentAttributeError is raised when src attribute is missing."""
+
+    class MissingSrcComponent(Component):
+        pass
+
+    with pytest.raises(ComponentAttributeError) as exc_info:
+        MissingSrcComponent()
+
+    assert "Component (MissingSrcComponent): Must define 'src' class attribute" in str(exc_info.value)
 
 
 def test_sync_call_async_component_error():
