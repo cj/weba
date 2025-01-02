@@ -847,6 +847,16 @@ def test_component_missing_src_attribute():
     assert "Component (MissingSrcComponent): Must define 'src' class attribute" in str(exc_info.value)
 
 
+def test_component_callable_src():
+    """Test that src can be a callable that returns HTML."""
+
+    class CallableSrcComponent(Component):
+        src = lambda: "<div><h1>Dynamic</h1></div>"
+
+    component = CallableSrcComponent()
+    assert str(component) == "<div><h1>Dynamic</h1></div>"
+
+
 def test_sync_call_async_component_error():
     """Test that using a sync call with an async component raises an error."""
 

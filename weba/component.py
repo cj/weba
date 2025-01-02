@@ -12,6 +12,7 @@ from .tag_decorator import TagDecorator
 from .ui import ui
 
 if TYPE_CHECKING:  # pragma: no cover
+    from collections.abc import Callable
     from types import TracebackType
 
 T = TypeVar("T", bound="Component")
@@ -77,8 +78,8 @@ class ComponentMeta(ABCMeta):
 class Component(ABC, Tag, metaclass=ComponentMeta):
     """Base class for UI components."""
 
-    src: ClassVar[str]
-    """The HTML source template for the component. Can be inline HTML or a path to an HTML file."""
+    src: ClassVar[str | Callable[[], str]]
+    """The HTML source template for the component. Can be inline HTML, a path to an HTML file, or a callable returning either."""
     src_parser: ClassVar[str] | None = None
     """The parser to use when parsing the source HTML. Defaults to 'html.parser'."""
     _tag_methods: ClassVar[list[str]]
@@ -86,10 +87,15 @@ class Component(ABC, Tag, metaclass=ComponentMeta):
     _has_async_hooks: bool = False
     _doctype: str | None = None
 
-    def __new__(cls, *args: Any, **kwargs: Any):
+    @classmethod
+    def _get_source_content(cls) -> tuple[str, str | None]:
+        """Get the source content and doctype."""
         src = getattr(cls, "src", None)
 
-        if src is None:
+        if callable(src):
+            src = src()
+
+        if src is None or not isinstance(src, str):
             raise ComponentAttributeError(cls)
 
         if src.endswith(".html") or src.endswith(".svg") or src.endswith(".xml"):
@@ -103,53 +109,51 @@ class Component(ABC, Tag, metaclass=ComponentMeta):
 
             src = path.read_text()
 
-        # Create root tag
-        root_tag = ui.raw(src, parser=cls.src_parser or "html.parser")
-
-        # Create instance
-        instance = super().__new__(cls)
-
         doctype = src.split("\n", 1)[0]
+        doctype = doctype if "!doctype" in doctype.lower() else None
 
-        # Handle doctype
-        if "!doctype" in doctype.lower():
-            instance._doctype = doctype
+        return src, doctype
 
-        instance._called_with_context = False
-
-        # Initialize the instance with root_tag's properties
-        Tag.__init__(instance, name=root_tag.name, attrs=root_tag.attrs)
-
-        # Move contents from root_tag to instance
-        instance.extend(root_tag.contents)
-
-        # Clean up root_tag
+    def _init_from_tag(self, root_tag: Tag) -> None:
+        """Initialize component from a root tag."""
+        Tag.__init__(self, name=root_tag.name, attrs=root_tag.attrs)
+        self.extend(root_tag.contents)
         root_tag.decompose()
 
-        # Initialize the instance
+    def _run_sync_hooks(self) -> None:
+        """Run synchronous lifecycle hooks."""
+        if callable(self.before_render):
+            self.before_render()
+
+        self._load_tag_methods()
+
+        if callable(self.render) and (response := self.render()):
+            self._update_from_response(response)
+
+        if callable(self.after_render):
+            self.after_render()
+
+    def __new__(cls, *args: Any, **kwargs: Any):
+        src, doctype = cls._get_source_content()
+        root_tag = ui.raw(src, parser=cls.src_parser or "html.parser")
+
+        instance = super().__new__(cls)
+        instance._doctype = doctype
+        instance._called_with_context = False
+
+        instance._init_from_tag(root_tag)
         instance.__init__(*args, **kwargs)
 
         if parent := current_parent.get():
             parent.append(instance)
 
-        # Check if any hooks are async
         instance._has_async_hooks = any(
             inspect.iscoroutinefunction(getattr(instance, hook, None))
             for hook in ["before_render", "render", "after_render"]
         )
 
-        # For non-async components, run hooks immediately
         if not instance._has_async_hooks:
-            if callable(instance.before_render):
-                instance.before_render()
-
-            instance._load_tag_methods()
-
-            if callable(instance.render) and (response := instance.render()):
-                instance._update_from_response(response)
-
-            if callable(instance.after_render):
-                instance.after_render()
+            instance._run_sync_hooks()
 
         return instance
 
