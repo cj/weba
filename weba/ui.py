@@ -38,7 +38,7 @@ class Ui:
         # Return the raw string only when no parent (for direct usage)
         return text
 
-    def raw(self, html: str) -> Tag:
+    def raw(self, html: str, parser: str | None = "html.parser") -> Tag:
         """Create a Tag from a raw HTML string.
 
         Args:
@@ -47,7 +47,7 @@ class Ui:
         Returns:
             Tag: A new Tag object containing the parsed HTML
         """
-        parsed = BeautifulSoup(html, "html.parser")
+        parsed = BeautifulSoup(html, parser)
 
         # Count root elements
         root_elements = [child for child in parsed.children if isinstance(child, BeautifulSoupTag)]

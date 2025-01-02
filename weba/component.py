@@ -78,6 +78,9 @@ class Component(ABC, Tag, metaclass=ComponentMeta):
     """Base class for UI components."""
 
     src: ClassVar[str]
+    """The HTML source template for the component. Can be inline HTML or a path to an HTML file."""
+    src_parser: ClassVar[str] | None = None
+    """The parser to use when parsing the source HTML. Defaults to 'html.parser'."""
     _tag_methods: ClassVar[list[str]]
     _called_with_context: bool
     _has_async_hooks: bool = False
@@ -94,10 +97,14 @@ class Component(ABC, Tag, metaclass=ComponentMeta):
             cls_dir = os.path.dirname(cls_path)
             path = Path(cls_dir, src)
 
+            # Set XML parser for SVG and XML files if not explicitly set
+            if not cls.src_parser and (src.endswith(".svg") or src.endswith(".xml")):
+                cls.src_parser = "xml"
+
             src = path.read_text()
 
         # Create root tag
-        root_tag = ui.raw(src)
+        root_tag = ui.raw(src, parser=cls.src_parser or "html.parser")
 
         # Create instance
         instance = super().__new__(cls)

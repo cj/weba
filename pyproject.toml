@@ -30,9 +30,10 @@ default-groups = ["lint", "test", "docs"]
 [dependency-groups]
 dev = [
     "tox-uv>=1.11.3",
-    "aider-chat>=0.68.0",
+    "aider-chat>=0.70.0",
     "reload>=0.9",
     "sourcery>=1.26.0",
+    "lxml>=5.3.0",
 ]
 docs = ["mkdocs", "mkdocs-material", "mkdocstrings[python]"]
 lint = ["ruff>=0.8.2", "pyright", "pre-commit>=2.20.0", "deptry>=0.20.0"]

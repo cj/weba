@@ -703,6 +703,22 @@ def test_component_after_render():
     assert str(component) == "<div>after render</div>"
 
 
+def test_component_xml_parser():
+    """Test that SVG files automatically use XML parser."""
+
+    class SvgButton(Component):
+        src = "./button.svg"
+
+        def render(self):
+            if text_elem := self.select_one("text"):
+                text_elem.string = "Test"
+
+    button = SvgButton()
+    assert button.src_parser == "xml"
+    assert "<text" in str(button)
+    assert ">Test</text>" in str(button)
+
+
 def test_component_after_render_called_before_exit():
     """Test that after_render raises error in sync context."""
 
