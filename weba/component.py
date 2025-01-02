@@ -17,6 +17,14 @@ if TYPE_CHECKING:  # pragma: no cover
 T = TypeVar("T", bound="Component")
 
 
+class ComponentAttributeError(AttributeError):
+    """Raised when a component is missing required attributes."""
+
+    def __init__(self, component: type[Component]) -> None:
+        name = component.__name__
+        super().__init__(f"Component ({name}): Must define 'src' class attribute")
+
+
 class ComponentTypeError(TypeError):
     """Raised when a component receives an invalid type."""
 
@@ -69,29 +77,32 @@ class ComponentMeta(ABCMeta):
 class Component(ABC, Tag, metaclass=ComponentMeta):
     """Base class for UI components."""
 
-    html: ClassVar[str]
+    src: ClassVar[str]
     _tag_methods: ClassVar[list[str]]
     _called_with_context: bool
     _has_async_hooks: bool = False
     _doctype: str | None = None
 
     def __new__(cls, *args: Any, **kwargs: Any):
-        html = cls.html
+        src = getattr(cls, "src", None)
 
-        if html.endswith(".html") or html.endswith(".svg") or html.endswith(".xml"):
+        if src is None:
+            raise ComponentAttributeError(cls)
+
+        if src.endswith(".html") or src.endswith(".svg") or src.endswith(".xml"):
             cls_path = inspect.getfile(cls)
             cls_dir = os.path.dirname(cls_path)
-            path = Path(cls_dir, html)
+            path = Path(cls_dir, src)
 
-            html = path.read_text()
+            src = path.read_text()
 
         # Create root tag
-        root_tag = ui.raw(html)
+        root_tag = ui.raw(src)
 
         # Create instance
         instance = super().__new__(cls)
 
-        doctype = html.split("\n", 1)[0]
+        doctype = src.split("\n", 1)[0]
 
         # Handle doctype
         if "!doctype" in doctype.lower():

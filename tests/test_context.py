@@ -29,7 +29,7 @@ class AppContext(Context):
 
 
 class ContextComponent(Component, AppContext):
-    html = "<h1>ContextComponent</h1>"
+    src = "<h1>ContextComponent</h1>"
 
     def render(self):
         self.string = self.msg

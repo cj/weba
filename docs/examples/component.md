@@ -8,7 +8,7 @@ Create a simple button component:
 from weba import Component, ui
 
 class Button(Component):
-    html = "<button>Example</button>"
+    src = "<button>Example</button>"
 
     def __init__(self, msg: str):
         self.msg = msg
@@ -37,7 +37,7 @@ Components with tag decorators for more control:
 
 ```python
 class Button(Component):
-    html = "<div><button class='btn'>Example</button></div>"
+    src = "<div><button class='btn'>Example</button></div>"
 
     def __init__(self, msg: str):
         self.msg = msg
@@ -69,7 +69,7 @@ Use HTML comments as selectors:
 
 ```python
 class Button(Component):
-    html = """<div><!-- #button --><button>Example</button></div>"""
+    src = """<div><!-- #button --><button>Example</button></div>"""
 
     def __init__(self, msg: str):
         self.msg = msg
@@ -104,7 +104,7 @@ Create components with async rendering:
 import asyncio
 
 class AsyncButton(Component):
-    html = "<button></button>"
+    src = "<button></button>"
 
     def __init__(self, msg: str):
         self.msg = msg
@@ -137,7 +137,7 @@ Manipulate component structure with extract and clear options:
 
 ```python
 class Button(Component):
-    html = "<div><button class='btn'>Example</button></div>"
+    src = "<div><button class='btn'>Example</button></div>"
 
     def __init__(self, msg: str):
         self.msg = msg
@@ -173,7 +173,7 @@ Create a component that dynamically generates list items:
 
 ```python
 class ListComponent(Component):
-    html = """
+    src = """
     <ul>
         <li>Item 1</li>
         <li>Item 2</li>
@@ -221,7 +221,7 @@ Components can perform async operations before rendering:
 import asyncio
 
 class UserProfile(Component):
-    html = "<div><h2></h2><div class='content'></div></div>"
+    src = "<div><h2></h2><div class='content'></div></div>"
 
     def __init__(self, user_id: str):
         self.user_id = user_id
@@ -264,7 +264,7 @@ Load component HTML from external file:
 
 ```python
 class Button(Component):
-    html = "./button.html"  # Contents: <button>Test Button</button>
+    src = "./button.html"  # Contents: <button>Test Button</button>
 
     def __init__(self, msg: str):
         self.msg = msg
@@ -297,7 +297,7 @@ Components support `before_render`, `render`, and `after_render` hooks:
 
 ```python
 class UserProfile(Component):
-    html = "<div><h2></h2><p></p></div>"
+    src = "<div><h2></h2><p></p></div>"
 
     def __init__(self):
         self.steps = []
@@ -336,7 +336,7 @@ Components can use async hooks for data loading and rendering:
 
 ```python
 class AsyncProfile(Component):
-    html = "<div><h2></h2><p></p></div>"
+    src = "<div><h2></h2><p></p></div>"
 
     async def before_render(self):
         # Simulate fetching user data

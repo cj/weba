@@ -13,7 +13,7 @@ if TYPE_CHECKING:  # pragma: no cover
 
 
 class Button(Component):
-    html = "<button>Example</button>"
+    src = "<button>Example</button>"
 
     def __init__(self, msg: str):
         self.msg = msg
@@ -34,7 +34,7 @@ def test_basic_component():
 
 def test_component_with_tag_decorator_passing_tag():
     class Button(Component):
-        html = "<div><button class='btn'>Example</button></div>"
+        src = "<div><button class='btn'>Example</button></div>"
 
         def __init__(self, msg: str):
             self.msg = msg
@@ -51,7 +51,7 @@ def test_component_with_tag_decorator_passing_tag():
 
 def test_component_with_tag_decorator():
     class Button(Component):
-        html = "<div><button class='btn'>Example</button></div>"
+        src = "<div><button class='btn'>Example</button></div>"
 
         def __init__(self, msg: str):
             self.msg = msg
@@ -72,7 +72,7 @@ def test_component_with_tag_decorator():
 
 def test_component_with_comment_selector():
     class Button(Component):
-        html = """<div><!-- #button --><button>Example</button></div>"""
+        src = """<div><!-- #button --><button>Example</button></div>"""
 
         def __init__(self, msg: str):
             self.msg = msg
@@ -92,7 +92,7 @@ async def test_component_async_context_isolation():
     """Test that components maintain proper context isolation in async tasks."""
 
     class SimpleCard(Component):
-        html = '<div class="card"><!-- #content --><div class="content"></div></div>'
+        src = '<div class="card"><!-- #content --><div class="content"></div></div>'
 
         def __init__(self, title: str, msg: str):
             self.title = title
@@ -140,7 +140,7 @@ async def test_component_async_context_isolation():
 
 def test_component_from_file():
     class Button(Component):
-        html = "./button.html"
+        src = "./button.html"
 
         def __init__(self, msg: str):
             self.msg = msg
@@ -158,14 +158,14 @@ def test_component_from_file():
 
 def test_component_empty():
     class UiList(Component):
-        html = "<ul></ul>"
+        src = "<ul></ul>"
 
     assert str(UiList()) == "<ul></ul>"
 
 
 def test_component_with_extract():
     class Button(Component):
-        html = "<div><button class='btn'>Example</button></div>"
+        src = "<div><button class='btn'>Example</button></div>"
 
         def __init__(self, msg: str):
             self.msg = msg
@@ -189,7 +189,7 @@ def test_component_with_extract():
 
 def test_component_with_clear():
     class Button(Component):
-        html = "<div><button class='btn'>Example</button></div>"
+        src = "<div><button class='btn'>Example</button></div>"
 
         @tag("button", clear=True)
         def button_tag(self):
@@ -200,7 +200,7 @@ def test_component_with_clear():
 
 def test_component_with_extract_and_clear():
     class Button(Component):
-        html = "<div><button class='btn'>Example</button></div>"
+        src = "<div><button class='btn'>Example</button></div>"
 
         @tag("button", extract=True, clear=True)
         def button_tag(self):
@@ -214,7 +214,7 @@ def test_component_with_extract_and_clear():
 
 def test_component_context_manager():
     class List(Component):
-        html = "<ul></ul>"
+        src = "<ul></ul>"
 
     assert str(List()) == "<ul></ul>"
 
@@ -227,7 +227,7 @@ def test_component_context_manager():
 
 def test_multiple_components_in_list():
     class Button(Component):
-        html = "<button></button>"
+        src = "<button></button>"
 
         def __init__(self, msg: str):
             self.msg = msg
@@ -253,7 +253,7 @@ async def test_async_component_context_isolation():
     """Test that async components maintain proper context isolation."""
 
     class AsyncCard(Component):
-        html = '<div class="card"><h2></h2><p></p></div>'
+        src = '<div class="card"><h2></h2><p></p></div>'
 
         def __init__(self, title: str, content: str):
             self.title = title
@@ -307,7 +307,7 @@ async def test_async_component_context_isolation():
 @pytest.mark.asyncio
 async def test_async_component():
     class AsyncButton(Component):
-        html = "<button></button>"
+        src = "<button></button>"
 
         def __init__(self, msg: str):
             self.msg = msg
@@ -325,7 +325,7 @@ async def test_async_component():
 
 def test_component_with_layout():  # sourcery skip: extract-duplicate-method
     class Layout(Component):
-        html = "./layout.html"
+        src = "./layout.html"
 
         @tag("header")
         def header(self):
@@ -368,7 +368,7 @@ def test_component_with_layout_append_to_body():  # sourcery skip: extract-dupli
     append_text = "<span>one</span><span>two</span>"
 
     class Layout(Component):
-        html = "./layout.html"
+        src = "./layout.html"
 
         @tag("body")
         def body(self):
@@ -383,7 +383,7 @@ def test_component_with_layout_append_to_body():  # sourcery skip: extract-dupli
 
 def test_component_layout_appends():
     class Layout(Component):
-        html = "./layout.html"
+        src = "./layout.html"
 
     with Layout() as html:
         ui.h1("Hello, World!")
@@ -394,7 +394,7 @@ def test_component_layout_appends():
 @pytest.mark.asyncio
 async def test_component_async_layout_appends():
     class Layout(Component):
-        html = "./layout.html"
+        src = "./layout.html"
 
     async with Layout() as html:
         ui.h1("Hello, World!")
@@ -404,7 +404,7 @@ async def test_component_async_layout_appends():
 
 def test_component_select_root_tag():
     class ListC(Component):
-        html = """
+        src = """
         <ul>
             <li>Item 1</li>
             <li>Item 2</li>
@@ -438,7 +438,7 @@ def test_component_select_root_tag():
 
 def test_component_tag_decorator_cache():
     class CachedComponent(Component):
-        html = "<div><span>Original</span></div>"
+        src = "<div><span>Original</span></div>"
 
         def __init__(self):
             self.counter = 0
@@ -458,7 +458,7 @@ def test_component_tag_decorator_cache():
 
 def test_component_tag_render_return():
     class Render(Component):
-        html = "<div>Original</div>"
+        src = "<div>Original</div>"
 
         def render(self):
             return ui.h1("Hello, World!")
@@ -472,7 +472,7 @@ def test_component_type_error():
     """Test that ComponentTypeError is raised with correct message when non-Tag is returned."""
 
     class BadComponent(Component):
-        html = "<div>Original</div>"
+        src = "<div>Original</div>"
 
         def render(self):
             return "not a tag"  # This should raise ComponentTypeError
@@ -487,7 +487,7 @@ def test_component_before_render_sync():
     """Test that synchronous before_render hook is called and can modify the component."""
 
     class BeforeRenderComponent(Component):
-        html = "<div>Original</div>"
+        src = "<div>Original</div>"
 
         def before_render(self):
             self.msg = "Modified in before_render"
@@ -504,7 +504,7 @@ async def test_component_async_before_render():
     """Test that asynchronous before_render hook is called and can modify the component."""
 
     class AsyncBeforeRenderComponent(Component):
-        html = "<div>Original</div>"
+        src = "<div>Original</div>"
 
         async def before_render(self):
             await asyncio.sleep(0.01)  # Simulate async operation
@@ -521,7 +521,7 @@ def test_component_before_render_only():
     """Test that before_render hook works without a render method."""
 
     class BeforeRenderOnlyComponent(Component):
-        html = "<div>Original</div>"
+        src = "<div>Original</div>"
 
         def before_render(self):
             self.string = "Modified in before_render"
@@ -536,7 +536,7 @@ async def test_component_async_before_render_sync_render():
     """Test that asynchronous before_render hook is called and can modify the component."""
 
     class AsyncBeforeRenderComponent(Component):
-        html = "<div>Original</div>"
+        src = "<div>Original</div>"
 
         async def before_render(self):
             await asyncio.sleep(0.01)  # Simulate async operation
@@ -554,7 +554,7 @@ async def test_component_async_before_render_sync_render_with_context():
     """Test that asynchronous before_render hook is called and can modify the component."""
 
     class AsyncBeforeRenderComponent(Component):
-        html = "<div>Original</div>"
+        src = "<div>Original</div>"
 
         async def before_render(self):
             await asyncio.sleep(0.01)  # Simulate async operation
@@ -577,7 +577,7 @@ async def test_component_async_before_render_async_render_with_context():
     """Test that asynchronous before_render hook is called and can modify the component."""
 
     class AsyncBeforeRenderComponent(Component):
-        html = "<div>Original</div>"
+        src = "<div>Original</div>"
 
         async def before_render(self):
             await asyncio.sleep(0.01)  # Simulate async operation
@@ -599,7 +599,7 @@ def test_component_async_before_render_sync_with_context():
     """Test that asynchronous before_render hook is called and can modify the component."""
 
     class SyncBeforeRenderComponent(Component):
-        html = "<div>Original</div>"
+        src = "<div>Original</div>"
 
         def before_render(self):
             self.msg = "Modified in before_render"
@@ -620,7 +620,7 @@ def test_component_async_before_render_sync_with_context_with_tag():
     """Test that asynchronous before_render hook is called and can modify the component."""
 
     class SyncBeforeRenderComponent(Component):
-        html = "<div>Original</div>"
+        src = "<div>Original</div>"
 
         def before_render(self):
             self.msg = "Modified in before_render"
@@ -647,7 +647,7 @@ async def test_component_async_before_render_async_with_context_with_tag():
     """Test that asynchronous before_render hook is called and can modify the component."""
 
     class SyncBeforeRenderComponent(Component):
-        html = "<div>Original</div>"
+        src = "<div>Original</div>"
 
         async def before_render(self):
             self.msg = "Modified in before_render"
@@ -673,7 +673,7 @@ def test_component_after_render():
     """Test that after_render is called when not using context manager."""
 
     class AfterRenderComponent(Component):
-        html = "<div>Original</div>"
+        src = "<div>Original</div>"
 
         def __init__(self):
             self.steps: list[str] = []
@@ -698,7 +698,7 @@ def test_component_after_render_called_before_exit():
     """Test that after_render raises error in sync context."""
 
     class AfterRenderComponent(Component):
-        html = "<div>Original</div>"
+        src = "<div>Original</div>"
 
         def __init__(self):
             self.steps: list[str] = []
@@ -724,7 +724,7 @@ async def test_component_async_after_render_called_before_exit():
     """Test that after_render is called when not using context manager."""
 
     class AfterRenderComponent(Component):
-        html = "<div>Original</div>"
+        src = "<div>Original</div>"
 
         def __init__(self):
             self.steps: list[str] = []
@@ -751,7 +751,7 @@ async def test_component_async_after_render():
     """Test that after_render is called when not using context manager."""
 
     class AfterRenderComponent(Component):
-        html = "<div>Original</div>"
+        src = "<div>Original</div>"
 
         def __init__(self):
             self.steps: list[str] = []
@@ -781,7 +781,7 @@ def test_component_sync_after_render_error_explanation():
     """Test that sync after_render in sync context raises clear error."""
 
     class SyncAfterRenderComponent(Component):
-        html = "<div>Original</div>"
+        src = "<div>Original</div>"
 
         def after_render(self):
             self.string = "after render"
@@ -800,7 +800,7 @@ def test_component_sync_after_render_without_context():
     """Test that sync after_render works fine outside context manager."""
 
     class SyncAfterRenderComponent(Component):
-        html = "<div>Original</div>"
+        src = "<div>Original</div>"
 
         def after_render(self):
             self.string = "after render"
@@ -814,7 +814,7 @@ def test_sync_call_async_component_error():
     """Test that using a sync call with an async component raises an error."""
 
     class AsyncComponent(Component):
-        html = "<div>Original</div>"
+        src = "<div>Original</div>"
 
         async def render(self):
             return ui.h1("Hello")
@@ -836,7 +836,7 @@ async def test_component_mixed_sync_async_hooks():
     """Test component with mix of sync and async lifecycle hooks."""
 
     class MixedComponent(Component):
-        html = "<div>Original</div>"
+        src = "<div>Original</div>"
 
         def __init__(self):
             self.steps: list[str] = []
@@ -866,7 +866,7 @@ async def test_component_mixed_sync_async_hooks():
 #     """Test that after_render is called at context exit."""
 #
 #     class ContextComponent(Component):
-#         html = "<div>Original</div>"
+#         src = "<div>Original</div>"
 #
 #         def __init__(self):
 #             self.steps: list[str] = []
@@ -895,7 +895,7 @@ async def test_component_mixed_sync_async_hooks():
 #     """Test that async after_render is called correctly."""
 #
 #     class AsyncComponent(Component):
-#         html = "<div>Original</div>"
+#         src = "<div>Original</div>"
 #
 #         def __init__(self):
 #             self.steps: list[str] = []
