@@ -19,7 +19,7 @@ T = TypeVar("T", bound="Component")
 
 @contextmanager
 def no_tag_context():
-    """Temporarily clear the current parent context."""
+    """Temporarily disable the current tag context."""
     parent = current_tag_context.get()
     current_tag_context.set(None)
 

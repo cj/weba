@@ -81,28 +81,24 @@ class Ui:
             converted_kwargs: dict[str, Any] = {}
 
             for key, value in kwargs.items():
-                if key == "class_":
-                    # class_ -> class
-                    new_key = "class"
+                key = key.rstrip("_").replace("_", "-")
+
+                if key == "class":
                     if isinstance(value, list | tuple):
                         value = " ".join(str(v) for v in value if isinstance(v, str | int | float))
                 else:
-                    new_key = key.replace("_", "-")
                     # Handle boolean attributes
                     if isinstance(value, bool) and value:
                         value = None
 
-                converted_kwargs[new_key] = value
-
-            # Remove trailing underscore from tag names like input_
-            actual_tag_name = tag_name.rstrip("_")
+                converted_kwargs[key] = value
 
             parent = current_tag_context.get()
 
             # Create a BeautifulSoupTag directly
             base_tag = BeautifulSoupTag(
                 builder=self.soup.builder,
-                name=actual_tag_name,
+                name=tag_name,
                 attrs=converted_kwargs,
             )
 

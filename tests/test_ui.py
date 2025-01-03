@@ -807,3 +807,12 @@ def test_ui_passing_tag_as_argument():
     button_tag = ui.button(ui.span("Hello, World!"))
 
     assert str(button_tag) == "<button><span>Hello, World!</span></button>"
+
+
+def test_ui_underscore_as_last_letter_gets_removed():
+    script_tag = ui.script(async_=True)
+
+    html = str(script_tag)
+
+    assert "async-" not in html
+    assert "async" in html
