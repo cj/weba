@@ -291,6 +291,47 @@ Output:
 </div>
 ```
 
+## Using no_tag_context
+
+The `no_tag_context` context manager temporarily disables tag context tracking:
+
+```python
+from weba import Component, ui, no_tag_context
+
+class NestedComponent(Component):
+    src = "<div><ul></ul></div>"
+
+    def render(self):
+        # Normal context - appends to current component
+        with self.select_one("ul"):
+            ui.li("First item")
+
+        # Disable context tracking - creates standalone tags
+        with no_tag_context():
+            standalone_li = ui.li("Standalone item")
+            # Manually append where needed
+            self.select_one("ul").append(standalone_li)
+
+# Usage
+with ui.div() as container:
+    NestedComponent()
+
+print(container)
+```
+
+Output:
+
+```html
+<div>
+    <div>
+        <ul>
+            <li>First item</li>
+            <li>Standalone item</li>
+        </ul>
+    </div>
+</div>
+```
+
 ## Component Lifecycle Hooks
 
 Components support `before_render`, `render`, and `after_render` hooks:

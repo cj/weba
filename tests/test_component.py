@@ -13,6 +13,7 @@ from weba import (
     ComponentAttributeError,
     ComponentTypeError,
     Tag,
+    no_tag_context,
     tag,
     ui,
 )
@@ -870,6 +871,28 @@ def test_component_callable_src_current_parent_context():
         CallableSrcComponent()
 
     assert str(html) == "<div><h1>Dynamic</h1><div><h1>Dynamic</h1></div></div>"
+
+
+def test_no_tag_context():
+    """Test that no_tag_context prevents automatic tag appending."""
+
+    with ui.div() as container:
+        # Normal context - tag gets appended
+        ui.p("Normal paragraph")
+
+        # no_tag_context - tag doesn't get appended
+        with no_tag_context():
+            standalone = ui.p("Standalone paragraph")
+
+        # Manually append the standalone tag
+        container.append(standalone)
+
+        # Verify normal context still works
+        ui.p("Another normal paragraph")
+
+    expected = "<div><p>Normal paragraph</p><p>Standalone paragraph</p><p>Another normal paragraph</p></div>"
+
+    assert str(container) == expected
 
 
 @pytest.mark.asyncio
