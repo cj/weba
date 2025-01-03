@@ -860,7 +860,9 @@ def test_component_invalid_src_type():
     with pytest.raises(ComponentSrcTypeError) as exc_info:  # type: ignore[reportUnknownVariableType]
         InvalidSrcComponent()
 
-    assert "Component (InvalidSrcComponent): 'src' must be either a str, method or Tag" in str(exc_info.value)  # type: ignore[reportUnknownMemberType]
+    assert "Component (InvalidSrcComponent): 'src' must be either a str, callable[..., str | Tag] or Tag" in str(
+        exc_info.value
+    )  # type: ignore[reportUnknownMemberType]
 
 
 def test_component_callable_src():
@@ -870,6 +872,35 @@ def test_component_callable_src():
         src = lambda: "<div><h1>Dynamic</h1></div>"
 
     component = CallableSrcComponent()
+
+    assert str(component) == "<div><h1>Dynamic</h1></div>"
+
+
+def test_component_callable_src_str():
+    """Test that src can be a callable that returns HTML."""
+
+    def html():
+        return "<div><h1>Dynamic</h1></div>"
+
+    class CallableSrcComponent(Component):
+        src = html
+
+    component = CallableSrcComponent()
+
+    assert str(component) == "<div><h1>Dynamic</h1></div>"
+
+
+def test_component_callable_src_tag():
+    """Test that src can be a callable that returns HTML."""
+
+    def html():
+        return ui.raw("<div><h1>Dynamic</h1></div>")
+
+    class CallableSrcComponent(Component):
+        src = html
+
+    component = CallableSrcComponent()
+
     assert str(component) == "<div><h1>Dynamic</h1></div>"
 
 

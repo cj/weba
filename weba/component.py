@@ -46,7 +46,7 @@ class ComponentSrcTypeError(AttributeError):
 
     def __init__(self, component: type[Component]) -> None:
         name = component.__name__
-        super().__init__(f"Component ({name}): 'src' must be either a str, method or Tag")
+        super().__init__(f"Component ({name}): 'src' must be either a str, callable[..., str | Tag] or Tag")
 
 
 class ComponentSrcRootTagNotFoundError(AttributeError):
@@ -109,7 +109,7 @@ class ComponentMeta(ABCMeta):
 class Component(ABC, Tag, metaclass=ComponentMeta):
     """Base class for UI components."""
 
-    src: ClassVar[str | Tag | Callable[[], str | Tag]]
+    src: ClassVar[str | Tag | Callable[[], str | Tag] | None]
     """The HTML source template for the component. Can be inline HTML, a Tag, a path to an HTML file, or a callable returning any of these."""
     src_parser: ClassVar[str] | None = None
     """The parser to use when parsing the source HTML. Defaults to 'html.parser'."""
@@ -140,7 +140,12 @@ class Component(ABC, Tag, metaclass=ComponentMeta):
         if not src:
             return None, None
 
-        if not isinstance(src, str):
+        if isinstance(src, Tag):
+            return src, None
+
+        # NOTE: the pyright lint error is a false positive as the user could ignore linting and pass/return something
+        # other than str | Tag
+        if not isinstance(src, str):  # pyright: ignore[reportUnnecessaryIsInstance]
             raise ComponentSrcTypeError(cls)
 
         if src.endswith((".html", ".svg", ".xml")):
