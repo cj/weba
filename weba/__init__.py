@@ -6,6 +6,7 @@ from .component import (
     ComponentAsyncError,
     ComponentAttributeError,
     ComponentTypeError,
+    no_tag_context,
 )
 from .component_tag import component_tag
 from .context import Context
@@ -24,6 +25,7 @@ __all__ = [
     "Tag",
     "component_tag",
     "current_tag_context",
+    "no_tag_context",
     "tag",
     "ui",
 ]
