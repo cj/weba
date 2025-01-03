@@ -132,6 +132,20 @@ class Component(ABC, Tag, metaclass=ComponentMeta):
         self.extend(root_tag.contents)
         root_tag.decompose()
 
+    def replace_root_tag(self, new_root: Tag) -> None:
+        """Replace the component's root tag while preserving contents.
+
+        Args:
+            new_root: The new Tag to use as the root
+        """
+        contents = list(self.contents)
+
+        self.clear()
+        self.name = new_root.name
+        self.attrs = new_root.attrs.copy()
+
+        self.extend(contents)
+
     def __new__(cls, *args: Any, **kwargs: Any):
         src, doctype = cls._get_source_content()
         root_tag = ui.raw(src, parser=cls.src_parser or "html.parser")

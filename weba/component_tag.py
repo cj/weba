@@ -25,6 +25,7 @@ def component_tag(
     *,
     extract: bool = False,
     clear: bool = False,
+    root_tag: bool = False,
 ) -> Callable[[Callable[[T, Tag], Tag | T | None] | Callable[[T], Tag | T | None]], TagDecorator[T]]: ...
 
 
@@ -33,6 +34,7 @@ def component_tag(
     *,
     extract: bool = False,
     clear: bool = False,
+    root_tag: bool = False,
 ) -> TagDecorator[T] | Callable[[Callable[[T, Tag], Tag | T | None] | Callable[[T], Tag | T | None]], TagDecorator[T]]:
     """Decorator factory for component tag methods.
 
@@ -46,7 +48,7 @@ def component_tag(
     """
     if callable(selector_or_method):
         # Decorator used without parameters
-        return TagDecorator(selector_or_method, selector="", extract=False, clear=False)
+        return TagDecorator(selector_or_method, selector="", extract=False, clear=False, root_tag=False)
 
     # Decorator used with parameters
     def decorator(method: Callable[[T, Tag], Tag | T | None] | Callable[[T], Tag | T | None]) -> TagDecorator[T]:
@@ -55,6 +57,7 @@ def component_tag(
             selector=str(selector_or_method),
             extract=extract,
             clear=clear,
+            root_tag=root_tag,
         )
 
     return decorator

@@ -31,6 +31,49 @@ Output:
 </div>
 ```
 
+## Replace Root Tag
+
+Components can replace their root tag while preserving contents:
+
+```python
+class RootComponent(Component):
+    src = "<div>Content <span>here</span></div>"
+
+    def render(self):
+        self.replace_root_tag(ui.section(class_="container"))
+
+# Usage
+component = RootComponent()
+print(component)
+```
+
+Output:
+```html
+<section class="container">Content <span>here</span></section>
+```
+
+## Replace Root Tag Using Selector
+
+Components can also replace their root tag based on a selector:
+
+```python
+class RootTagComponent(Component):
+    src = "<div>Content <span>here</span><section class='container'>Content <span>here</span></section></div>"
+
+    @tag("section", root_tag=True)
+    def section(self):
+        pass
+
+# Usage
+component = RootTagComponent()
+print(component)
+```
+
+Output:
+```html
+<section class="container">Content <span>here</span></section>
+```
+
 ## Using Tag Decorators
 
 Components with tag decorators for more control:

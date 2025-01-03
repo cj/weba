@@ -21,11 +21,13 @@ class TagDecorator(Generic[T]):
         selector: str,
         extract: bool = False,
         clear: bool = False,
+        root_tag: bool = False,
     ) -> None:
         self.method = method
         self.selector = selector
         self.extract = extract
         self.clear = clear
+        self.root_tag = root_tag
         self._cache_name = f"_{method.__name__}_result"
         self.__name__ = method.__name__
 
@@ -59,6 +61,14 @@ class TagDecorator(Generic[T]):
             tag.clear()
 
         result = cast(Tag, (self.method(instance, tag) if argcount == 2 else self.method(instance)) or tag)  # pyright: ignore[reportArgumentType, reportCallIssue]
+
+        # Handle root tag replacement if requested
+        if self.root_tag:
+            if self.selector:
+                # For selectors, extract the matched tag first
+                tag.extract()
+            instance.replace_root_tag(result or tag)
+            result = instance
 
         # Cache the result
         setattr(instance, self._cache_name, result)

@@ -932,6 +932,81 @@ async def test_component_async_callable_src_current_parent_context():
     assert str(html) == "<div><h1>Dynamic</h1><div><h1>Dynamic</h1></div></div>"
 
 
+def test_component_replace_root():
+    """Test replacing a component's root tag."""
+
+    class RootComponent(Component):
+        src = "<div>Content <span>here</span></div>"
+
+        def render(self):
+            self.replace_root_tag(ui.section(class_="container"))
+
+    component = RootComponent()
+    assert str(component) == '<section class="container">Content <span>here</span></section>'
+
+
+def test_component_tag_root_replacement():
+    """Test that root_tag option replaces the component's root tag."""
+
+    class RootTagComponent(Component):
+        src = "<div>Content <span>here</span></div>"
+
+        @tag(root_tag=True)
+        def root(self):
+            return ui.section(class_="container")
+
+    component = RootTagComponent()
+
+    assert str(component) == '<section class="container">Content <span>here</span></section>'
+
+
+def test_component_tag_root_replacement_with_nested():
+    """Test that root_tag option replaces the component's root tag."""
+
+    class RootTagComponent(Component):
+        src = "<div>Content <span>here</span><section class='container'>Content <span>here</span></section></div>"
+
+        @tag("section", root_tag=True)
+        def section(self):
+            pass
+
+    component = RootTagComponent()
+
+    assert str(component) == '<section class="container">Content <span>here</span></section>'
+
+
+def test_component_tag_root_replacement_with_nested_modified():
+    """Test that root_tag option replaces the component's root tag."""
+
+    class RootTagComponent(Component):
+        src = "<div>Content <span>here</span><section class='container'>Content <span>here</span></section></div>"
+
+        @tag("section", root_tag=True)
+        def section(self, t: Tag):
+            t["class"].append("prose")
+
+    component = RootTagComponent()
+
+    assert str(component) == '<section class="container prose">Content <span>here</span></section>'
+
+
+def test_component_tag_root_replacement_with_nested_modified_returned():
+    """Test that root_tag option replaces the component's root tag."""
+
+    class RootTagComponent(Component):
+        src = "<div>Content <span>here</span><section class='container'>Content <span>here</span></section></div>"
+
+        @tag("section", root_tag=True)
+        def section(self, t: Tag):
+            t["class"].append("prose")
+
+            return t
+
+    component = RootTagComponent()
+
+    assert str(component) == '<section class="container prose">Content <span>here</span></section>'
+
+
 def test_sync_call_async_component_error():
     """Test that using a sync call with an async component raises an error."""
 
@@ -981,64 +1056,3 @@ async def test_component_mixed_sync_async_hooks():
 
     assert component.steps == ["sync before", "async render", "async after"]
     assert str(component) == "<div>all done</div>"
-
-
-#
-# def test_component_after_render_with_context():
-#     """Test that after_render is called at context exit."""
-#
-#     class ContextComponent(Component):
-#         src = "<div>Original</div>"
-#
-#         def __init__(self):
-#             self.steps: list[str] = []
-#
-#         def before_render(self):
-#             self.steps.append("before")
-#
-#         def render(self):
-#             self.steps.append("render")
-#             self.string = "rendered"
-#
-#         def after_render(self):
-#             self.steps.append("after")
-#             self.string = "after render"
-#
-#     with ContextComponent() as component:
-#         assert component.steps == ["before", "render"]
-#         assert str(component) == "<div>rendered</div>"
-#
-#     assert component.steps == ["before", "render", "after"]
-#     assert str(component) == "<div>after render</div>"
-#
-#
-# @pytest.mark.asyncio
-# async def test_component_async_after_render():
-#     """Test that async after_render is called correctly."""
-#
-#     class AsyncComponent(Component):
-#         src = "<div>Original</div>"
-#
-#         def __init__(self):
-#             self.steps: list[str] = []
-#
-#         async def before_render(self):
-#             await asyncio.sleep(0.01)
-#             self.steps.append("before")
-#
-#         async def render(self):
-#             await asyncio.sleep(0.01)
-#             self.steps.append("render")
-#             self.string = "rendered"
-#
-#         async def after_render(self):
-#             await asyncio.sleep(0.01)
-#             self.steps.append("after")
-#             self.string = "after render"
-#
-#     async with AsyncComponent() as component:
-#         assert component.steps == ["before", "render"]
-#         assert str(component) == "<div>rendered</div>"
-#
-#     assert component.steps == ["before", "render", "after"]
-#     assert str(component) == "<div>after render</div>"
