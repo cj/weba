@@ -13,7 +13,6 @@ from .ui import ui
 
 if TYPE_CHECKING:  # pragma: no cover
     from collections.abc import Callable
-    from types import TracebackType
 
 T = TypeVar("T", bound="Component")
 
@@ -200,14 +199,12 @@ class Component(ABC, Tag, metaclass=ComponentMeta):
 
     async def __aexit__(
         self,
-        exc_type: type[BaseException] | None,
-        exc_val: BaseException | None,
-        exc_tb: TracebackType | None,
+        *args: Any,
     ) -> None:
         if callable(self.after_render):
             await self.after_render() if inspect.iscoroutinefunction(self.after_render) else self.after_render()
 
-        return super().__exit__()
+        return super().__exit__(*args)
 
     def _load_tag_methods(self) -> None:
         # Execute tag decorators after contents are copied
