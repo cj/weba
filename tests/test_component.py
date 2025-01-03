@@ -11,6 +11,7 @@ from weba import (
     ComponentAfterRenderError,
     ComponentAsyncError,
     ComponentSrcRequiredError,
+    ComponentSrcRootTagNotFoundError,
     ComponentSrcTypeError,
     ComponentTypeError,
     Tag,
@@ -1074,14 +1075,16 @@ def test_component_src_root_tag_with_nested():
 
 
 def test_component_src_root_tag_not_found():
-    """Test that component works normally when src_root_tag selector isn't found."""
+    """Test that component raises error when src_root_tag selector isn't found."""
 
     class RootTagComponent(Component):
         src = "<div>Content <span>here</span></div>"
         src_root_tag = ".not-found"
 
-    component = RootTagComponent()
-    assert str(component) == "<div>Content <span>here</span></div>"
+    with pytest.raises(ComponentSrcRootTagNotFoundError) as exc_info:
+        RootTagComponent()
+
+    assert "src_root_tag selector '.not-found' not found in source HTML" in str(exc_info.value)
 
 
 def test_component_no_src_only_render():

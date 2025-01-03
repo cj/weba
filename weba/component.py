@@ -49,6 +49,14 @@ class ComponentSrcTypeError(AttributeError):
         super().__init__(f"Component ({name}): 'src' must be either a str, method or Tag")
 
 
+class ComponentSrcRootTagNotFoundError(AttributeError):
+    """Raised when src_root_tag selector doesn't match any elements."""
+
+    def __init__(self, component: type[Component], selector: str) -> None:
+        name = component.__name__
+        super().__init__(f"Component ({name}): src_root_tag selector '{selector}' not found in source HTML")
+
+
 class ComponentTypeError(TypeError):
     """Raised when a component receives an invalid type."""
 
@@ -153,8 +161,11 @@ class Component(ABC, Tag, metaclass=ComponentMeta):
 
     def _init_from_tag(self, root_tag: Tag) -> None:
         """Initialize component from a root tag."""
-        if hasattr(self, "src_root_tag") and self.src_root_tag and (new_root := root_tag.select_one(self.src_root_tag)):
-            root_tag = new_root
+        if hasattr(self, "src_root_tag") and self.src_root_tag:
+            if new_root := root_tag.select_one(self.src_root_tag):
+                root_tag = new_root
+            else:
+                raise ComponentSrcRootTagNotFoundError(self.__class__, self.src_root_tag)
         Tag.__init__(self, name=root_tag.name, attrs=root_tag.attrs)
         self.extend(root_tag.contents)
         root_tag.decompose()
