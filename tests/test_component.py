@@ -1051,6 +1051,39 @@ def test_component_tag_src():
     assert str(component) == '<div class="container"></div>'
 
 
+def test_component_src_root_tag():
+    """Test that src_root_tag selects a new root from the source."""
+
+    class RootTagComponent(Component):
+        src = "<div><section class='container'>Content <span>here</span></section></div>"
+        src_root_tag = "section"
+
+    component = RootTagComponent()
+    assert str(component) == '<section class="container">Content <span>here</span></section>'
+
+
+def test_component_src_root_tag_with_nested():
+    """Test that src_root_tag works with deeply nested elements."""
+
+    class RootTagComponent(Component):
+        src = "<div><main><section class='container'>Content <span>here</span></section></main></div>"
+        src_root_tag = "section.container"
+
+    component = RootTagComponent()
+    assert str(component) == '<section class="container">Content <span>here</span></section>'
+
+
+def test_component_src_root_tag_not_found():
+    """Test that component works normally when src_root_tag selector isn't found."""
+
+    class RootTagComponent(Component):
+        src = "<div>Content <span>here</span></div>"
+        src_root_tag = ".not-found"
+
+    component = RootTagComponent()
+    assert str(component) == "<div>Content <span>here</span></div>"
+
+
 def test_component_no_src_only_render():
     class NoSrcComponent(Component):
         def render(self):

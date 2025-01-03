@@ -105,6 +105,8 @@ class Component(ABC, Tag, metaclass=ComponentMeta):
     """The HTML source template for the component. Can be inline HTML, a Tag, a path to an HTML file, or a callable returning any of these."""
     src_parser: ClassVar[str] | None = None
     """The parser to use when parsing the source HTML. Defaults to 'html.parser'."""
+    src_root_tag: str | None
+    """Allows you to specify the root_tag from the src as if using @tag("some_selector", root_tag=True)"""
     _tag_methods: ClassVar[list[str]]
     _called_with_context: bool
     _has_async_hooks: bool = False
@@ -151,6 +153,8 @@ class Component(ABC, Tag, metaclass=ComponentMeta):
 
     def _init_from_tag(self, root_tag: Tag) -> None:
         """Initialize component from a root tag."""
+        if hasattr(self, "src_root_tag") and self.src_root_tag and (new_root := root_tag.select_one(self.src_root_tag)):
+            root_tag = new_root
         Tag.__init__(self, name=root_tag.name, attrs=root_tag.attrs)
         self.extend(root_tag.contents)
         root_tag.decompose()

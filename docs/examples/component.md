@@ -471,6 +471,40 @@ Output:
 </div>
 ```
 
+## Select Root Tag from Source
+
+Components can select a new root tag from their source HTML using `src_root_tag`:
+
+```python
+class CardComponent(Component):
+    src = """
+    <div class="wrapper">
+        <section class="card">
+            <h2>Card Title</h2>
+            <p>Card content goes here</p>
+        </section>
+        <div class="footer">Footer content</div>
+    </div>
+    """
+    # Select the card section as the root, discarding wrapper and footer
+    src_root_tag = "section.card"
+
+# Usage
+card = CardComponent()
+print(card)
+```
+
+Output:
+
+```html
+<section class="card">
+    <h2>Card Title</h2>
+    <p>Card content goes here</p>
+</section>
+```
+
+This is equivalent to using `@tag("section.card", root_tag=True)` but requires less code.
+
 ## Replace Component Content
 
 Components can replace their content using tag assignment:
