@@ -521,6 +521,7 @@ def test_ui_comment_one():
 
     container = ui.raw(html)
     button = container.comment_one("#button")
+    assert "<!-- #button -->" in str(container)
     assert button is not None
     assert str(button) == "<button>click me</button>"
 

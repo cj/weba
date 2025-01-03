@@ -2,7 +2,7 @@
 from __future__ import annotations
 
 import asyncio
-from typing import TYPE_CHECKING
+from typing import cast
 
 import pytest
 
@@ -19,9 +19,6 @@ from weba import (
     tag,
     ui,
 )
-
-if TYPE_CHECKING:  # pragma: no cover
-    from weba.ui import Tag
 
 
 class Button(Component):
@@ -1125,6 +1122,57 @@ def test_component_src_root_tag_with_comment():
     nav = NavComponent()
     nav_str = "".join(str(nav).split("\n"))
     assert nav_str == '<nav class="sidebar"><ul><li>Home</li></ul></nav>'
+
+
+def test_component_with_comment_tag():
+    """Test that src_root_tag works with comment selectors."""
+
+    class NavComponent(Component):
+        src = """
+        <div>
+            <!-- section -->
+            <section>
+                <!-- #sidebar-nav-wrong -->
+                <nav class="sidebar">
+                    <ul>
+                        <li>Home</li>
+                    </ul>
+                </nav>
+                <!-- #sidebar-nav -->
+                <nav class="sidebar">
+                    <ul>
+                        <!-- .list_item -->
+                        <li>Home</li>
+                    </ul>
+                </nav>
+                <main>Content</main>
+            </section>
+
+            <!-- section-two -->
+            <section>
+                <!-- #sidebar-nav -->
+                <nav class="sidebar">
+                    <ul>
+                        <li>Home</li>
+                    </ul>
+                </nav>
+                <main>Content</main>
+            </section>
+        </div>
+        """
+        src_root_tag = "<!-- section -->"
+
+        @tag("<!-- #sidebar-nav -->", extract=True)
+        def sidebar_nav(self):
+            pass
+
+        def render(self):
+            sidebar_nav = self.sidebar_nav.copy()
+            list_item = cast(Tag, sidebar_nav.comment_one(".list_item"))
+            list_item.string = "Hello"
+            self.append(sidebar_nav)
+
+    assert "Hello" in str(NavComponent())
 
 
 def test_component_src_root_tag_not_found():

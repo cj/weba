@@ -162,8 +162,8 @@ class Tag(Bs4Tag):
         # results: list[Tag | NavigableString | None] = []
         results: list[Tag | None] = []
 
-        # Find all comment nodes matching the selector
-        comments = self.find_all(string=lambda text: isinstance(text, str) and selector in text.strip())
+        # Find all comment nodes matching the selector exactly
+        comments = self.find_all(string=lambda text: isinstance(text, str) and text.strip() == selector.strip())
 
         for comment in comments:
             # Get the next sibling of the comment
@@ -197,8 +197,8 @@ class Tag(Bs4Tag):
             A Tag object if the next element is an HTML tag, or a NavigableString if it's a text node.
             Returns None if no match is found.
         """
-        # Find all comment nodes matching the selector
-        comments = self.find_all(string=lambda text: isinstance(text, str) and selector in text.strip())
+        # Find all comment nodes matching the selector exactly
+        comments = self.find_all(string=lambda text: isinstance(text, str) and text.strip() == selector.strip())
 
         for comment in comments:
             # Get the next sibling of the comment
