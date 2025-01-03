@@ -455,6 +455,7 @@ Output:
 ```
 
 This example shows how to:
+
 1. Select a section of the component using CSS selectors
 2. Replace its content by assigning a new tag
 3. Modify the replaced content within the context manager
