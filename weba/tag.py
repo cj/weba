@@ -174,7 +174,7 @@ class Tag(Bs4Tag):
                 next_node = next_node.next_sibling
 
             if isinstance(next_node, Tag):
-                # Convert to our Tag
+                # Convert to our Tag but preserve comments
                 results.append(next_node)
             # elif isinstance(next_node, NavigableString) and (text := next_node.strip()):
             #     # Return the NavigableString as-is
@@ -205,6 +205,7 @@ class Tag(Bs4Tag):
             next_node = comment.next_sibling
             while next_node:
                 if isinstance(next_node, Tag):
+                    # Return the tag without removing comments
                     return next_node
 
                 # if isinstance(next_node, NavigableString) and (text := next_node.strip()):

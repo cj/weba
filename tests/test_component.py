@@ -984,7 +984,7 @@ def test_component_replace_root():
             self.replace_root_tag(ui.section(class_="container"))
 
     component = RootComponent()
-    assert str(component) == '<section class="container">Content <span>here</span></section>'
+    assert str(component) == '<section class="container"></section>'
 
 
 def test_component_tag_root_replacement():
@@ -999,7 +999,7 @@ def test_component_tag_root_replacement():
 
     component = RootTagComponent()
 
-    assert str(component) == '<section class="container">Content <span>here</span></section>'
+    assert str(component) == '<section class="container"></section>'
 
 
 def test_component_tag_root_replacement_with_nested():
@@ -1047,6 +1047,30 @@ def test_component_tag_root_replacement_with_nested_modified_returned():
     component = RootTagComponent()
 
     assert str(component) == '<section class="container prose">Content <span>here</span></section>'
+
+
+def test_component_tag_root_replacement_with_comment_nested_modified_returned():
+    """Test that root_tag option replaces the component's root tag."""
+
+    class RootTagComponent(Component):
+        src = """
+            <div>Content
+                <span>here</span>
+                <!-- #section -->
+                <section class='container'>Content <span>here</span></section>
+            </div>
+        """
+
+        @tag("<!-- #section -->", root_tag=True)
+        def section(self, t: Tag):
+            t["class"].append("prose")
+
+            return t
+
+    component = RootTagComponent()
+    html = str(component)
+
+    assert html == '<section class="container prose">Content <span>here</span></section>'
 
 
 def test_component_sync_call_async_component_error():

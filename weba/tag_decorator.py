@@ -64,13 +64,7 @@ class TagDecorator(Generic[T]):
 
         # Handle root tag replacement if requested
         if self.root_tag:
-            if self.selector and tag:
-                # For selectors, extract the matched tag first
-                tag.extract()
-
             instance.replace_root_tag(result)
-
-            result = instance
 
         # Cache the result
         setattr(instance, self._cache_name, result)

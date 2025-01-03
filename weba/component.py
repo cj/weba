@@ -186,13 +186,9 @@ class Component(ABC, Tag, metaclass=ComponentMeta):
         Args:
             new_root: The new Tag to use as the root
         """
-        contents = list(self.contents)
-
-        self.clear()
         self.name = new_root.name
         self.attrs = new_root.attrs.copy()
-
-        self.extend(contents)
+        self.contents = new_root.contents.copy()
 
     def __new__(cls, *args: Any, **kwargs: Any):
         src, doctype = cls._get_source_content()
