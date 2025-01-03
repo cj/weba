@@ -143,7 +143,8 @@ class Tag(Bs4Tag):
 
         return json.dumps(value) if isinstance(value, dict | list) else value
 
-    def comment(self, selector: str) -> list[Tag | NavigableString | None]:
+    # def comment(self, selector: str) -> list[Tag | NavigableString | None]:
+    def comment(self, selector: str) -> list[Tag | None]:
         """Find all tags or text nodes that follow comments matching the given selector.
 
         This method searches for HTML comments containing the selector text and returns
@@ -158,7 +159,8 @@ class Tag(Bs4Tag):
             For text nodes, returns them as `NavigableString`.
             Returns an empty list if no matches are found.
         """
-        results: list[Tag | NavigableString | None] = []
+        # results: list[Tag | NavigableString | None] = []
+        results: list[Tag | None] = []
 
         # Find all comment nodes matching the selector
         comments = self.find_all(string=lambda text: isinstance(text, str) and selector in text.strip())
@@ -174,13 +176,14 @@ class Tag(Bs4Tag):
             if isinstance(next_node, Tag):
                 # Convert to our Tag
                 results.append(next_node)
-            elif isinstance(next_node, NavigableString) and (text := next_node.strip()):
-                # Return the NavigableString as-is
-                results.append(NavigableString(text))
+            # elif isinstance(next_node, NavigableString) and (text := next_node.strip()):
+            #     # Return the NavigableString as-is
+            #     results.append(NavigableString(text))
 
         return results
 
-    def comment_one(self, selector: str) -> Tag | NavigableString | None:
+    # def comment_one(self, selector: str) -> Tag | NavigableString | None:
+    def comment_one(self, selector: str) -> Tag | None:
         """Find the first tag or text node that follows a comment matching the given selector.
 
         This method searches for the first HTML comment containing the selector text and returns
@@ -204,9 +207,9 @@ class Tag(Bs4Tag):
                 if isinstance(next_node, Tag):
                     return next_node
 
-                if isinstance(next_node, NavigableString) and (text := next_node.strip()):
-                    # Return NavigableString directly for consistency
-                    return NavigableString(text)
+                # if isinstance(next_node, NavigableString) and (text := next_node.strip()):
+                #     # Return NavigableString directly for consistency
+                #     return NavigableString(text)
 
                 next_node = next_node.next_sibling
 
