@@ -7,6 +7,8 @@ from contextlib import contextmanager
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, ClassVar, TypeVar
 
+from bs4 import ResultSet
+
 from .tag import Tag, current_tag_context
 from .tag_decorator import TagDecorator
 from .ui import ui
@@ -29,12 +31,22 @@ def no_tag_context():
         current_tag_context.set(parent)
 
 
-class ComponentAttributeError(AttributeError):
+class ComponentSrcRequiredError(AttributeError):
     """Raised when a component is missing required attributes."""
 
     def __init__(self, component: type[Component]) -> None:
         name = component.__name__
-        super().__init__(f"Component ({name}): Must define 'src' class attribute")
+        super().__init__(
+            f"Component ({name}): Must define 'src' class attribute or have a render method which returns a Tag"
+        )
+
+
+class ComponentSrcTypeError(AttributeError):
+    """Raised when a component src is not a str, method or Tag."""
+
+    def __init__(self, component: type[Component]) -> None:
+        name = component.__name__
+        super().__init__(f"Component ({name}): 'src' must be either a str, method or Tag")
 
 
 class ComponentTypeError(TypeError):
@@ -89,8 +101,8 @@ class ComponentMeta(ABCMeta):
 class Component(ABC, Tag, metaclass=ComponentMeta):
     """Base class for UI components."""
 
-    src: ClassVar[str | Callable[[], str]]
-    """The HTML source template for the component. Can be inline HTML, a path to an HTML file, or a callable returning either."""
+    src: ClassVar[str | Tag | Callable[[], str | Tag]]
+    """The HTML source template for the component. Can be inline HTML, a Tag, a path to an HTML file, or a callable returning any of these."""
     src_parser: ClassVar[str] | None = None
     """The parser to use when parsing the source HTML. Defaults to 'html.parser'."""
     _tag_methods: ClassVar[list[str]]
@@ -99,24 +111,35 @@ class Component(ABC, Tag, metaclass=ComponentMeta):
     _doctype: str | None = None
 
     @classmethod
-    def _get_source_content(cls) -> tuple[str, str | None]:
+    def _get_source_content(cls) -> tuple[str | Tag | None, str | None]:
         """Get the source content and doctype."""
-        src = getattr(cls, "src", None)
+        if not hasattr(cls, "src") and not hasattr(cls, "render"):
+            raise ComponentSrcRequiredError(cls)
 
-        if callable(src):
-            with no_tag_context():
-                src = src()
+        src = None
 
-        if src is None or not isinstance(src, str):
-            raise ComponentAttributeError(cls)
+        if hasattr(cls, "src"):
+            src = cls.src
 
-        if src.endswith(".html") or src.endswith(".svg") or src.endswith(".xml"):
+            if isinstance(src, Tag):
+                return src, None
+            elif callable(src):
+                with no_tag_context():
+                    src = src()
+
+        if not src:
+            return None, None
+
+        if not isinstance(src, str):
+            raise ComponentSrcTypeError(cls)
+
+        if src.endswith((".html", ".svg", ".xml")):
             cls_path = inspect.getfile(cls)
             cls_dir = os.path.dirname(cls_path)
             path = Path(cls_dir, src)
 
             # Set XML parser for SVG and XML files if not explicitly set
-            if not cls.src_parser and (src.endswith(".svg") or src.endswith(".xml")):
+            if not cls.src_parser and (src.endswith((".svg", ".xml"))):
                 cls.src_parser = "xml"
 
             src = path.read_text()
@@ -148,13 +171,19 @@ class Component(ABC, Tag, metaclass=ComponentMeta):
 
     def __new__(cls, *args: Any, **kwargs: Any):
         src, doctype = cls._get_source_content()
-        root_tag = ui.raw(src, parser=cls.src_parser or "html.parser")
 
         instance = super().__new__(cls)
         instance._doctype = doctype
         instance._called_with_context = False
 
-        instance._init_from_tag(root_tag)
+        if isinstance(src, Tag | ResultSet):
+            instance._init_from_tag(src)
+        elif src:
+            root_tag = ui.raw(src, parser=cls.src_parser or "html.parser")
+            instance._init_from_tag(root_tag)
+        else:
+            Tag.__init__(instance, name="fragment")
+
         instance.__init__(*args, **kwargs)
 
         if parent := current_tag_context.get():

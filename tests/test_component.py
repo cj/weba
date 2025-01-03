@@ -10,7 +10,8 @@ from weba import (
     Component,
     ComponentAfterRenderError,
     ComponentAsyncError,
-    ComponentAttributeError,
+    ComponentSrcRequiredError,
+    ComponentSrcTypeError,
     ComponentTypeError,
     Tag,
     no_tag_context,
@@ -843,10 +844,22 @@ def test_component_missing_src_attribute():
     class MissingSrcComponent(Component):
         pass
 
-    with pytest.raises(ComponentAttributeError) as exc_info:
+    with pytest.raises(ComponentSrcRequiredError) as exc_info:
         MissingSrcComponent()
 
     assert "Component (MissingSrcComponent): Must define 'src' class attribute" in str(exc_info.value)
+
+
+def test_component_invalid_src_type():
+    """Test that ComponentSrcTypeError is raised when src is an invalid type."""
+
+    class InvalidSrcComponent(Component):
+        src = 42  # type: ignore[assignment]
+
+    with pytest.raises(ComponentSrcTypeError) as exc_info:  # type: ignore[reportUnknownVariableType]
+        InvalidSrcComponent()
+
+    assert "Component (InvalidSrcComponent): 'src' must be either a str, method or Tag" in str(exc_info.value)  # type: ignore[reportUnknownMemberType]
 
 
 def test_component_callable_src():
@@ -1007,7 +1020,7 @@ def test_component_tag_root_replacement_with_nested_modified_returned():
     assert str(component) == '<section class="container prose">Content <span>here</span></section>'
 
 
-def test_sync_call_async_component_error():
+def test_component_sync_call_async_component_error():
     """Test that using a sync call with an async component raises an error."""
 
     class AsyncComponent(Component):
@@ -1026,6 +1039,27 @@ def test_sync_call_async_component_error():
     #     AsyncComponent()  # This should raise because it's an async component called synchronously
     #
     # assert "Component has async hooks but was called synchronously" in str(exc_info.value)
+
+
+def test_component_tag_src():
+    """Test that src can be a Tag instance."""
+
+    class TagSrcComponent(Component):
+        src = ui.div(class_="container")
+
+    component = TagSrcComponent()
+    assert str(component) == '<div class="container"></div>'
+
+
+def test_component_no_src_only_render():
+    class NoSrcComponent(Component):
+        def render(self):
+            with ui.div() as html:
+                ui.h1("Hello, World!")
+
+            return html
+
+    assert str(NoSrcComponent()) == "<div><h1>Hello, World!</h1></div>"
 
 
 @pytest.mark.asyncio
