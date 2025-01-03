@@ -1105,6 +1105,28 @@ def test_component_src_root_tag_with_nested():
     assert str(component) == '<section class="container">Content <span>here</span></section>'
 
 
+def test_component_src_root_tag_with_comment():
+    """Test that src_root_tag works with comment selectors."""
+
+    class NavComponent(Component):
+        src = """
+        <div>
+            <!-- #sidebar-nav -->
+            <nav class="sidebar">
+                <ul>
+                    <li>Home</li>
+                </ul>
+            </nav>
+            <main>Content</main>
+        </div>
+        """
+        src_root_tag = "<!-- #sidebar-nav -->"
+
+    nav = NavComponent()
+    nav_str = "".join(str(nav).split("\n"))
+    assert nav_str == '<nav class="sidebar"><ul><li>Home</li></ul></nav>'
+
+
 def test_component_src_root_tag_not_found():
     """Test that component raises error when src_root_tag selector isn't found."""
 

@@ -167,10 +167,15 @@ class Component(ABC, Tag, metaclass=ComponentMeta):
     def _init_from_tag(self, root_tag: Tag) -> None:
         """Initialize component from a root tag."""
         if hasattr(self, "src_root_tag") and self.src_root_tag:
-            if new_root := root_tag.select_one(self.src_root_tag):
+            # Try comment selector first if it starts with <!--
+            if (
+                (self.src_root_tag.startswith("<!--"))
+                and (new_root := root_tag.comment_one(self.src_root_tag[4:-3].strip()))
+            ) or ((not self.src_root_tag.startswith("<!--")) and (new_root := root_tag.select_one(self.src_root_tag))):
                 root_tag = new_root
             else:
                 raise ComponentSrcRootTagNotFoundError(self.__class__, self.src_root_tag)
+
         Tag.__init__(self, name=root_tag.name, attrs=root_tag.attrs)
         self.extend(root_tag.contents)
         root_tag.decompose()
