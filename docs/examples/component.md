@@ -425,3 +425,36 @@ Output:
     <p>Async loaded</p>
 </div>
 ```
+
+## Replace Component Content
+
+Components can replace their content using tag assignment:
+
+```python
+class HelloComponent(Component):
+    src = "./layout.html"  # A layout with <body><main></main></body>
+
+    @tag("body > main")
+    def main(self):
+        pass
+
+    def render(self):
+        self.main = ui.raw("<main>Hello</main>")
+
+# Usage with context manager
+with HelloComponent() as html:
+    html.main.append(ui.text(", World!"))
+
+print(html)  # Contains: <main>Hello, World!</main>
+```
+
+Output:
+
+```html
+<main>Hello, World!</main>
+```
+
+This example shows how to:
+1. Select a section of the component using CSS selectors
+2. Replace its content by assigning a new tag
+3. Modify the replaced content within the context manager

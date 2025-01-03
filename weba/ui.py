@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Any
 
-from bs4 import BeautifulSoup
+from bs4 import BeautifulSoup, NavigableString
 from bs4 import Tag as BeautifulSoupTag
 
 from .tag import Tag, current_tag_context
@@ -26,13 +26,12 @@ class Ui:
         Returns:
             A string containing the text.
         """
-        text = "" if html is None else str(html)
+        text = NavigableString("" if html is None else str(html))
 
-        # Only append to parent if we're creating a new text node
-        # This prevents double-appending when the text is used in other operations
+        # # Only append to parent if we're creating a new text node
+        # # This prevents double-appending when the text is used in other operations
         if parent := current_tag_context.get():
             parent.append(text)
-            return ""  # Return empty string since content is already appended
 
         # Return the raw string only when no parent (for direct usage)
         return text
@@ -71,7 +70,6 @@ class Ui:
 
             # Ensure fragment tag doesn't render
             tag.hidden = True
-
         if parent := current_tag_context.get():
             parent.append(tag)
 

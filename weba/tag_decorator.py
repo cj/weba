@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Generic, TypeVar, cast
+from typing import TYPE_CHECKING, Any, Generic, TypeVar, cast
 
 from .tag import Tag
 
@@ -28,6 +28,10 @@ class TagDecorator(Generic[T]):
         self.clear = clear
         self._cache_name = f"_{method.__name__}_result"
         self.__name__ = method.__name__
+
+    def __set__(self, instance: T, value: Tag):
+        getattr(instance, self.method.__name__).replace_with(value)
+        setattr(instance, self._cache_name, value)
 
     def __get__(self, instance: T, owner: type[T]):
         # Return cached result if it exists

@@ -711,6 +711,7 @@ def test_component_xml_parser():
         src = "./button.svg"
 
         def render(self):
+            # sourcery skip: no-conditionals-in-tests
             if text_elem := self.select_one("text"):
                 text_elem.string = "Test"
 
@@ -873,7 +874,7 @@ def test_component_callable_src_current_parent_context():
     assert str(html) == "<div><h1>Dynamic</h1><div><h1>Dynamic</h1></div></div>"
 
 
-def test_no_tag_context():
+def test_component_no_tag_context():
     """Test that no_tag_context prevents automatic tag appending."""
 
     with ui.div() as container:
@@ -893,6 +894,23 @@ def test_no_tag_context():
     expected = "<div><p>Normal paragraph</p><p>Standalone paragraph</p><p>Another normal paragraph</p></div>"
 
     assert str(container) == expected
+
+
+def test_component_replace_with():
+    class HelloComponent(Component):
+        src = "./layout.html"
+
+        @tag("body > main")
+        def main(self):
+            pass
+
+        def render(self):
+            self.main = ui.raw("<main>Hello</main>")
+
+    with HelloComponent() as html:
+        html.main.append(ui.text(", World!"))
+
+    assert "Hello, World!" in str(html)
 
 
 @pytest.mark.asyncio
