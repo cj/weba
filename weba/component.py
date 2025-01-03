@@ -7,8 +7,7 @@ from contextlib import contextmanager
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, ClassVar, TypeVar
 
-from .context import current_parent
-from .tag import Tag
+from .tag import Tag, current_tag_context
 from .tag_decorator import TagDecorator
 from .ui import ui
 
@@ -19,15 +18,15 @@ T = TypeVar("T", bound="Component")
 
 
 @contextmanager
-def no_current_parent():
+def no_tag_context():
     """Temporarily clear the current parent context."""
-    parent = current_parent.get()
-    current_parent.set(None)
+    parent = current_tag_context.get()
+    current_tag_context.set(None)
 
     try:
         yield
     finally:
-        current_parent.set(parent)
+        current_tag_context.set(parent)
 
 
 class ComponentAttributeError(AttributeError):
@@ -105,7 +104,7 @@ class Component(ABC, Tag, metaclass=ComponentMeta):
         src = getattr(cls, "src", None)
 
         if callable(src):
-            with no_current_parent():
+            with no_tag_context():
                 src = src()
 
         if src is None or not isinstance(src, str):
@@ -144,7 +143,7 @@ class Component(ABC, Tag, metaclass=ComponentMeta):
         instance._init_from_tag(root_tag)
         instance.__init__(*args, **kwargs)
 
-        if parent := current_parent.get():
+        if parent := current_tag_context.get():
             parent.append(instance)
 
         instance._has_async_hooks = any(
@@ -160,36 +159,36 @@ class Component(ABC, Tag, metaclass=ComponentMeta):
     def _run_sync_hooks(self) -> None:
         """Run synchronous lifecycle hooks."""
         if callable(self.before_render):
-            with no_current_parent():
+            with no_tag_context():
                 self.before_render()
 
-        with no_current_parent():
+        with no_tag_context():
             self._load_tag_methods()
 
         if callable(self.render):
-            with no_current_parent():
+            with no_tag_context():
                 if response := self.render():
                     self._update_from_response(response)
 
         if callable(self.after_render):
-            with no_current_parent():
+            with no_tag_context():
                 self.after_render()
 
     async def _async_render_hooks(self):
         if callable(self.before_render):
-            with no_current_parent():
+            with no_tag_context():
                 await self.before_render() if inspect.iscoroutinefunction(self.before_render) else self.before_render()
 
-        with no_current_parent():
+        with no_tag_context():
             self._load_tag_methods()
 
         if callable(self.render):
-            with no_current_parent():
+            with no_tag_context():
                 if response := await self.render() if inspect.iscoroutinefunction(self.render) else self.render():
                     self._update_from_response(response)
 
         if not self._called_with_context and callable(self.after_render):
-            with no_current_parent():
+            with no_tag_context():
                 await self.after_render() if inspect.iscoroutinefunction(self.after_render) else self.after_render()
 
         return self
@@ -224,7 +223,7 @@ class Component(ABC, Tag, metaclass=ComponentMeta):
         *args: Any,
     ) -> None:
         if callable(self.after_render):
-            with no_current_parent():
+            with no_tag_context():
                 await self.after_render() if inspect.iscoroutinefunction(self.after_render) else self.after_render()
 
         return super().__exit__(*args)

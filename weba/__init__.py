@@ -8,8 +8,8 @@ from .component import (
     ComponentTypeError,
 )
 from .component_tag import component_tag
-from .context import Context, current_parent
-from .tag import Tag
+from .context import Context
+from .tag import Tag, current_tag_context
 from .ui import ui
 
 tag = component_tag
@@ -23,7 +23,7 @@ __all__ = [
     "Context",
     "Tag",
     "component_tag",
-    "current_parent",
+    "current_tag_context",
     "tag",
     "ui",
 ]

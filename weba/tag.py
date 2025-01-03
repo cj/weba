@@ -1,18 +1,22 @@
 from __future__ import annotations
 
 import json
+from contextvars import ContextVar
 from typing import TYPE_CHECKING, Any, Literal, overload
 
 from bs4 import Comment, NavigableString
 from bs4 import Tag as Bs4Tag
-
-from .context import current_parent
 
 if TYPE_CHECKING:  # pragma: no cover
     from contextvars import Token
 
     from bs4 import BeautifulSoup, PageElement
     from bs4.builder import TreeBuilder
+
+# Context variable that tracks the current parent Tag during component rendering.
+# This allows nested components to access their parent Tag context.
+# Default is None when outside of a component render context.
+current_tag_context: ContextVar[Tag | None] = ContextVar("__weba_current_tag_context__", default=None)
 
 
 class Tag(Bs4Tag):
@@ -106,11 +110,11 @@ class Tag(Bs4Tag):
         self._token: Token[Tag | None] | None = None
 
     def __enter__(self):
-        self._token = current_parent.set(self)  # pyright: ignore[reportArgumentType, reportAttributeAccessIssue]
+        self._token = current_tag_context.set(self)  # pyright: ignore[reportArgumentType, reportAttributeAccessIssue]
         return self
 
     def __exit__(self, *args: Any) -> None:
-        current_parent.reset(self._token)  # pyright: ignore[reportArgumentType]
+        current_tag_context.reset(self._token)  # pyright: ignore[reportArgumentType]
 
     @overload  # pragma: no cover # NOTE: We have tests that cover this case
     def __getitem__(self, key: Literal["class"]) -> list[str]:

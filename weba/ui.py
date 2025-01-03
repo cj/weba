@@ -5,8 +5,7 @@ from typing import TYPE_CHECKING, Any
 from bs4 import BeautifulSoup
 from bs4 import Tag as BeautifulSoupTag
 
-from .context import current_parent
-from .tag import Tag
+from .tag import Tag, current_tag_context
 
 if TYPE_CHECKING:  # pragma: no cover
     from collections.abc import Callable, Sequence
@@ -31,7 +30,7 @@ class Ui:
 
         # Only append to parent if we're creating a new text node
         # This prevents double-appending when the text is used in other operations
-        if parent := current_parent.get():
+        if parent := current_tag_context.get():
             parent.append(text)
             return ""  # Return empty string since content is already appended
 
@@ -73,7 +72,7 @@ class Ui:
             # Ensure fragment tag doesn't render
             tag.hidden = True
 
-        if parent := current_parent.get():
+        if parent := current_tag_context.get():
             parent.append(tag)
 
         return tag
@@ -100,7 +99,7 @@ class Ui:
             # Remove trailing underscore from tag names like input_
             actual_tag_name = tag_name.rstrip("_")
 
-            parent = current_parent.get()
+            parent = current_tag_context.get()
 
             # Create a BeautifulSoupTag directly
             base_tag = BeautifulSoupTag(

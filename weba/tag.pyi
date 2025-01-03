@@ -1,5 +1,6 @@
 from _typeshed import Incomplete, ReadableBuffer  # noqa: I001
 from collections.abc import Callable, Iterable, Iterator
+from contextvars import ContextVar
 from re import Pattern
 from typing import Any, Literal, TypeVar, overload
 from typing import Self, TypeAlias
@@ -13,6 +14,11 @@ DEFAULT_OUTPUT_ENCODING: str
 nonwhitespace_re: Pattern[str]
 whitespace_re: Pattern[str]
 PYTHON_SPECIFIC_ENCODINGS: set[str]
+
+# Context variable that tracks the current parent Tag during component rendering.
+# This allows nested components to access their parent Tag context.
+# Default is None when outside of a component render context.
+current_tag_context: ContextVar[Tag | None]
 
 class NamespacedAttribute(str):
     def __new__(cls, prefix: str, name: str | None = None, namespace: str | None = None) -> Self: ...
