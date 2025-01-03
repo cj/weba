@@ -3,6 +3,7 @@ from __future__ import annotations
 import inspect
 import os
 from abc import ABC, ABCMeta
+from contextlib import contextmanager
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, ClassVar, TypeVar
 
@@ -15,6 +16,18 @@ if TYPE_CHECKING:  # pragma: no cover
     from collections.abc import Callable
 
 T = TypeVar("T", bound="Component")
+
+
+@contextmanager
+def no_current_parent():
+    """Temporarily clear the current parent context."""
+    parent = current_parent.get()
+    current_parent.set(None)
+
+    try:
+        yield
+    finally:
+        current_parent.set(parent)
 
 
 class ComponentAttributeError(AttributeError):
@@ -92,14 +105,8 @@ class Component(ABC, Tag, metaclass=ComponentMeta):
         src = getattr(cls, "src", None)
 
         if callable(src):
-            # Temporarily clear current_parent while executing src
-            parent = current_parent.get()
-            current_parent.set(None)
-
-            try:
+            with no_current_parent():
                 src = src()
-            finally:
-                current_parent.set(parent)
 
         if src is None or not isinstance(src, str):
             raise ComponentAttributeError(cls)
@@ -126,19 +133,6 @@ class Component(ABC, Tag, metaclass=ComponentMeta):
         self.extend(root_tag.contents)
         root_tag.decompose()
 
-    def _run_sync_hooks(self) -> None:
-        """Run synchronous lifecycle hooks."""
-        if callable(self.before_render):
-            self.before_render()
-
-        self._load_tag_methods()
-
-        if callable(self.render) and (response := self.render()):
-            self._update_from_response(response)
-
-        if callable(self.after_render):
-            self.after_render()
-
     def __new__(cls, *args: Any, **kwargs: Any):
         src, doctype = cls._get_source_content()
         root_tag = ui.raw(src, parser=cls.src_parser or "html.parser")
@@ -163,19 +157,40 @@ class Component(ABC, Tag, metaclass=ComponentMeta):
 
         return instance
 
+    def _run_sync_hooks(self) -> None:
+        """Run synchronous lifecycle hooks."""
+        if callable(self.before_render):
+            with no_current_parent():
+                self.before_render()
+
+        with no_current_parent():
+            self._load_tag_methods()
+
+        if callable(self.render):
+            with no_current_parent():
+                if response := self.render():
+                    self._update_from_response(response)
+
+        if callable(self.after_render):
+            with no_current_parent():
+                self.after_render()
+
     async def _async_render_hooks(self):
         if callable(self.before_render):
-            await self.before_render() if inspect.iscoroutinefunction(self.before_render) else self.before_render()
+            with no_current_parent():
+                await self.before_render() if inspect.iscoroutinefunction(self.before_render) else self.before_render()
 
-        self._load_tag_methods()
+        with no_current_parent():
+            self._load_tag_methods()
 
-        if callable(self.render) and (
-            response := await self.render() if inspect.iscoroutinefunction(self.render) else self.render()
-        ):
-            self._update_from_response(response)
+        if callable(self.render):
+            with no_current_parent():
+                if response := await self.render() if inspect.iscoroutinefunction(self.render) else self.render():
+                    self._update_from_response(response)
 
         if not self._called_with_context and callable(self.after_render):
-            await self.after_render() if inspect.iscoroutinefunction(self.after_render) else self.after_render()
+            with no_current_parent():
+                await self.after_render() if inspect.iscoroutinefunction(self.after_render) else self.after_render()
 
         return self
 
@@ -209,7 +224,8 @@ class Component(ABC, Tag, metaclass=ComponentMeta):
         *args: Any,
     ) -> None:
         if callable(self.after_render):
-            await self.after_render() if inspect.iscoroutinefunction(self.after_render) else self.after_render()
+            with no_current_parent():
+                await self.after_render() if inspect.iscoroutinefunction(self.after_render) else self.after_render()
 
         return super().__exit__(*args)
 
