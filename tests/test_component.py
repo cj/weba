@@ -857,6 +857,40 @@ def test_component_callable_src():
     assert str(component) == "<div><h1>Dynamic</h1></div>"
 
 
+def test_component_callable_src_current_parent_context():
+    """Test that src can be a callable that returns HTML."""
+
+    def load_html():
+        return str(ui.raw("<div><h1>Dynamic</h1></div>"))
+
+    class CallableSrcComponent(Component):
+        src = load_html
+
+    with CallableSrcComponent() as html:
+        CallableSrcComponent()
+
+    assert str(html) == "<div><h1>Dynamic</h1><div><h1>Dynamic</h1></div></div>"
+
+
+@pytest.mark.asyncio
+async def test_component_async_callable_src_current_parent_context():
+    """Test that src can be a callable that returns HTML."""
+
+    def load_html():
+        return str(ui.raw("<div><h1>Dynamic</h1></div>"))
+
+    class CallableSrcComponent(Component):
+        src = load_html
+
+        async def render(self):
+            pass
+
+    async with CallableSrcComponent() as html:
+        await CallableSrcComponent()
+
+    assert str(html) == "<div><h1>Dynamic</h1><div><h1>Dynamic</h1></div></div>"
+
+
 def test_sync_call_async_component_error():
     """Test that using a sync call with an async component raises an error."""
 

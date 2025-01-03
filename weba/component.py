@@ -92,7 +92,14 @@ class Component(ABC, Tag, metaclass=ComponentMeta):
         src = getattr(cls, "src", None)
 
         if callable(src):
-            src = src()
+            # Temporarily clear current_parent while executing src
+            parent = current_parent.get()
+            current_parent.set(None)
+
+            try:
+                src = src()
+            finally:
+                current_parent.set(parent)
 
         if src is None or not isinstance(src, str):
             raise ComponentAttributeError(cls)
