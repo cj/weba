@@ -54,7 +54,7 @@ class TagDecorator(Generic[T]):
         argcount = self.method.__code__.co_argcount  # type: ignore[attr-defined]
 
         # Handle extraction and clearing if requested
-        if self.extract and tag is not None:
+        if self.extract and tag:
             tag.extract()
 
         if isinstance(tag, Tag) and self.clear:
@@ -64,10 +64,12 @@ class TagDecorator(Generic[T]):
 
         # Handle root tag replacement if requested
         if self.root_tag:
-            if self.selector:
+            if self.selector and tag:
                 # For selectors, extract the matched tag first
                 tag.extract()
-            instance.replace_root_tag(result or tag)
+
+            instance.replace_root_tag(result)
+
             result = instance
 
         # Cache the result

@@ -48,6 +48,7 @@ print(component)
 ```
 
 Output:
+
 ```html
 <section class="container">Content <span>here</span></section>
 ```
@@ -70,6 +71,7 @@ print(component)
 ```
 
 Output:
+
 ```html
 <section class="container">Content <span>here</span></section>
 ```
