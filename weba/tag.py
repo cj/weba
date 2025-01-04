@@ -218,10 +218,13 @@ class Tag(Bs4Tag):
 
         return None
 
+    def __copy__(self) -> Tag:
+        return Tag.from_existing_bs4tag(self)
+
     def copy(self) -> Tag:
         """Create a copy of this tag.
 
         Returns:
             A new Tag instance that is a copy of this tag
         """
-        return Tag.from_existing_bs4tag(self)
+        return self.__copy__()
