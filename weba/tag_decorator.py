@@ -63,7 +63,7 @@ class TagDecorator(Generic[T]):
 
         # Handle root tag replacement if requested
         if self.root_tag:
-            instance.replace_root_tag(result)
+            result = instance.replace_root_tag(result.copy())
 
         # Cache the result
         instance._cached_tags[self.__name__] = result  # pyright: ignore[reportPrivateUsage]

@@ -236,19 +236,13 @@ class Component(ABC, Tag, metaclass=ComponentMeta):
             else:
                 raise ComponentSrcRootTagNotFoundError(self.__class__, self.src_root_tag)
 
+        self.replace_root_tag(root_tag)
+
+    def replace_root_tag(self, root_tag: Tag):
         Tag.__init__(self, name=root_tag.name, attrs=root_tag.attrs)
         self.extend(root_tag.contents)
         root_tag.decompose()
-
-    def replace_root_tag(self, new_root: Tag) -> None:
-        """Replace the component's root tag while preserving contents.
-
-        Args:
-            new_root: The new Tag to use as the root
-        """
-        self.name = new_root.name
-        self.attrs = new_root.attrs.copy()
-        self.contents = new_root.contents.copy()
+        return self
 
     def _run_sync_hooks(self) -> None:
         """Run synchronous lifecycle hooks."""
