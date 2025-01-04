@@ -127,17 +127,19 @@ class Tag(Bs4Tag):
         ...
 
     def __getitem__(self, key: str) -> str | list[str]:
-        if key not in self.attrs and key == "class":
-            self.attrs["class"] = []
-            return self.attrs["class"]
-
         if key == "class":
-            current_value = self.attrs.get("class", [])
+            current_value = self.attrs.get("class")
+
             if isinstance(current_value, str):
-                self.attrs["class"] = current_value.split()
+                current_value = current_value.split()
             elif not isinstance(current_value, list):
-                self.attrs["class"] = []
-            return self.attrs["class"]
+                current_value = []
+            else:
+                current_value = current_value.copy()  # pyright: ignore[reportUnknownVariableType]
+
+            self.attrs["class"] = current_value
+
+            return current_value  # pyright: ignore[reportUnknownVariableType]
 
         value = self.attrs[key]
 
