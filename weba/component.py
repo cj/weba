@@ -4,6 +4,7 @@ import inspect
 import os
 from abc import ABC, ABCMeta
 from contextlib import contextmanager
+from copy import copy
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, ClassVar, TypeVar
 
@@ -161,13 +162,13 @@ class Component(ABC, Tag, metaclass=ComponentMeta):
         src = None
 
         if hasattr(cls, "src"):
-            src = cls.src
+            src = copy(cls.src)
 
             if isinstance(src, Tag):
                 return src, None
             elif callable(src):
                 with no_tag_context():
-                    src = src()
+                    src = copy(src())
 
         if not src:
             return None, None
