@@ -93,10 +93,22 @@ class ComponentMeta(ABCMeta):
     def __new__(cls, name: str, bases: tuple[type, ...], namespace: dict[str, Any]) -> type:
         cls = super().__new__(cls, name, bases, namespace)
 
-        tag_methods: list[str] = [
+        # Collect tag methods from all base classes
+        tag_methods: set[str] = set()
+
+        # Add tag methods from base classes
+        for base in bases:
+            if hasattr(base, "_tag_methods"):
+                base_methods: list[str] = getattr(base, "_tag_methods", [])
+                tag_methods.update(base_methods)
+
+        # Add tag methods from current class
+        tag_methods.update(
             attr_value.__name__ for attr_value in namespace.values() if isinstance(attr_value, TagDecorator)
-        ]
-        cls._tag_methods = tag_methods  # pyright: ignore[reportAttributeAccessIssue]
+        )
+
+        # Store as list for compatibility
+        cls._tag_methods = list(tag_methods)
 
         return cls
 
@@ -120,6 +132,36 @@ class Component(ABC, Tag, metaclass=ComponentMeta):
     _has_async_hooks: bool = False
     _doctype: str | None = None
 
+    def __new__(cls, *args: Any, **kwargs: Any):
+        src, doctype = cls._get_source_content()
+
+        instance = super().__new__(cls)
+        instance._doctype = doctype
+        instance._called_with_context = False
+
+        if isinstance(src, Tag | ResultSet):
+            instance._init_from_tag(src)
+        elif src:
+            root_tag = ui.raw(src, parser=cls.src_parser or "html.parser")
+            instance._init_from_tag(root_tag)
+        else:
+            Tag.__init__(instance, name="fragment")
+
+        instance.__init__(*args, **kwargs)
+
+        if parent := current_tag_context.get():
+            parent.append(instance)
+
+        instance._has_async_hooks = any(
+            inspect.iscoroutinefunction(getattr(instance, hook, None))
+            for hook in ["before_render", "render", "after_render"]
+        )
+
+        if not instance._has_async_hooks:
+            instance._run_sync_hooks()
+
+        return instance
+
     @classmethod
     def _get_source_content(cls) -> tuple[str | Tag | None, str | None]:
         """Get the source content and doctype."""
@@ -132,7 +174,7 @@ class Component(ABC, Tag, metaclass=ComponentMeta):
             src = cls.src
 
             if isinstance(src, Tag):
-                return src, None
+                return str(src), None
             elif callable(src):
                 with no_tag_context():
                     src = src()
@@ -189,36 +231,6 @@ class Component(ABC, Tag, metaclass=ComponentMeta):
         self.name = new_root.name
         self.attrs = new_root.attrs.copy()
         self.contents = new_root.contents.copy()
-
-    def __new__(cls, *args: Any, **kwargs: Any):
-        src, doctype = cls._get_source_content()
-
-        instance = super().__new__(cls)
-        instance._doctype = doctype
-        instance._called_with_context = False
-
-        if isinstance(src, Tag | ResultSet):
-            instance._init_from_tag(src)
-        elif src:
-            root_tag = ui.raw(src, parser=cls.src_parser or "html.parser")
-            instance._init_from_tag(root_tag)
-        else:
-            Tag.__init__(instance, name="fragment")
-
-        instance.__init__(*args, **kwargs)
-
-        if parent := current_tag_context.get():
-            parent.append(instance)
-
-        instance._has_async_hooks = any(
-            inspect.iscoroutinefunction(getattr(instance, hook, None))
-            for hook in ["before_render", "render", "after_render"]
-        )
-
-        if not instance._has_async_hooks:
-            instance._run_sync_hooks()
-
-        return instance
 
     def _run_sync_hooks(self) -> None:
         """Run synchronous lifecycle hooks."""

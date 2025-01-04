@@ -50,6 +50,10 @@ class TagDecorator(Generic[T]):
         else:
             tag = instance.select_one(self.selector)  # type: ignore[attr-defined]
 
+        # Create a new tag if none found and extraction is requested
+        if tag is None and self.extract:
+            tag = Tag(name="li" if self.selector == "li" else "div")
+
         # Call the decorated method
         argcount = self.method.__code__.co_argcount  # type: ignore[attr-defined]
 
