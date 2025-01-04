@@ -28,16 +28,15 @@ class TagDecorator(Generic[T]):
         self.extract = extract
         self.clear = clear
         self.root_tag = root_tag
-        self._cache_name = f"_{method.__name__}_result"
         self.__name__ = method.__name__
 
     def __set__(self, instance: T, value: Tag):
         getattr(instance, self.method.__name__).replace_with(value)
-        setattr(instance, self._cache_name, value)
+        instance._cached_tags[self.__name__] = value  # pyright: ignore[reportPrivateUsage]
 
     def __get__(self, instance: T, owner: type[T]):
         # Return cached result if it exists
-        if response := getattr(instance, self._cache_name):
+        if response := instance._cached_tags.get(self.__name__):  # pyright: ignore[reportPrivateUsage]
             return response
 
         if not self.selector:
@@ -67,6 +66,6 @@ class TagDecorator(Generic[T]):
             instance.replace_root_tag(result)
 
         # Cache the result
-        setattr(instance, self._cache_name, result)
+        instance._cached_tags[self.__name__] = result  # pyright: ignore[reportPrivateUsage]
 
         return result

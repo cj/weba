@@ -119,6 +119,7 @@ class Component(ABC, Tag, metaclass=ComponentMeta):
     _called_with_context: bool
     _has_async_hooks: bool = False
     _doctype: str | None = None
+    _cached_tags: dict[str, Tag]
 
     def __new__(cls, *args: Any, **kwargs: Any):
         src, doctype = cls._get_source_content()
@@ -126,6 +127,7 @@ class Component(ABC, Tag, metaclass=ComponentMeta):
         instance = super().__new__(cls)
         instance._doctype = doctype
         instance._called_with_context = False
+        instance._cached_tags = {}
 
         if isinstance(src, Tag | ResultSet):
             instance._init_from_tag(src)
