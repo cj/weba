@@ -453,13 +453,13 @@ def test_component_with_layout_append_to_body():  # sourcery skip: extract-dupli
     assert "</>" not in str(Layout())
 
 
-# def test_component_fragment():
-#     html = "<h1>One</h1><h2>Two</h2><h3>Three</h3>"
-#
-#     class FragmentComponent(Component):
-#         src = html
-#
-#     assert str(FragmentComponent()) == "<h1>One</h1><h2>Two</h2><h3>Three</h3>"
+def test_component_fragment():
+    html = "<h1>One</h1><h2>Two</h2><h3>Three</h3>"
+
+    class FragmentComponent(Component):
+        src = html
+
+    assert str(FragmentComponent()) == "<h1>One</h1><h2>Two</h2><h3>Three</h3>"
 
 
 def test_component_layout_appends():

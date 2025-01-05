@@ -348,7 +348,6 @@ class Component(ABC, Tag, metaclass=ComponentMeta):
         self.attrs = response.attrs
 
     def __str__(self) -> str:
-        if self._doctype:
-            return f"{self._doctype}\n{super().__str__()}"
+        string = "".join(str(child) for child in self.children) if self.name == "fragment" else super().__str__()
 
-        return super().__str__()
+        return f"{self._doctype}\n{string}" if self._doctype else string
