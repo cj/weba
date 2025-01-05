@@ -70,6 +70,7 @@ class Ui:
 
             # Ensure fragment tag doesn't render
             tag.hidden = True
+
         if parent := current_tag_context.get():
             parent.append(tag)
 

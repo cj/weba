@@ -163,7 +163,9 @@ class Component(ABC, Tag, metaclass=ComponentMeta):
         if isinstance(src, Tag | ResultSet):
             instance._init_from_tag(src)
         elif src:
-            root_tag = ui.raw(src, parser=cls.src_parser or "html.parser")
+            with no_tag_context():
+                root_tag = ui.raw(src, parser=cls.src_parser or "html.parser")
+
             instance._init_from_tag(root_tag)
         else:
             Tag.__init__(instance, name="fragment")
@@ -244,7 +246,7 @@ class Component(ABC, Tag, metaclass=ComponentMeta):
 
     def replace_root_tag(self, root_tag: Tag):
         Tag.__init__(self, name=root_tag.name, attrs=root_tag.attrs)
-        self.extend(root_tag.contents)
+        self.extend(root_tag.contents.copy())
         root_tag.decompose()
         return self
 
