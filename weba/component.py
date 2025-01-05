@@ -92,6 +92,7 @@ class ComponentMeta(ABCMeta):
     """Metaclass for Component to handle automatic rendering."""
 
     _tag_methods: ClassVar[list[str]]
+
     src: ClassVar[str | Tag | Callable[[], str | Tag] | None]
     src_root_tag: ClassVar[str | None]
 
@@ -114,17 +115,7 @@ class ComponentMeta(ABCMeta):
         new_cls._tag_methods = list(dict.fromkeys(tag_methods))  # pyright: ignore[eportAttributeAccessIssue, reportAttributeAccessIssue]
 
         # Inherit src and src_root_tag if not defined in this class
-        if "src" not in namespace and bases:
-            for base in bases:
-                if hasattr(base, "src"):
-                    new_cls.src = base.src  # pyright: ignore[reportUnknownMemberType, reportAttributeAccessIssue]
-                    break
-
-        if "src_root_tag" not in namespace and bases:
-            for base in bases:
-                if hasattr(base, "src_root_tag"):
-                    new_cls.src_root_tag = base.src_root_tag  # pyright: ignore[reportUnknownMemberType, reportAttributeAccessIssue]
-                    break
+        cls._inherit_attrs(new_cls, namespace, bases, ["src", "src_root_tag"])
 
         return new_cls  # pyright: ignore[reportReturnType]
 
@@ -132,6 +123,18 @@ class ComponentMeta(ABCMeta):
     def __call__(cls, *args: Any, **kwargs: Any):
         # sourcery skip: instance-method-first-arg-name
         return cls.__new__(cls, *args, **kwargs)  # pyright: ignore[reportArgumentType]
+
+    @staticmethod
+    def _inherit_attrs(
+        new_cls: type[Any], namespace: dict[str, Any], bases: tuple[type, ...], attrs: list[str]
+    ) -> None:
+        """Inherit class attributes from bases if not defined in the current class."""
+        for attr_name in attrs:
+            if attr_name not in namespace and bases:
+                for base in bases:
+                    if hasattr(base, attr_name):
+                        setattr(new_cls, attr_name, getattr(base, attr_name))  # pyright: ignore[reportUnknownMemberType, reportAttributeAccessIssue]
+                        break
 
 
 class Component(ABC, Tag, metaclass=ComponentMeta):
