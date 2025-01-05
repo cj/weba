@@ -209,6 +209,25 @@ def test_component_from_file():
     assert str(container) == "<div><button>Save</button><button>Edit</button><button>Delete</button></div>"
 
 
+def test_component_from_relative_path():
+    """Test loading component template from a relative path."""
+
+    class SubdirButton(Component):
+        src = "./button.html"
+
+    assert str(SubdirButton()) == "<button>Test Button</button>"
+
+
+def test_component_from_absolute_path():
+    """Test loading component template from an absolute path."""
+    abs_path = "tests/button.html"
+
+    class AbsoluteButton(Component):
+        src = abs_path
+
+    assert str(AbsoluteButton()) == "<button>Test Button</button>"
+
+
 def test_component_empty():
     class UiList(Component):
         src = "<ul></ul>"
