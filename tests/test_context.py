@@ -5,7 +5,67 @@ import asyncio
 import pytest
 
 from weba import Component
-from weba.context import Context
+from weba.context import Context, ContextMixin
+
+
+class ValueMixin(ContextMixin):
+    @property
+    def current_value(self) -> str:
+        return self.context._value
+
+    @current_value.setter
+    def current_value(self, val: str):
+        self.context._value = val
+
+
+class ValueContext(Context):
+    _value: str = ""
+
+
+def test_context_mixin_access():
+    """Test that ContextMixin can access the current context."""
+    with ValueContext() as ctx:
+        mixin = ValueMixin()
+        ctx._value = "test"
+        assert mixin.current_value == "test"
+
+
+@pytest.mark.asyncio
+async def test_context_mixin_isolation():
+    """Test that ContextMixin maintains proper isolation between async tasks."""
+
+    async def task1():
+        async with ValueContext():
+            mixin = ValueMixin()
+            mixin.current_value = "Task 1"
+            await asyncio.sleep(0.1)
+            assert mixin.current_value == "Task 1"
+            return mixin.current_value
+
+    async def task2():
+        async with ValueContext():
+            mixin = ValueMixin()
+            mixin.current_value = "Task 2"
+            await asyncio.sleep(0.05)
+            assert mixin.current_value == "Task 2"
+            return mixin.current_value
+
+    results = await asyncio.gather(task1(), task2())
+    assert results == ["Task 1", "Task 2"]
+
+
+@pytest.mark.asyncio
+async def test_context_mixin_nesting():
+    """Test that ContextMixin works properly with nested contexts."""
+    async with ValueContext():
+        outer_mixin = ValueMixin()
+        outer_mixin.current_value = "Outer"
+
+        async with ValueContext():
+            inner_mixin = ValueMixin()
+            inner_mixin.current_value = "Inner"
+            assert inner_mixin.current_value == "Inner"
+            assert outer_mixin.current_value == "Outer"
 
 
 def test_context_creation():
