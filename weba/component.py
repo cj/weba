@@ -91,7 +91,11 @@ class ComponentAsyncError(RuntimeError):
 class ComponentMeta(ABCMeta):
     """Metaclass for Component to handle automatic rendering."""
 
-    def __new__(cls, name: str, bases: tuple[type, ...], namespace: dict[str, Any]) -> type:
+    _tag_methods: ClassVar[list[str]]
+    src: ClassVar[str | Tag | Callable[[], str | Tag] | None]
+    src_root_tag: ClassVar[str | None]
+
+    def __new__(cls, name: str, bases: tuple[type, ...], namespace: dict[str, Any]) -> type[Component]:
         # Create the class
         new_cls = super().__new__(cls, name, bases, namespace)
 
@@ -103,25 +107,26 @@ class ComponentMeta(ABCMeta):
         # Add tag methods from parent classes
         for base in bases:
             if hasattr(base, "_tag_methods"):
-                tag_methods.extend(base._tag_methods)
+                base_methods = getattr(base, "_tag_methods", [])
+                tag_methods.extend(base_methods)
 
         # Remove duplicates while preserving order
-        new_cls._tag_methods = list(dict.fromkeys(tag_methods))
+        new_cls._tag_methods = list(dict.fromkeys(tag_methods))  # pyright: ignore[eportAttributeAccessIssue, reportAttributeAccessIssue]
 
         # Inherit src and src_root_tag if not defined in this class
         if "src" not in namespace and bases:
             for base in bases:
                 if hasattr(base, "src"):
-                    new_cls.src = base.src
+                    new_cls.src = base.src  # pyright: ignore[reportUnknownMemberType, reportAttributeAccessIssue]
                     break
 
         if "src_root_tag" not in namespace and bases:
             for base in bases:
                 if hasattr(base, "src_root_tag"):
-                    new_cls.src_root_tag = base.src_root_tag
+                    new_cls.src_root_tag = base.src_root_tag  # pyright: ignore[reportUnknownMemberType, reportAttributeAccessIssue]
                     break
 
-        return new_cls
+        return new_cls  # pyright: ignore[reportReturnType]
 
     # NOTE: This prevents the default __init__ method from being called
     def __call__(cls, *args: Any, **kwargs: Any):
