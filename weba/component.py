@@ -92,14 +92,36 @@ class ComponentMeta(ABCMeta):
     """Metaclass for Component to handle automatic rendering."""
 
     def __new__(cls, name: str, bases: tuple[type, ...], namespace: dict[str, Any]) -> type:
-        cls = super().__new__(cls, name, bases, namespace)
+        # Create the class
+        new_cls = super().__new__(cls, name, bases, namespace)
 
+        # Collect tag methods from this class
         tag_methods: list[str] = [
             attr_value.__name__ for attr_value in namespace.values() if isinstance(attr_value, TagDecorator)
         ]
-        cls._tag_methods = tag_methods  # pyright: ignore[reportAttributeAccessIssue]
 
-        return cls
+        # Add tag methods from parent classes
+        for base in bases:
+            if hasattr(base, "_tag_methods"):
+                tag_methods.extend(base._tag_methods)
+
+        # Remove duplicates while preserving order
+        new_cls._tag_methods = list(dict.fromkeys(tag_methods))
+
+        # Inherit src and src_root_tag if not defined in this class
+        if "src" not in namespace and bases:
+            for base in bases:
+                if hasattr(base, "src"):
+                    new_cls.src = base.src
+                    break
+
+        if "src_root_tag" not in namespace and bases:
+            for base in bases:
+                if hasattr(base, "src_root_tag"):
+                    new_cls.src_root_tag = base.src_root_tag
+                    break
+
+        return new_cls
 
     # NOTE: This prevents the default __init__ method from being called
     def __call__(cls, *args: Any, **kwargs: Any):

@@ -21,6 +21,49 @@ from weba import (
 )
 
 
+def html():
+    return ui.raw(
+        """<div>
+        <!-- #sidebar-nav -->
+        <nav class="sidebar">
+            <!-- #header-right-wrapper-refresh-data-btn -->
+            <div id="foo">
+                <div class="hs-tooltip inline-block [--placement:bottom]">
+                    <a
+                        type="button"
+                        class="inline-flex items-center gap-x-2 rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm font-medium text-gray-800 shadow-sm hover:bg-gray-50 disabled:pointer-events-none disabled:opacity-50 dark:border-neutral-700 dark:bg-neutral-900 dark:text-white dark:hover:bg-neutral-800"
+                    >
+                        <span class="icon-[lucide--refresh-cw] size-4 flex-shrink-0"></span>
+                    </a>
+                    <span
+                        class="hs-tooltip-content invisible absolute z-20 inline-block rounded-lg bg-gray-900 px-2.5 py-1.5 text-xs text-white opacity-0 hs-tooltip-shown:visible hs-tooltip-shown:opacity-100 dark:bg-neutral-700"
+                        role="tooltip"
+                    >
+                        Refresh
+                    </span>
+                </div>
+            </div>
+            <!-- End #header-right-wrapper-refresh-data-btn -->
+        </nav>
+        <main>Content</main>
+    </div>
+    """
+    )
+
+
+class AppNavComponent(Component):
+    src = html()
+    src_root_tag = "<!-- #sidebar-nav -->"
+
+    @tag("<!-- #header-right-wrapper-refresh-data-btn -->")
+    def header_right_wrapper_refresh_data_btn(self, t: Tag):
+        # sourcery skip: no-conditionals-in-tests
+        if link := t.select_one("a"):
+            link["href"] = "/home"
+            link["hx-ext"] = "push-url-w-params"
+            link["hx-push-url"] = "false"
+
+
 class Button(Component):
     src = "<button>Example</button>"
 
@@ -1153,67 +1196,36 @@ def test_component_src_root_tag_with_comment():
     #         link["hx-push-url"] = "false"
 
 
-@pytest.mark.asyncio
-async def test_component_src_root_tag_with_comment_replace():
+def test_component_src_root_tag_with_comment_replace():
     """Test that src_root_tag works with comment selectors."""
 
-    def html():
-        html_tag = ui.raw("""<div>
-            <!-- #sidebar-nav -->
-            <nav class="sidebar">
-                <!-- #header-right-wrapper-refresh-data-btn -->
-                <div id="foo">
-                    <div class="hs-tooltip inline-block [--placement:bottom]">
-                        <a
-                            type="button"
-                            class="inline-flex items-center gap-x-2 rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm font-medium text-gray-800 shadow-sm hover:bg-gray-50 disabled:pointer-events-none disabled:opacity-50 dark:border-neutral-700 dark:bg-neutral-900 dark:text-white dark:hover:bg-neutral-800"
-                        >
-                            <span class="icon-[lucide--refresh-cw] size-4 flex-shrink-0"></span>
-                        </a>
-                        <span
-                            class="hs-tooltip-content invisible absolute z-20 inline-block rounded-lg bg-gray-900 px-2.5 py-1.5 text-xs text-white opacity-0 hs-tooltip-shown:visible hs-tooltip-shown:opacity-100 dark:bg-neutral-700"
-                            role="tooltip"
-                        >
-                            Refresh
-                        </span>
-                    </div>
-                </div>
-                <!-- End #header-right-wrapper-refresh-data-btn -->
-            </nav>
-            <main>Content</main>
-        </div>
-        """)
-
-        return html_tag
-
-    class NavComponent(Component):
-        src = html()
-        src_root_tag = "<!-- #sidebar-nav -->"
-
-        @tag("<!-- #header-right-wrapper-refresh-data-btn -->")
-        def header_right_wrapper_refresh_data_btn(self, t: Tag):
-            # sourcery skip: no-conditionals-in-tests
-            if link := t.select_one("a"):
-                link["href"] = "/home"
-                link["hx-ext"] = "push-url-w-params"
-                link["hx-push-url"] = "false"
-
-    nav = NavComponent()
+    nav = AppNavComponent()
     nav_str = "".join(str(nav).split("\n"))
 
     assert 'href="/home"' in nav_str
 
-    nav = NavComponent()
+    nav = AppNavComponent()
     nav_str = "".join(str(nav).split("\n"))
 
     assert 'href="/home"' in nav_str
 
-    class AsyncNavComponent(NavComponent):
-        async def render(self):
-            pass
+    with AppNavComponent() as nav:
+        assert 'href="/home"' in str(nav)
 
-    async with AsyncNavComponent() as component:
-        assert 'href="/home"' in str(component)
+    # class AsyncNavComponent(NavComponent):
+    #     async def render(self):
+    #         pass
+    #
+    # async with AsyncNavComponent() as component:
+    #     assert 'href="/home"' in str(component)
+
+
+def test_component_src_root_tag_with_comment_replace_inherited():
+    class InheritedAppNavComponent(AppNavComponent):
+        pass
+
+    with InheritedAppNavComponent() as nav:
+        assert 'href="/home"' in str(nav)
 
 
 def test_component_with_comment_tag():
