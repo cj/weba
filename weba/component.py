@@ -214,7 +214,8 @@ class Component(ABC, Tag, metaclass=ComponentMeta):
         if src.endswith((".html", ".svg", ".xml")):
             cls_path = inspect.getfile(cls)
             cls_dir = os.path.dirname(cls_path)
-            path = Path(cls_dir, src)
+            base_path = cls_dir if src.startswith(".") else os.getcwd()
+            path = Path(base_path, src)
 
             # Set XML parser for SVG and XML files if not explicitly set
             if not cls.src_parser and (src.endswith((".svg", ".xml"))):
