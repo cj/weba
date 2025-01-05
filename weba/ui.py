@@ -105,10 +105,6 @@ class Ui:
             # Wrap it into our Tag class
             tag_obj = Tag.from_existing_bs4tag(base_tag)
 
-            # If there's a current parent, append this tag to it
-            if parent:
-                parent.append(tag_obj)
-
             # Handle content
             if args:
                 arg = args[0]
@@ -118,6 +114,10 @@ class Ui:
                     tag_obj.string = ""
                 else:
                     tag_obj.string = str(arg)
+
+            # If there's a current parent, append this tag to it
+            if parent:
+                parent.append(tag_obj)
 
             return tag_obj
 
