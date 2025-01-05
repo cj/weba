@@ -15,6 +15,7 @@ from weba import (
     ComponentSrcTypeError,
     ComponentTypeError,
     Tag,
+    TagNotFoundError,
     no_tag_context,
     tag,
     ui,
@@ -1301,6 +1302,22 @@ def test_component_no_src_only_render():
             return html
 
     assert str(NoSrcComponent()) == "<div><h1>Hello, World!</h1></div>"
+
+
+def test_tag_not_found_error():
+    """Test that TagNotFoundError is raised with correct message."""
+
+    class MissingTagComponent(Component):
+        src = "<div>Content</div>"
+
+        @tag(".non-existent")
+        def missing_tag(self):
+            pass
+
+    with pytest.raises(TagNotFoundError) as exc_info:
+        MissingTagComponent()
+
+    assert "MissingTagComponent.missing_tag did not find selector: .non-existent" in str(exc_info.value)
 
 
 @pytest.mark.asyncio

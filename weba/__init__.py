@@ -13,6 +13,7 @@ from .component import (
 from .component_tag import component_tag
 from .context import Context
 from .tag import Tag, current_tag_context
+from .tag_decorator import TagNotFoundError
 from .ui import ui
 
 tag = component_tag
@@ -27,6 +28,7 @@ __all__ = [
     "ComponentTypeError",
     "Context",
     "Tag",
+    "TagNotFoundError",
     "component_tag",
     "current_tag_context",
     "no_tag_context",

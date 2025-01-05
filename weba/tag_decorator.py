@@ -1,15 +1,21 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Generic, TypeVar, cast
-
-from .tag import Tag
+from typing import TYPE_CHECKING, Generic, TypeVar
 
 if TYPE_CHECKING:  # pragma: no cover
     from collections.abc import Callable
 
     from .component import Component
+    from .tag import Tag
 
 T = TypeVar("T", bound="Component")
+
+
+class TagNotFoundError(RuntimeError):
+    """Raised when a @tag can't find the selector."""
+
+    def __init__(self, selector: str, fn_name: str, component: type[Component]) -> None:
+        super().__init__(f"{component.__name__}.{fn_name} did not find selector: {selector}.")
 
 
 class TagDecorator(Generic[T]):
@@ -49,17 +55,28 @@ class TagDecorator(Generic[T]):
         else:
             tag = instance.select_one(self.selector)  # type: ignore[attr-defined]
 
-        # Call the decorated method
-        argcount = self.method.__code__.co_argcount  # type: ignore[attr-defined]
+        if not tag:
+            raise TagNotFoundError(self.selector, self.__name__, owner)
+
+        if self.clear:
+            tag.clear()
 
         # Handle extraction and clearing if requested
         if self.extract and tag:
             tag.extract()
 
-        if isinstance(tag, Tag) and self.clear:
-            tag.clear()
+        # Call the decorated method
+        argcount = self.method.__code__.co_argcount  # type: ignore[attr-defined]
+        method_result = self.method(instance, tag) if argcount == 2 else self.method(instance)  # pyright: ignore[reportArgumentType, reportCallIssue]
 
-        result = cast(Tag, (self.method(instance, tag) if argcount == 2 else self.method(instance)) or tag)  # pyright: ignore[reportArgumentType, reportCallIssue]
+        # If method returns a value directly without needing the tag, use that
+        if method_result is not None:
+            if tag and tag != instance:
+                tag.replace_with(method_result)
+
+            tag = method_result
+
+        result = tag
 
         # Handle root tag replacement if requested
         if self.root_tag:
