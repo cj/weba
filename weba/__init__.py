@@ -11,7 +11,7 @@ from .component import (
     no_tag_context,
 )
 from .component_tag import component_tag
-from .context import Context
+from .context import Context, ContextMixin
 from .tag import Tag, current_tag_context
 from .tag_decorator import TagNotFoundError
 from .ui import ui
@@ -27,6 +27,7 @@ __all__ = [
     "ComponentSrcTypeError",
     "ComponentTypeError",
     "Context",
+    "ContextMixin",
     "Tag",
     "TagNotFoundError",
     "component_tag",
