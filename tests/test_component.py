@@ -775,6 +775,31 @@ def test_component_after_render():
     assert str(component) == "<div>after render</div>"
 
 
+def test_no_tag_context_nested():
+    """Test that no_tag_context works correctly with nested contexts."""
+
+    with ui.div() as container:
+        ui.p("First paragraph")  # Should be appended
+
+        with no_tag_context():
+            standalone = ui.p("Not appended")  # Should not be appended
+
+            with ui.div() as inner:  # Should not be appended
+                ui.p("Not appended paragraph")  # Should be appended to inner
+
+            with ui.div() as inner:  # Should not be appended
+                ui.p("Inner paragraph")  # Should be appended to inner
+
+            container.append(inner)  # Manually append inner
+
+        ui.p("Last paragraph")  # Should be appended
+
+    expected = "<div><p>First paragraph</p><div><p>Inner paragraph</p></div><p>Last paragraph</p></div>"
+
+    assert str(container) == expected
+    assert str(standalone) == "<p>Not appended</p>"
+
+
 def test_component_xml_parser():
     """Test that SVG files automatically use XML parser."""
 
@@ -1376,3 +1401,19 @@ async def test_component_mixed_sync_async_hooks():
 
     assert component.steps == ["sync before", "async render", "async after"]
     assert str(component) == "<div>all done</div>"
+
+
+def test_component_tag_return_tag():
+    class Render(Component):
+        src = "<div><h1>Hello</h1></div>"
+
+        def render(self):
+            self.h1_tag.string = f"{self.h1_tag.string}, World!"
+
+        @tag("h1")
+        def h1_tag(self, t: Tag):
+            t["class"].append("header")
+
+            return t
+
+    assert str(Render()) == '<div><h1 class="header">Hello, World!</h1></div>'

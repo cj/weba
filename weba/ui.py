@@ -94,8 +94,6 @@ class Ui:
 
                 converted_kwargs[key] = value
 
-            parent = current_tag_context.get()
-
             # Create a BeautifulSoupTag directly
             base_tag = BeautifulSoupTag(
                 builder=self.soup.builder,
@@ -117,7 +115,7 @@ class Ui:
                     tag_obj.string = str(arg)
 
             # If there's a current parent, append this tag to it
-            if parent:
+            if parent := current_tag_context.get():
                 parent.append(tag_obj)
 
             return tag_obj
