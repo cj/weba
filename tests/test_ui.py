@@ -709,6 +709,16 @@ def test_ui_comment_no_sibling():
     assert results == []
 
 
+def test_ui_setting_true_on_attribute_should_not_have_true():
+    script_tag = ui.raw("<script></script>")
+    script_tag["async"] = True
+    assert str(script_tag) == "<script async></script>"
+
+    # Test False value
+    script_tag["async"] = False
+    assert str(script_tag) == "<script></script>"
+
+
 # def test_ui_comment_with_text_sibling():
 #     # HTML with a comment followed by plain text (NavigableString)
 #     html = """<div>

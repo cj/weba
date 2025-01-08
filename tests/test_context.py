@@ -44,11 +44,11 @@ async def test_context_mixin_isolation():
 
     async def task2():
         async with ValueContext():
-            mixin = ValueMixin()
-            mixin.current_value = "Task 2"
-            await asyncio.sleep(0.05)
-            assert mixin.current_value == "Task 2"
-            return mixin.current_value
+            with ValueMixin() as mixin:
+                mixin.current_value = "Task 2"
+                await asyncio.sleep(0.05)
+                assert mixin.current_value == "Task 2"
+                return mixin.current_value
 
     results = await asyncio.gather(task1(), task2())
     assert results == ["Task 1", "Task 2"]
@@ -62,10 +62,10 @@ async def test_context_mixin_nesting():
         outer_mixin.current_value = "Outer"
 
         async with ValueContext():
-            inner_mixin = ValueMixin()
-            inner_mixin.current_value = "Inner"
-            assert inner_mixin.current_value == "Inner"
-            assert outer_mixin.current_value == "Outer"
+            async with ValueMixin() as inner_mixin:
+                inner_mixin.current_value = "Inner"
+                assert inner_mixin.current_value == "Inner"
+                assert outer_mixin.current_value == "Outer"
 
 
 def test_context_creation():

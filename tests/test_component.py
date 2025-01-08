@@ -1417,3 +1417,30 @@ def test_component_tag_return_tag():
             return t
 
     assert str(Render()) == '<div><h1 class="header">Hello, World!</h1></div>'
+
+
+def test_appending_multiple_tags_from_ui_raw():
+    class Layout(Component):
+        src = "./layout.html"
+
+        @tag("body")
+        def body(self):
+            pass
+
+        def render(self):
+            scripts = ui.raw("""
+                <script src="script1.js"></script>
+                <script src="script2.js"></script>
+            """)
+
+            # sourcery skip: no-conditionals-in-tests
+            # sourcery skip: no-loop-in-tests
+            for script in scripts:
+                if isinstance(script, Tag):
+                    script["foo"] = "bar"
+                    self.body.append(script)
+
+    layout_html = str(Layout())
+
+    assert '<script foo="bar" src="script1.js"></script>' in layout_html
+    assert '<script foo="bar" src="script2.js"></script>' in layout_html
