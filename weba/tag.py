@@ -146,6 +146,19 @@ class Tag(Bs4Tag):
 
         return json.dumps(value) if isinstance(value, dict | list) else value
 
+    def __setitem__(self, key: str, value: Any) -> None:
+        """Set an attribute value, handling boolean attributes correctly."""
+        if isinstance(value, bool):
+            if value:
+                # For True, set attribute with empty string value
+                self.attrs[key] = None
+            else:
+                # For False, remove the attribute
+                self.attrs.pop(key, None)
+        else:
+            # Handle non-boolean values normally
+            self.attrs[key] = value
+
     # def comment(self, selector: str) -> list[Tag | NavigableString | None]:
     def comment(self, selector: str) -> list[Tag | None]:
         """Find all tags or text nodes that follow comments matching the given selector.
