@@ -8,6 +8,7 @@ from bs4 import Comment, NavigableString
 from bs4 import Tag as Bs4Tag
 
 if TYPE_CHECKING:  # pragma: no cover
+    from collections.abc import Iterator
     from contextvars import Token
 
     from bs4 import BeautifulSoup, PageElement
@@ -217,6 +218,10 @@ class Tag(Bs4Tag):
                 next_node = next_node.next_sibling
 
         return None
+
+    def __iter__(self) -> Iterator[PageElement]:
+        """Iterate over children, creating a static list to prevent modification during iteration."""
+        return iter(list(self.contents))
 
     def __copy__(self) -> Tag:
         return Tag.from_existing_bs4tag(self)
