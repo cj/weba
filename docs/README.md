@@ -18,5 +18,15 @@ type safety and follows clean code practices, making it particularly suitable fo
 building modern web applications in Python with a focus on maintainability and developer
 experience.
 
+## Configuration
+
+The library supports the following environment variables for configuration:
+
+- `WEBA_LRU_CACHE_SIZE`: Controls the maximum size of the LRU cache used for storing parsed HTML templates and file contents. Defaults to 128. Example:
+
+```bash
+export WEBA_LRU_CACHE_SIZE=256  # Increase cache size to 256 entries
+```
+
 - **Github repository**: <https://github.com/cj/weba/>
 - **Documentation** <https://weba.cj.io/>
