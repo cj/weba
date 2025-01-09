@@ -5,6 +5,7 @@ import os
 from abc import ABC, ABCMeta
 from contextlib import contextmanager
 from copy import copy
+from functools import lru_cache
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, ClassVar, TypeVar
 
@@ -30,6 +31,9 @@ def no_tag_context():
         yield
     finally:
         current_tag_context.set(parent)
+
+
+WEBA_LRU_CACHE_SIZE = int(os.getenv("WEBA_LRU_CACHE_SIZE", "128"))
 
 
 class ComponentSrcRequiredError(AttributeError):
@@ -185,19 +189,33 @@ class Component(ABC, Tag, metaclass=ComponentMeta):
 
         return instance
 
+    @staticmethod
+    @lru_cache(maxsize=WEBA_LRU_CACHE_SIZE)
+    def _read_source_file(path: str, _parser: str | None) -> tuple[str, str | None]:
+        """Cache file reading and initial parsing."""
+        content = Path(path).read_text()
+        doctype = content.split("\n", 1)[0]
+        doctype = doctype if "!doctype" in doctype.lower() else None
+        return content, doctype
+
+    @staticmethod
+    @lru_cache(maxsize=WEBA_LRU_CACHE_SIZE)
+    def _get_static_source_content(src: str) -> tuple[str, str | None]:
+        """Cache parsing of static (non-file) source content."""
+        doctype = src.split("\n", 1)[0]
+        doctype = doctype if "!doctype" in doctype.lower() else None
+        return src, doctype
+
     @classmethod
     def _get_source_content(cls) -> tuple[str | Tag | None, str | None]:
-        """Get the source content and doctype."""
         if not hasattr(cls, "src") and not hasattr(cls, "render"):
             raise ComponentSrcRequiredError(cls)
 
         src = None
-
         if hasattr(cls, "src"):
             src = copy(cls.src)
-
             if isinstance(src, Tag):
-                return src, None
+                return src, None  # Tags are already parsed, no need to cache
             elif callable(src):
                 with no_tag_context():
                     src = copy(src())
@@ -217,18 +235,15 @@ class Component(ABC, Tag, metaclass=ComponentMeta):
             cls_path = inspect.getfile(cls)
             cls_dir = os.path.dirname(cls_path)
             base_path = cls_dir if src.startswith(".") else os.getcwd()
-            path = Path(base_path, src)
+            path = str(Path(base_path, src))
 
-            # Set XML parser for SVG and XML files if not explicitly set
-            if not cls.src_parser and (src.endswith((".svg", ".xml"))):
+            if not cls.src_parser and src.endswith((".svg", ".xml")):
                 cls.src_parser = "xml"
 
-            src = path.read_text()
+            return cls._read_source_file(path, cls.src_parser)
 
-        doctype = src.split("\n", 1)[0]
-        doctype = doctype if "!doctype" in doctype.lower() else None
-
-        return src, doctype
+        # Cache static source content
+        return cls._get_static_source_content(src)
 
     def _init_from_tag(self, root_tag: Tag) -> None:
         """Initialize component from a root tag."""
