@@ -22,10 +22,15 @@ experience.
 
 The library supports the following environment variables for configuration:
 
-- `WEBA_LRU_CACHE_SIZE`: Controls the maximum size of the LRU cache used for storing parsed HTML templates and file contents. Defaults to 128. Example:
+- `WEBA_LRU_CACHE_SIZE`: Controls caching of parsed HTML templates and file contents:
+  - When set: Enables LRU caching with the specified maximum size
+  - When not set: Disables caching, templates and files are re-read on every access
+
+Example:
 
 ```bash
-export WEBA_LRU_CACHE_SIZE=256  # Increase cache size to 256 entries
+export WEBA_LRU_CACHE_SIZE=256  # Enable caching with max 256 entries
+unset WEBA_LRU_CACHE_SIZE      # Disable caching completely
 ```
 
 - **Github repository**: <https://github.com/cj/weba/>
