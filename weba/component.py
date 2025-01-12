@@ -11,6 +11,14 @@ from typing import TYPE_CHECKING, Any, ClassVar, TypeVar
 
 from bs4 import ResultSet
 
+from .errors import (
+    ComponentAfterRenderError,
+    ComponentAsyncError,
+    ComponentSrcRequiredError,
+    ComponentSrcRootTagNotFoundError,
+    ComponentSrcTypeError,
+    ComponentTypeError,
+)
 from .tag import Tag, current_tag_context
 from .tag_decorator import TagDecorator
 from .ui import ui
@@ -34,62 +42,6 @@ def no_tag_context():
 
 
 WEBA_LRU_CACHE_SIZE = os.getenv("WEBA_LRU_CACHE_SIZE")
-
-
-class ComponentSrcRequiredError(AttributeError):
-    """Raised when a component is missing required attributes."""
-
-    def __init__(self, component: type[Component]) -> None:
-        name = component.__name__
-        super().__init__(
-            f"Component ({name}): Must define 'src' class attribute or have a render method which returns a Tag"
-        )
-
-
-class ComponentSrcTypeError(AttributeError):
-    """Raised when a component src is not a str, method or Tag."""
-
-    def __init__(self, component: type[Component]) -> None:
-        name = component.__name__
-        super().__init__(f"Component ({name}): 'src' must be either a str, callable[..., str | Tag] or Tag")
-
-
-class ComponentSrcRootTagNotFoundError(AttributeError):
-    """Raised when src_root_tag selector doesn't match any elements."""
-
-    def __init__(self, component: type[Component], selector: str) -> None:
-        name = component.__name__
-        super().__init__(f"Component ({name}): src_root_tag selector '{selector}' not found in source HTML")
-
-
-class ComponentTypeError(TypeError):
-    """Raised when a component receives an invalid type."""
-
-    def __init__(self, received_type: Any, component: type[Component]) -> None:
-        name = component.__name__
-        super().__init__(f"Component ({name}): Expected Tag, got {type(received_type)}")
-
-
-class ComponentAfterRenderError(RuntimeError):
-    """Raised when after_render is called in a synchronous context."""
-
-    def __init__(self, component: type[Component]) -> None:
-        name = component.__name__
-        super().__init__(
-            f"Component ({name}): after_render cannot be called in a synchronous context manager. "
-            "Either make the context manager async or remove after_render."
-        )
-
-
-class ComponentAsyncError(RuntimeError):
-    """Raised when async component is called synchronously."""
-
-    def __init__(self, component: type[Component]) -> None:
-        name = component.__name__
-        super().__init__(
-            f"Component ({name}): has async hooks but was called synchronously. "
-            "Use 'await component' or 'async with component' instead."
-        )
 
 
 class ComponentMeta(ABCMeta):

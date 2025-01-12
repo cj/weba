@@ -15,7 +15,7 @@ from weba import (
     ComponentSrcTypeError,
     ComponentTypeError,
     Tag,
-    TagNotFoundError,
+    ComponentTagNotFoundError,
     no_tag_context,
     tag,
     ui,
@@ -1367,7 +1367,7 @@ def test_tag_not_found_error():
         def missing_tag(self):
             pass
 
-    with pytest.raises(TagNotFoundError) as exc_info:
+    with pytest.raises(ComponentTagNotFoundError) as exc_info:
         MissingTagComponent()
 
     assert "MissingTagComponent.missing_tag did not find selector: .non-existent" in str(exc_info.value)

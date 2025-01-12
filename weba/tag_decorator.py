@@ -2,6 +2,8 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Generic, TypeVar
 
+from .errors import ComponentTagNotFoundError
+
 if TYPE_CHECKING:  # pragma: no cover
     from collections.abc import Callable
 
@@ -9,13 +11,6 @@ if TYPE_CHECKING:  # pragma: no cover
     from .tag import Tag
 
 T = TypeVar("T", bound="Component")
-
-
-class TagNotFoundError(RuntimeError):
-    """Raised when a @tag can't find the selector."""
-
-    def __init__(self, selector: str, fn_name: str, component: type[Component]) -> None:
-        super().__init__(f"{component.__name__}.{fn_name} did not find selector: {selector}.")
 
 
 class TagDecorator(Generic[T]):
@@ -56,7 +51,7 @@ class TagDecorator(Generic[T]):
             tag = instance.select_one(self.selector)  # type: ignore[attr-defined]
 
         if not tag:
-            raise TagNotFoundError(self.selector, self.__name__, owner)
+            raise ComponentTagNotFoundError(self.selector, self.__name__, owner)
 
         if self.clear:
             tag.clear()

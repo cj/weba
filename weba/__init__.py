@@ -2,18 +2,20 @@ from __future__ import annotations
 
 from .component import (
     Component,
+    no_tag_context,
+)
+from .component_tag import component_tag
+from .context import Context, ContextMixin
+from .errors import (
     ComponentAfterRenderError,
     ComponentAsyncError,
     ComponentSrcRequiredError,
     ComponentSrcRootTagNotFoundError,
     ComponentSrcTypeError,
     ComponentTypeError,
-    no_tag_context,
+    ComponentTagNotFoundError,
 )
-from .component_tag import component_tag
-from .context import Context, ContextMixin
 from .tag import Tag, current_tag_context
-from .tag_decorator import TagNotFoundError
 from .ui import ui
 
 tag = component_tag
@@ -29,7 +31,7 @@ __all__ = [
     "Context",
     "ContextMixin",
     "Tag",
-    "TagNotFoundError",
+    "ComponentTagNotFoundError",
     "component_tag",
     "current_tag_context",
     "no_tag_context",
