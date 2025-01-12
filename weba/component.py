@@ -33,7 +33,7 @@ def no_tag_context():
         current_tag_context.set(parent)
 
 
-WEBA_LRU_CACHE_SIZE = int(os.getenv("WEBA_LRU_CACHE_SIZE", "128"))
+WEBA_LRU_CACHE_SIZE = os.getenv("WEBA_LRU_CACHE_SIZE")
 
 
 class ComponentSrcRequiredError(AttributeError):
@@ -190,18 +190,37 @@ class Component(ABC, Tag, metaclass=ComponentMeta):
         return instance
 
     @staticmethod
-    @lru_cache(maxsize=WEBA_LRU_CACHE_SIZE)
     def _read_source_file(path: str, _parser: str | None) -> tuple[str, str | None]:
-        """Cache file reading and initial parsing."""
+        """Read file content and parse doctype."""
+        if WEBA_LRU_CACHE_SIZE:
+
+            @lru_cache(maxsize=int(WEBA_LRU_CACHE_SIZE))
+            def cached_read(p: str) -> tuple[str, str | None]:
+                content = Path(p).read_text()
+                doctype = content.split("\n", 1)[0]
+                doctype = doctype if "!doctype" in doctype.lower() else None
+                return content, doctype
+
+            return cached_read(path)
+
         content = Path(path).read_text()
         doctype = content.split("\n", 1)[0]
         doctype = doctype if "!doctype" in doctype.lower() else None
         return content, doctype
 
     @staticmethod
-    @lru_cache(maxsize=WEBA_LRU_CACHE_SIZE)
     def _get_static_source_content(src: str) -> tuple[str, str | None]:
-        """Cache parsing of static (non-file) source content."""
+        """Parse static source content and doctype."""
+        if WEBA_LRU_CACHE_SIZE:
+
+            @lru_cache(maxsize=int(WEBA_LRU_CACHE_SIZE))
+            def cached_parse(s: str) -> tuple[str, str | None]:
+                doctype = s.split("\n", 1)[0]
+                doctype = doctype if "!doctype" in doctype.lower() else None
+                return s, doctype
+
+            return cached_parse(src)
+
         doctype = src.split("\n", 1)[0]
         doctype = doctype if "!doctype" in doctype.lower() else None
         return src, doctype
