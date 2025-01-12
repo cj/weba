@@ -18,8 +18,8 @@ Output:
 
 ```html
 <div>
-    <h1>Hello, World!</h1>
-    <p>Welcome to weba!</p>
+  <h1>Hello, World!</h1>
+  <p>Welcome to weba!</p>
 </div>
 ```
 
@@ -39,8 +39,8 @@ Output:
 
 ```html
 <div class="container mx-auto p-4">
-    <h1 class="text-2xl font-bold">Styled Heading</h1>
-    <p class="mt-2" data-testid="content">Some content</p>
+  <h1 class="text-2xl font-bold">Styled Heading</h1>
+  <p class="mt-2" data-testid="content">Some content</p>
 </div>
 ```
 
@@ -67,19 +67,19 @@ Output:
 
 ```html
 <div class="card">
-    <div class="card-header">
-        <h2>Card Title</h2>
-    </div>
-    <div class="card-body">
-        <p>Card content goes here</p>
-        <ul class="list">
-            <li>Item 1</li>
-            <li>Item 2</li>
-        </ul>
-    </div>
-    <div class="card-footer">
-        <button class="btn">Click me!</button>
-    </div>
+  <div class="card-header">
+    <h2>Card Title</h2>
+  </div>
+  <div class="card-body">
+    <p>Card content goes here</p>
+    <ul class="list">
+      <li>Item 1</li>
+      <li>Item 2</li>
+    </ul>
+  </div>
+  <div class="card-footer">
+    <button class="btn">Click me!</button>
+  </div>
 </div>
 ```
 
@@ -103,10 +103,10 @@ Output:
 
 ```html
 <div>
-    <p>42</p>
-    <p>3.14159</p>
-    <p>True</p>
-    <p>2024-02-20 10:30:45</p>
+  <p>42</p>
+  <p>3.14159</p>
+  <p>True</p>
+  <p>2024-02-20 10:30:45</p>
 </div>
 ```
 
@@ -133,10 +133,10 @@ Output:
 
 ```html
 <form>
-    <input type="text" name="search" hx-post="/search" hx-trigger="keyup changed delay:500ms" hx-target="#results" />
-    <div id="results">
-        <p>Results will appear here...</p>
-    </div>
+  <input type="text" name="search" hx-post="/search" hx-trigger="keyup changed delay:500ms" hx-target="#results" />
+  <div id="results">
+    <p>Results will appear here...</p>
+  </div>
 </form>
 ```
 
@@ -191,8 +191,8 @@ Output:
 
 ```html
 <div>
-    <h2>New</h2>
-    <span>Other</span>
+  <h2>New</h2>
+  <span>Other</span>
 </div>
 ```
 
@@ -211,8 +211,8 @@ Output:
 
 ```html
 <div>
-    <h2>First</h2>
-    <h3>Second</h3>
+  <h2>First</h2>
+  <h3>Second</h3>
 </div>
 ```
 

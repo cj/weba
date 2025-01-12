@@ -27,7 +27,7 @@ Output:
 
 ```html
 <div>
-    <button>Click me</button>
+  <button>Click me</button>
 </div>
 ```
 
@@ -102,9 +102,9 @@ Output:
 
 ```html
 <div>
-    <div>
-        <button class="btn">Submit</button>
-    </div>
+  <div>
+    <button class="btn">Submit</button>
+  </div>
 </div>
 ```
 
@@ -134,10 +134,10 @@ Output:
 
 ```html
 <div>
-    <div>
-        <!-- #button -->
-        <button>Delete</button>
-    </div>
+  <div>
+    <!-- #button -->
+    <button>Delete</button>
+  </div>
 </div>
 ```
 
@@ -171,8 +171,8 @@ Output:
 
 ```html
 <div>
-    <button>Async Click Me</button>
-    <button>Another Button</button>
+  <button>Async Click Me</button>
+  <button>Another Button</button>
 </div>
 ```
 
@@ -208,7 +208,7 @@ Output:
 ```html
 <div></div>
 <div>
-    <button class="btn">Extracted</button>
+  <button class="btn">Extracted</button>
 </div>
 ```
 
@@ -252,9 +252,9 @@ Output:
 
 ```html
 <ul>
-    <li>one</li>
-    <li>two</li>
-    <li>three</li>
+  <li>one</li>
+  <li>two</li>
+  <li>three</li>
 </ul>
 ```
 
@@ -296,10 +296,10 @@ Output:
 
 ```html
 <div>
-    <h2>Alice Smith</h2>
-    <div class="content">
-        <p>Python Developer</p>
-    </div>
+  <h2>Alice Smith</h2>
+  <div class="content">
+    <p>Python Developer</p>
+  </div>
 </div>
 ```
 
@@ -330,9 +330,9 @@ Output:
 
 ```html
 <div>
-    <button>Save</button>
-    <button>Edit</button>
-    <button>Delete</button>
+  <button>Save</button>
+  <button>Edit</button>
+  <button>Delete</button>
 </div>
 ```
 
@@ -368,12 +368,12 @@ Output:
 
 ```html
 <div>
-    <div>
-        <ul>
-            <li>First item</li>
-            <li>Standalone item</li>
-        </ul>
-    </div>
+  <div>
+    <ul>
+      <li>First item</li>
+      <li>Standalone item</li>
+    </ul>
+  </div>
 </div>
 ```
 
@@ -411,8 +411,8 @@ Output:
 
 ```html
 <div>
-    <h2>Alice Smith</h2>
-    <p>Profile loaded ✓</p>
+  <h2>Alice Smith</h2>
+  <p>Profile loaded ✓</p>
 </div>
 ```
 
@@ -449,9 +449,9 @@ Output:
 
 ```html
 <div>
-    <h2>Bob Jones</h2>
-    <p>Async loaded</p>
-    <span>Extra content</span>
+  <h2>Bob Jones</h2>
+  <p>Async loaded</p>
+  <span>Extra content</span>
 </div>
 ```
 
@@ -466,8 +466,8 @@ Output:
 
 ```html
 <div>
-    <h2>Bob Jones</h2>
-    <p>Async loaded</p>
+  <h2>Bob Jones</h2>
+  <p>Async loaded</p>
 </div>
 ```
 
@@ -498,8 +498,8 @@ Output:
 
 ```html
 <section class="card">
-    <h2>Card Title</h2>
-    <p>Card content goes here</p>
+  <h2>Card Title</h2>
+  <p>Card content goes here</p>
 </section>
 ```
 
