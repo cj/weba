@@ -19,6 +19,7 @@ class Ui:
     """A factory class for creating UI elements using BeautifulSoup."""
 
     _html_parser: ClassVar[str | None] = None
+    _xml_parser: ClassVar[str | None] = None
 
     @classmethod
     def get_html_parser(cls) -> str | None:
@@ -27,6 +28,14 @@ class Ui:
             cls._html_parser = os.getenv("WEBA_HTML_PARSER", "html.parser")
 
         return cls._html_parser
+
+    @classmethod
+    def get_xml_parser(cls) -> str | None:
+        """Get the XML parser from environment variable."""
+        if cls._xml_parser is None:
+            cls._xml_parser = os.getenv("WEBA_XML_PARSER", "xml")
+
+        return cls._xml_parser
 
     def text(self, html: str | int | float | Sequence[Any] | None) -> str:
         """Create a raw text node from a string.
@@ -65,7 +74,9 @@ class Ui:
 
             html = str(detected)  # Convert bytes to a string
 
-        parser = parser or ("xml" if html.startswith("<?xml") else self.__class__.get_html_parser())
+        parser = parser or (
+            self.__class__.get_xml_parser() if html.startswith("<?xml") else self.__class__.get_html_parser()
+        )
 
         parsed = BeautifulSoup(html, parser)
 
