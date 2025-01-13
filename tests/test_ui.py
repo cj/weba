@@ -834,3 +834,32 @@ def test_ui_underscore_as_last_letter_gets_removed():
 
     assert "async-" not in html
     assert "async" in html
+
+
+def test_ui_raw_xml_with_lxml_xml():
+    """Test parsing XML content with lxml-xml parser."""
+    xml_content = """<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="100" height="100">
+    <circle cx="50" cy="50" r="40" stroke="black" stroke-width="3" fill="red"/>
+</svg>"""
+
+    svg = ui.raw(xml_content, parser="lxml-xml")
+    assert svg.name == "svg"
+    assert svg["width"] == "100"
+    assert svg["height"] == "100"
+    assert len(svg.find_all("circle")) == 1
+
+
+def test_ui_raw_with_bytes():
+    """Test that raw() can handle bytes input."""
+    html_bytes = b'<div class="test">Hello World</div>'
+    tag = ui.raw(html_bytes)
+    assert tag.name == "div"
+    assert tag["class"] == ["test"]
+    assert str(tag) == '<div class="test">Hello World</div>'
+
+    # Test UTF-8 encoded content
+    utf8_bytes = "<p>Hello ☃</p>".encode()  # Snowman emoji
+    tag = ui.raw(utf8_bytes)
+    assert tag.name == "p"
+    assert "☃" in str(tag)

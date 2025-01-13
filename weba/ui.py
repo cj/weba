@@ -7,8 +7,6 @@ from bs4 import BeautifulSoup, NavigableString
 from bs4 import Tag as BeautifulSoupTag
 from charset_normalizer import from_bytes
 
-from weba.errors import UiEncodingError
-
 from .tag import Tag, current_tag_context
 
 if TYPE_CHECKING:  # pragma: no cover
@@ -66,13 +64,7 @@ class Ui:
             Tag: A new Tag object containing the parsed HTML
         """
         if isinstance(html, bytes):
-            # Use charset-normalizer to detect the encoding and decode the bytes
-            detected = from_bytes(html).best()
-
-            if detected is None:
-                raise UiEncodingError
-
-            html = str(detected)  # Convert bytes to a string
+            html = str(from_bytes(html).best())
 
         parser = parser or (
             self.__class__.get_xml_parser() if html.startswith("<?xml") else self.__class__.get_html_parser()
@@ -83,12 +75,9 @@ class Ui:
         # NOTE: This is to html lxml always wrapping in html > body tags
         if parser == "lxml" and parsed.html and all(tag not in html.lower() for tag in ("<body", "<head", "<html")):
             if body := parsed.html.body:
-                parsed = body.extract()  # Extract the body content
+                parsed = body
             elif head := parsed.html.head:
-                parsed = head.extract()  # Extract the head content
-            else:
-                # Fall back to unwrapping the <html> itself
-                parsed = parsed.html.extract()
+                parsed = head
 
         # Count root elements
         root_elements = [child for child in parsed.children if isinstance(child, BeautifulSoupTag)]
