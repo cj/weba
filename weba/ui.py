@@ -54,6 +54,23 @@ class Ui:
         # Return the raw string only when no parent (for direct usage)
         return text
 
+    def _handle_lxml_parser(self, html: str, parsed: BeautifulSoupTag) -> Tag | BeautifulSoupTag:
+        stripped_html = html.strip().lower()
+
+        if parsed and parsed.html and all(tag in stripped_html for tag in ("<body", "<head", "<html")):
+            parsed = parsed.html
+        elif parsed.html and all(tag not in stripped_html for tag in ("<body", "<head", "<html")):
+            if body := parsed.html.body:
+                parsed = body
+            elif head := parsed.html.head:
+                parsed = head
+        elif (body := parsed.html) and (stripped_html.startswith("<body") or (body := body.body)):
+            parsed = body
+        elif (head := parsed.html) and (stripped_html.startswith("<head") or (head := head.head)):
+            parsed = head
+
+        return parsed
+
     def raw(self, html: str | bytes, parser: str | None = None) -> Tag:
         """Create a Tag from a raw HTML string.
 
@@ -73,11 +90,8 @@ class Ui:
         parsed = BeautifulSoup(html, parser)
 
         # NOTE: This is to html lxml always wrapping in html > body tags
-        if parser == "lxml" and parsed.html and all(tag not in html.lower() for tag in ("<body", "<head", "<html")):
-            if body := parsed.html.body:
-                parsed = body
-            elif head := parsed.html.head:
-                parsed = head
+        if parser == "lxml" and parsed.html:
+            parsed = self._handle_lxml_parser(html, parsed)
 
         # Count root elements
         root_elements = [child for child in parsed.children if isinstance(child, BeautifulSoupTag)]

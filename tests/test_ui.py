@@ -836,6 +836,37 @@ def test_ui_underscore_as_last_letter_gets_removed():
     assert "async" in html
 
 
+def test_ui_raw_with_head_only():
+    """Test that raw() correctly handles HTML with only head content when using lxml parser."""
+    head_html = """
+        <head>
+            <title>Test Page</title>
+            <meta charset="utf-8">
+        </head>
+    """
+
+    tag = ui.raw(head_html, parser="lxml")
+    assert tag.name == "head"
+    assert len(tag.find_all("title")) == 1
+    assert len(tag.find_all("meta")) == 1
+
+
+def test_ui_raw_with_body_only():
+    """Test that raw() correctly handles HTML with only body content when using lxml parser."""
+    body_html = """
+        <body>
+            <title>Test Page</title>
+            <meta charset="utf-8">
+        </body>
+    """
+
+    tag = ui.raw(body_html, parser="lxml")
+    print(tag)
+    assert tag.name == "body"
+    assert len(tag.find_all("title")) == 1
+    assert len(tag.find_all("meta")) == 1
+
+
 def test_ui_raw_xml_with_lxml_xml():
     """Test parsing XML content with lxml-xml parser."""
     xml_content = """<?xml version="1.0" encoding="UTF-8"?>
