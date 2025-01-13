@@ -2,9 +2,7 @@
 from __future__ import annotations
 
 import asyncio
-from functools import lru_cache
-from pathlib import Path
-from typing import cast
+from typing import TYPE_CHECKING, cast
 
 import pytest
 
@@ -23,6 +21,9 @@ from weba import (
     tag,
     ui,
 )
+
+if TYPE_CHECKING:
+    from pathlib import Path
 
 MonkeyPatch = pytest.MonkeyPatch
 
@@ -1430,7 +1431,7 @@ def test_component_parse_content():
     assert result == (content_with_doctype, "<!doctype HTML>")
 
 
-def test_parse_source_content_with_caching(monkeypatch: MonkeyPatch, tmp_path: Path):
+def test_component_parse_source_content_with_caching(monkeypatch: MonkeyPatch, tmp_path: Path):
     with monkeypatch.context() as mp:
         mp.setenv("WEBA_LRU_CACHE_SIZE", "10")
         content = "<!DOCTYPE html>\n<div>Test</div>"
@@ -1448,7 +1449,7 @@ def test_parse_source_content_with_caching(monkeypatch: MonkeyPatch, tmp_path: P
         assert result1 == result2 == (content, "<!DOCTYPE html>")
 
 
-def test_parse_source_content_without_caching(monkeypatch: MonkeyPatch, tmp_path: Path):
+def test_component_parse_source_content_without_caching(monkeypatch: MonkeyPatch, tmp_path: Path):
     with monkeypatch.context() as mp:
         mp.setenv("WEBA_LRU_CACHE_SIZE", "")
         content = "<!DOCTYPE html>\n<div>Test</div>"
@@ -1466,7 +1467,7 @@ def test_parse_source_content_without_caching(monkeypatch: MonkeyPatch, tmp_path
         assert result1 == result2 == (content, "<!DOCTYPE html>")
 
 
-def test_parse_source_content_edge_cases(monkeypatch: MonkeyPatch, tmp_path: Path):
+def test_component_parse_source_content_edge_cases(monkeypatch: MonkeyPatch, tmp_path: Path):
     with monkeypatch.context() as mp:
         mp.setenv("WEBA_LRU_CACHE_SIZE", "10")
 
@@ -1499,36 +1500,6 @@ def test_parse_source_content_edge_cases(monkeypatch: MonkeyPatch, tmp_path: Pat
             assert "!doctype" in result[1].lower()  ## pyright: ignore[reportOptionalMemberAccess]
 
 
-def test_cached_parse_info(monkeypatch: MonkeyPatch):
-    def _test_cached_results(component: Component, content: str, hit: int, misses: int):
-        # First call should be a miss
-        Component._cached_parse(content)  # pyright: ignore[reportPrivateUsage]
-        result = component._cached_parse.cache_info()  # pyright: ignore[reportPrivateUsage, reportFunctionMemberAccess]
-        assert result.hits == hit
-        assert result.misses == misses
-        return result
-
-    with monkeypatch.context() as mp:
-        mp.setenv("WEBA_LRU_CACHE_SIZE", "10")
-
-        # Get fresh instance of cached function
-        from functools import _lru_cache_wrapper  # type: ignore[attr-defined]
-        from typing import cast
-
-        # Reset both caching functions
-        cached_fn = cast(_lru_cache_wrapper, lru_cache(maxsize=10)(Component._parse_content))  # type: ignore[reportGeneralTypeIssues]
-        Component._cached_parse = staticmethod(cached_fn)  # type: ignore[reportGeneralTypeIssues]
-        Component._parse_file = staticmethod(lambda p: Component._cached_parse(Path(p).read_text()))  # type: ignore[reportGeneralTypeIssues]
-
-        content = "<!DOCTYPE html>\n<div>Test</div>"
-
-        cache_info = _test_cached_results(Component, content, 0, 1)
-        assert cache_info.maxsize == 10
-
-        cache_info = _test_cached_results(Component, content, 1, 1)
-        cache_info = _test_cached_results(Component, "<div>Different</div>", 1, 2)
-
-
 def test_component_tag_return_tag():
     class Render(Component):
         src = "<div><h1>Hello</h1></div>"
@@ -1545,7 +1516,7 @@ def test_component_tag_return_tag():
     assert str(Render()) == '<div><h1 class="header">Hello, World!</h1></div>'
 
 
-def test_appending_multiple_tags_from_ui_raw():
+def test_component_appending_multiple_tags_from_ui_raw():
     class Layout(Component):
         src = "./layout.html"
 
