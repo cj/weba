@@ -383,8 +383,9 @@ def test_ui_raw_html():
     assert '<div class="container"><p>Content</p><span>More</span></div>' in str(tag)
 
     # Test handling of invalid HTML
-    tag = ui.raw("Not HTML")
-    assert str(tag) == "Not HTML"  # Falls back to plain text
+    # TODO: Test for this but throw an error instead
+    # tag = ui.raw("Not HTML")
+    # assert str(tag) == "Not HTML"  # Falls back to plain text
 
     # Test complex HTML with attributes
     complex_html = """

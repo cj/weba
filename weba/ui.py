@@ -6,6 +6,8 @@ from bs4 import BeautifulSoup, NavigableString
 from bs4 import Tag as BeautifulSoupTag
 from charset_normalizer import from_bytes
 
+from weba.errors import UiEncodingError
+
 from .tag import Tag, current_tag_context
 
 if TYPE_CHECKING:  # pragma: no cover
@@ -14,9 +16,6 @@ if TYPE_CHECKING:  # pragma: no cover
 
 class Ui:
     """A factory class for creating UI elements using BeautifulSoup."""
-
-    def __init__(self):
-        self.soup = BeautifulSoup("", "html.parser")
 
     def text(self, html: str | int | float | Sequence[Any] | None) -> str:
         """Create a raw text node from a string.
@@ -51,14 +50,11 @@ class Ui:
             detected = from_bytes(html).best()
 
             if detected is None:
-                raise ValueError("Failed to detect encoding for the provided bytes.")
+                raise UiEncodingError
 
             html = str(detected)  # Convert bytes to a string
 
-        if not html.strip().startswith("<"):
-            return self.text(html)
-
-        parser = parser or ("xml" if html.startswith("<?xml") else "lxml")
+        parser = parser or ("xml" if html.startswith("<?xml") else "html.parser")
 
         parsed = BeautifulSoup(html, parser)
 
@@ -115,7 +111,6 @@ class Ui:
 
             # Create a BeautifulSoupTag directly
             base_tag = BeautifulSoupTag(
-                builder=self.soup.builder,
                 name=tag_name,
                 attrs=converted_kwargs,
             )

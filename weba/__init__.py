@@ -15,6 +15,7 @@ from .errors import (
     ComponentSrcTypeError,
     ComponentTagNotFoundError,
     ComponentTypeError,
+    UiEncodingError,
 )
 from .tag import Tag, current_tag_context
 from .ui import ui
@@ -34,6 +35,7 @@ __all__ = [
     "Context",
     "ContextMixin",
     "Tag",
+    "UiEncodingError",
     "component_tag",
     "current_tag_context",
     "no_tag_context",

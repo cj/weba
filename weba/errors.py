@@ -77,3 +77,10 @@ class ComponentTagNotFoundError(RuntimeError):
 
     def __init__(self, selector: str, fn_name: str, component: type[Component]) -> None:
         super().__init__(f"{component.__name__}.{fn_name} did not find selector: {selector}.")
+
+
+class UiEncodingError(ValueError):
+    """Raised when UI fails to detect encoding for provided bytes."""
+
+    def __init__(self) -> None:
+        super().__init__("Failed to detect encoding for the provided bytes.")
