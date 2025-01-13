@@ -4,6 +4,7 @@ from typing import TYPE_CHECKING, Any
 
 from bs4 import BeautifulSoup, NavigableString
 from bs4 import Tag as BeautifulSoupTag
+from charset_normalizer import from_bytes
 
 from .tag import Tag, current_tag_context
 
@@ -36,7 +37,7 @@ class Ui:
         # Return the raw string only when no parent (for direct usage)
         return text
 
-    def raw(self, html: str, parser: str | None = None) -> Tag:
+    def raw(self, html: str | bytes, parser: str | None = None) -> Tag:
         """Create a Tag from a raw HTML string.
 
         Args:
@@ -45,9 +46,27 @@ class Ui:
         Returns:
             Tag: A new Tag object containing the parsed HTML
         """
-        parser = parser or ("xml" if html.startswith("<?xml") else "html.parser")
+        if isinstance(html, bytes):
+            # Use charset-normalizer to detect the encoding and decode the bytes
+            detected = from_bytes(html).best()
+
+            if detected is None:
+                raise ValueError("Failed to detect encoding for the provided bytes.")
+
+            html = str(detected)  # Convert bytes to a string
+
+        if not html.strip().startswith("<"):
+            return self.text(html)
+
+        parser = parser or ("xml" if html.startswith("<?xml") else "lxml")
 
         parsed = BeautifulSoup(html, parser)
+
+        if parser == "lxml" and parsed.html:
+            if body := parsed.html.body:
+                parsed = body
+            elif head := parsed.html.head:
+                parsed = head
 
         # Count root elements
         root_elements = [child for child in parsed.children if isinstance(child, BeautifulSoupTag)]

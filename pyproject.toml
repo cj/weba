@@ -16,7 +16,11 @@ classifiers = [
     "Programming Language :: Python :: 3.13",
     "Topic :: Software Development :: Libraries :: Python Modules",
 ]
-dependencies = ["beautifulsoup4>=4", "types-beautifulsoup4>=4"]
+dependencies = [
+    "beautifulsoup4>=4",
+    "charset-normalizer>=3.4.0",
+    "types-beautifulsoup4>=4",
+]
 
 [project.urls]
 Homepage = "https://cj.github.io/weba/"
