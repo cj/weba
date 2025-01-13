@@ -1,6 +1,7 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any
+import os
+from typing import TYPE_CHECKING, Any, ClassVar
 
 from bs4 import BeautifulSoup, NavigableString
 from bs4 import Tag as BeautifulSoupTag
@@ -16,6 +17,16 @@ if TYPE_CHECKING:  # pragma: no cover
 
 class Ui:
     """A factory class for creating UI elements using BeautifulSoup."""
+
+    _html_parser: ClassVar[str | None] = None
+
+    @classmethod
+    def get_html_parser(cls) -> str | None:
+        """Get the LRU cache size from environment variable."""
+        if cls._html_parser is None:
+            cls._html_parser = os.getenv("WEBA_HTML_PARSER", "html.parser")
+
+        return cls._html_parser
 
     def text(self, html: str | int | float | Sequence[Any] | None) -> str:
         """Create a raw text node from a string.
@@ -54,7 +65,7 @@ class Ui:
 
             html = str(detected)  # Convert bytes to a string
 
-        parser = parser or ("xml" if html.startswith("<?xml") else "html.parser")
+        parser = parser or ("xml" if html.startswith("<?xml") else self.__class__.get_html_parser())
 
         parsed = BeautifulSoup(html, parser)
 
