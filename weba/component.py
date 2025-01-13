@@ -128,7 +128,7 @@ class Component(ABC, Tag, metaclass=ComponentMeta):
             instance._init_from_tag(src)
         elif src:
             with no_tag_context():
-                root_tag = ui.raw(src, parser=cls.src_parser or "html.parser")
+                root_tag = ui.raw(src, parser=cls.src_parser)
 
             instance._init_from_tag(root_tag)
         else:

@@ -80,11 +80,15 @@ class Ui:
 
         parsed = BeautifulSoup(html, parser)
 
-        if parser == "lxml" and parsed.html:
+        # NOTE: This is to html lxml always wrapping in html > body tags
+        if parser == "lxml" and parsed.html and all(tag not in html.lower() for tag in ("<body", "<head", "<html")):
             if body := parsed.html.body:
-                parsed = body
+                parsed = body.extract()  # Extract the body content
             elif head := parsed.html.head:
-                parsed = head
+                parsed = head.extract()  # Extract the head content
+            else:
+                # Fall back to unwrapping the <html> itself
+                parsed = parsed.html.extract()
 
         # Count root elements
         root_elements = [child for child in parsed.children if isinstance(child, BeautifulSoupTag)]
