@@ -2,6 +2,8 @@
 from __future__ import annotations
 
 import asyncio
+from functools import lru_cache
+from pathlib import Path
 from typing import cast
 
 import pytest
@@ -10,16 +12,19 @@ from weba import (
     Component,
     ComponentAfterRenderError,
     ComponentAsyncError,
+    ComponentSrcFileNotFoundError,
     ComponentSrcRequiredError,
     ComponentSrcRootTagNotFoundError,
     ComponentSrcTypeError,
+    ComponentTagNotFoundError,
     ComponentTypeError,
     Tag,
-    ComponentTagNotFoundError,
     no_tag_context,
     tag,
     ui,
 )
+
+MonkeyPatch = pytest.MonkeyPatch
 
 
 def html():
@@ -1401,6 +1406,127 @@ async def test_component_mixed_sync_async_hooks():
 
     assert component.steps == ["sync before", "async render", "async after"]
     assert str(component) == "<div>all done</div>"
+
+
+def test_component_parse_content():
+    """Test _parse_content with various inputs."""
+    # No doctype
+    content = "<div>Test</div>"
+    # pyright: ignore[reportPrivateUsage]
+    # pyright: ignore[reportPrivateUsage]
+    result = Component._parse_content(content)  # pyright: ignore[reportPrivateUsage]
+    assert result == (content, None)
+
+    # With doctype
+    content_with_doctype = "<!DOCTYPE html>\n<div>Test</div>"
+    # pyright: ignore[reportPrivateUsage]
+    # pyright: ignore[reportPrivateUsage]
+    result = Component._parse_content(content_with_doctype)  # pyright: ignore[reportPrivateUsage]
+    assert result == (content_with_doctype, "<!DOCTYPE html>")
+
+    # With doctype variations
+    content_with_doctype = "<!doctype HTML>\n<div>Test</div>"
+    result = Component._parse_content(content_with_doctype)  # pyright: ignore[reportPrivateUsage]
+    assert result == (content_with_doctype, "<!doctype HTML>")
+
+
+def test_parse_source_content_with_caching(monkeypatch: MonkeyPatch, tmp_path: Path):
+    with monkeypatch.context() as mp:
+        mp.setenv("WEBA_LRU_CACHE_SIZE", "10")
+        content = "<!DOCTYPE html>\n<div>Test</div>"
+
+        # Test direct content with caching
+        result1 = Component._parse_source_content(content)  # pyright: ignore[reportPrivateUsage]
+        result2 = Component._parse_source_content(content)  # pyright: ignore[reportPrivateUsage]
+        assert result1 == result2 == (content, "<!DOCTYPE html>")
+
+        # Test file content with caching
+        test_file = tmp_path / "test.html"
+        test_file.write_text(content)
+        result1 = Component._parse_source_content(str(test_file))  # pyright: ignore[reportPrivateUsage]
+        result2 = Component._parse_source_content(str(test_file))  # pyright: ignore[reportPrivateUsage]
+        assert result1 == result2 == (content, "<!DOCTYPE html>")
+
+
+def test_parse_source_content_without_caching(monkeypatch: MonkeyPatch, tmp_path: Path):
+    with monkeypatch.context() as mp:
+        mp.setenv("WEBA_LRU_CACHE_SIZE", "")
+        content = "<!DOCTYPE html>\n<div>Test</div>"
+
+        # Test direct content without caching
+        result1 = Component._parse_source_content(content)  # pyright: ignore[reportPrivateUsage]
+        result2 = Component._parse_source_content(content)  # pyright: ignore[reportPrivateUsage]
+        assert result1 == result2 == (content, "<!DOCTYPE html>")
+
+        # Test file content without caching
+        test_file = tmp_path / "test.html"
+        test_file.write_text(content)
+        result1 = Component._parse_source_content(str(test_file))  # pyright: ignore[reportPrivateUsage]
+        result2 = Component._parse_source_content(str(test_file))  # pyright: ignore[reportPrivateUsage]
+        assert result1 == result2 == (content, "<!DOCTYPE html>")
+
+
+def test_parse_source_content_edge_cases(monkeypatch: MonkeyPatch, tmp_path: Path):
+    with monkeypatch.context() as mp:
+        mp.setenv("WEBA_LRU_CACHE_SIZE", "10")
+
+        # Test with empty content (direct)
+        result = Component._parse_source_content("")  # pyright: ignore[reportPrivateUsage]
+        assert result == ("", None)
+
+        # Test with empty content (file)
+        empty_file = tmp_path / "empty.html"
+        empty_file.write_text("")
+        result = Component._parse_source_content(str(empty_file))  # pyright: ignore[reportPrivateUsage]
+        assert result == ("", None)
+
+        # Test with non-existent file
+        non_existent = tmp_path / "does_not_exist.html"
+        with pytest.raises(ComponentSrcFileNotFoundError) as exc_info:
+            Component._parse_source_content(non_existent)  # pyright: ignore[reportPrivateUsage]
+        assert "Source file not found" in str(exc_info.value)
+
+        # Test with different doctype variations
+        variations = [
+            "<!DOCTYPE html>\n<div>Test</div>",
+            "<!doctype HTML>\n<div>Test</div>",
+            "<!DOCTYPE HTML PUBLIC '-//W3C//DTD HTML 4.01//EN'>\n<div>Test</div>",
+        ]
+        # sourcery skip: no-loop-in-tests
+        for content in variations:
+            result = Component._parse_source_content(content)  # pyright: ignore[reportPrivateUsage]
+            assert result[0] == content
+            assert "!doctype" in result[1].lower()  ## pyright: ignore[reportOptionalMemberAccess]
+
+
+def test_cached_parse_info(monkeypatch: MonkeyPatch):
+    def _test_cached_results(component: Component, content: str, hit: int, misses: int):
+        # First call should be a miss
+        Component._cached_parse(content)  # pyright: ignore[reportPrivateUsage]
+        result = component._cached_parse.cache_info()  # pyright: ignore[reportPrivateUsage, reportFunctionMemberAccess]
+        assert result.hits == hit
+        assert result.misses == misses
+        return result
+
+    with monkeypatch.context() as mp:
+        mp.setenv("WEBA_LRU_CACHE_SIZE", "10")
+
+        # Get fresh instance of cached function
+        from functools import _lru_cache_wrapper  # type: ignore[attr-defined]
+        from typing import cast
+
+        # Reset both caching functions
+        cached_fn = cast(_lru_cache_wrapper, lru_cache(maxsize=10)(Component._parse_content))  # type: ignore[reportGeneralTypeIssues]
+        Component._cached_parse = staticmethod(cached_fn)  # type: ignore[reportGeneralTypeIssues]
+        Component._parse_file = staticmethod(lambda p: Component._cached_parse(Path(p).read_text()))  # type: ignore[reportGeneralTypeIssues]
+
+        content = "<!DOCTYPE html>\n<div>Test</div>"
+
+        cache_info = _test_cached_results(Component, content, 0, 1)
+        assert cache_info.maxsize == 10
+
+        cache_info = _test_cached_results(Component, content, 1, 1)
+        cache_info = _test_cached_results(Component, "<div>Different</div>", 1, 2)
 
 
 def test_component_tag_return_tag():

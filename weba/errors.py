@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Any, TypeVar
 
-if TYPE_CHECKING:
+if TYPE_CHECKING:  # pragma: no cover
     from .component import Component
 
 T = TypeVar("T", bound="Component")
@@ -24,6 +24,14 @@ class ComponentSrcTypeError(AttributeError):
     def __init__(self, component: type[Component]) -> None:
         name = component.__name__
         super().__init__(f"Component ({name}): 'src' must be either a str, callable[..., str | Tag] or Tag")
+
+
+class ComponentSrcFileNotFoundError(FileNotFoundError):
+    """Raised when a component's src file cannot be found."""
+
+    def __init__(self, component: type[Component], filepath: str) -> None:
+        name = component.__name__
+        super().__init__(f"Component ({name}): Source file not found: {filepath}")
 
 
 class ComponentSrcRootTagNotFoundError(AttributeError):

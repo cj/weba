@@ -9,11 +9,12 @@ from .context import Context, ContextMixin
 from .errors import (
     ComponentAfterRenderError,
     ComponentAsyncError,
+    ComponentSrcFileNotFoundError,
     ComponentSrcRequiredError,
     ComponentSrcRootTagNotFoundError,
     ComponentSrcTypeError,
-    ComponentTypeError,
     ComponentTagNotFoundError,
+    ComponentTypeError,
 )
 from .tag import Tag, current_tag_context
 from .ui import ui
@@ -24,14 +25,15 @@ __all__ = [
     "Component",
     "ComponentAfterRenderError",
     "ComponentAsyncError",
+    "ComponentSrcFileNotFoundError",
     "ComponentSrcRequiredError",
     "ComponentSrcRootTagNotFoundError",
     "ComponentSrcTypeError",
+    "ComponentTagNotFoundError",
     "ComponentTypeError",
     "Context",
     "ContextMixin",
     "Tag",
-    "ComponentTagNotFoundError",
     "component_tag",
     "current_tag_context",
     "no_tag_context",

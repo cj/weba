@@ -14,6 +14,7 @@ from bs4 import ResultSet
 from .errors import (
     ComponentAfterRenderError,
     ComponentAsyncError,
+    ComponentSrcFileNotFoundError,
     ComponentSrcRequiredError,
     ComponentSrcRootTagNotFoundError,
     ComponentSrcTypeError,
@@ -41,11 +42,18 @@ def no_tag_context():
         current_tag_context.set(parent)
 
 
-WEBA_LRU_CACHE_SIZE = os.getenv("WEBA_LRU_CACHE_SIZE")
-
-
 class ComponentMeta(ABCMeta):
     """Metaclass for Component to handle automatic rendering."""
+
+    _cache_size: ClassVar[int | None] = None
+
+    @classmethod
+    def get_cache_size(cls) -> int | None:
+        """Get the LRU cache size from environment variable."""
+        if cls._cache_size is None:
+            size = os.getenv("WEBA_LRU_CACHE_SIZE")
+            cls._cache_size = int(size) if size else None
+        return cls._cache_size
 
     _tag_methods: ClassVar[list[str]]
 
@@ -96,7 +104,7 @@ class ComponentMeta(ABCMeta):
 class Component(ABC, Tag, metaclass=ComponentMeta):
     """Base class for UI components."""
 
-    src: ClassVar[str | Tag | Callable[[], str | Tag] | None]
+    src: ClassVar[str | Tag | Path | Callable[[], str | Tag | Path] | None]
     """The HTML source template for the component. Can be inline HTML, a Tag, a path to an HTML file, or a callable returning any of these."""
     src_parser: ClassVar[str] | None = None
     """The parser to use when parsing the source HTML. Defaults to 'html.parser'."""
@@ -142,40 +150,39 @@ class Component(ABC, Tag, metaclass=ComponentMeta):
         return instance
 
     @staticmethod
-    def _read_source_file(path: str, _parser: str | None) -> tuple[str, str | None]:
-        """Read file content and parse doctype."""
-        if WEBA_LRU_CACHE_SIZE:
-
-            @lru_cache(maxsize=int(WEBA_LRU_CACHE_SIZE))
-            def cached_read(p: str) -> tuple[str, str | None]:
-                content = Path(p).read_text()
-                doctype = content.split("\n", 1)[0]
-                doctype = doctype if "!doctype" in doctype.lower() else None
-                return content, doctype
-
-            return cached_read(path)
-
-        content = Path(path).read_text()
-        doctype = content.split("\n", 1)[0]
+    def _parse_content(text: str) -> tuple[str, str | None]:
+        doctype = text.split("\n", 1)[0]
         doctype = doctype if "!doctype" in doctype.lower() else None
-        return content, doctype
+        return text, doctype
 
     @staticmethod
-    def _get_static_source_content(src: str) -> tuple[str, str | None]:
-        """Parse static source content and doctype."""
-        if WEBA_LRU_CACHE_SIZE:
+    def _parse_file(path: str) -> tuple[str, str | None]:
+        try:
+            content = Path(path).read_text()
+        except FileNotFoundError as err:
+            raise ComponentSrcFileNotFoundError(Component, path) from err
 
-            @lru_cache(maxsize=int(WEBA_LRU_CACHE_SIZE))
-            def cached_parse(s: str) -> tuple[str, str | None]:
-                doctype = s.split("\n", 1)[0]
-                doctype = doctype if "!doctype" in doctype.lower() else None
-                return s, doctype
+        return Component._parse_content(content)
 
-            return cached_parse(src)
+    @classmethod
+    def _parse_source_content(cls, content: str | Path) -> tuple[str, str | None]:
+        cache_size = cls.__class__.get_cache_size()
 
-        doctype = src.split("\n", 1)[0]
-        doctype = doctype if "!doctype" in doctype.lower() else None
-        return src, doctype
+        if isinstance(content, Path):
+            content = str(content)
+
+        if content.endswith((".html", ".svg", ".xml")):
+            cls_path = inspect.getfile(cls)
+            cls_dir = os.path.dirname(cls_path)
+            base_path = cls_dir if content.startswith(".") else os.getcwd()
+            path = str(Path(base_path, content))
+
+            if not cls.src_parser and content.endswith((".svg", ".xml")):
+                cls.src_parser = "xml"
+
+            return lru_cache(maxsize=cache_size)(Component._parse_file)(path)
+
+        return Component._parse_content(content)
 
     @classmethod
     def _get_source_content(cls) -> tuple[str | Tag | None, str | None]:
@@ -183,13 +190,16 @@ class Component(ABC, Tag, metaclass=ComponentMeta):
             raise ComponentSrcRequiredError(cls)
 
         src = None
+        cache_size = cls.get_cache_size()
+
         if hasattr(cls, "src"):
-            src = copy(cls.src)
+            src = cls.src
+
             if isinstance(src, Tag):
-                return src, None  # Tags are already parsed, no need to cache
+                return lru_cache(maxsize=cache_size)(copy)(src), None  # Tags are already parsed, no need to cache
             elif callable(src):
                 with no_tag_context():
-                    src = copy(src())
+                    src = lru_cache(maxsize=cache_size)(src)()
 
         if not src:
             return None, None
@@ -202,19 +212,7 @@ class Component(ABC, Tag, metaclass=ComponentMeta):
         if not isinstance(src, str):  # pyright: ignore[reportUnnecessaryIsInstance]
             raise ComponentSrcTypeError(cls)
 
-        if src.endswith((".html", ".svg", ".xml")):
-            cls_path = inspect.getfile(cls)
-            cls_dir = os.path.dirname(cls_path)
-            base_path = cls_dir if src.startswith(".") else os.getcwd()
-            path = str(Path(base_path, src))
-
-            if not cls.src_parser and src.endswith((".svg", ".xml")):
-                cls.src_parser = "xml"
-
-            return cls._read_source_file(path, cls.src_parser)
-
-        # Cache static source content
-        return cls._get_static_source_content(src)
+        return cls._parse_source_content(src)
 
     def _init_from_tag(self, root_tag: Tag) -> None:
         """Initialize component from a root tag."""
@@ -234,6 +232,7 @@ class Component(ABC, Tag, metaclass=ComponentMeta):
         Tag.__init__(self, name=root_tag.name, attrs=root_tag.attrs)
         self.extend(root_tag.contents.copy())
         root_tag.decompose()
+
         return self
 
     def _run_sync_hooks(self) -> None:
