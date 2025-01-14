@@ -1,8 +1,10 @@
 from __future__ import annotations
 
+from unittest import mock
+
 import pytest
 
-from weba import Component, Ui
+from weba import Component, Ui, tag, ui
 
 
 def test_component_with_lxml_parser():
@@ -66,3 +68,49 @@ async def test_async_component_with_lxml():
 
     component = await AsyncComponent()
     assert str(component) == "<div>Hello World</div>"
+
+
+def test_parser_lxml_with_layout():
+    with mock.patch("weba.Ui") as u:
+        u._html_parser = "lxmls"
+
+        class Layout(Component):
+            src = "./layout.html"
+
+            @tag("header")
+            def header(self):
+                pass
+
+            @tag("main")
+            def main(self):
+                pass
+
+            @tag("footer")
+            def footer(self):
+                pass
+
+        layout = Layout()
+
+        assert str(layout).startswith("<!doctype html>")
+        assert "<html" in str(layout)
+        assert "<header" in str(layout)
+        assert "<main" in str(layout)
+        assert "<footer" in str(layout)
+
+        with layout as html:
+            with html.header:
+                ui.nav("navbar")
+
+            with html.main:
+                ui.h1("Hello, World!")
+
+            with html.footer:
+                ui.span("contact us")
+
+        html_str = str(html)
+
+        print(html_str)
+
+        assert "<header><nav>navbar</nav></header>" in html_str
+        assert "<main><h1>Hello, World!</h1></main>" in html_str
+        assert "<footer><span>contact us</span></footer>" in html_str

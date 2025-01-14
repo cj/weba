@@ -58,16 +58,11 @@ class Ui:
         stripped_html = html.strip().lower()
 
         if parsed and parsed.html and all(tag in stripped_html for tag in ("<body", "<head", "<html")):
-            parsed = parsed.html
-        elif parsed.html and all(tag not in stripped_html for tag in ("<body", "<head", "<html")):
-            if body := parsed.html.body:
-                parsed = body
-            elif head := parsed.html.head:
-                parsed = head
+            return parsed
         elif (body := parsed.html) and (stripped_html.startswith("<body") or (body := body.body)):
-            parsed = body
+            return body
         elif (head := parsed.html) and (stripped_html.startswith("<head") or (head := head.head)):
-            parsed = head
+            return head
 
         return parsed
 
@@ -90,7 +85,7 @@ class Ui:
         parsed = BeautifulSoup(html, parser)
 
         # NOTE: This is to html lxml always wrapping in html > body tags
-        if parser == "lxml" and parsed.html:
+        if parser == "lxml":
             parsed = self._handle_lxml_parser(html, parsed)
 
         # Count root elements

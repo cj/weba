@@ -420,10 +420,10 @@ def test_component_with_layout():  # sourcery skip: extract-duplicate-method
     layout = Layout()
 
     assert str(layout).startswith("<!doctype html>")
-    assert "html" in str(layout)
-    assert "header" in str(layout)
-    assert "main" in str(layout)
-    assert "footer" in str(layout)
+    assert "<html" in str(layout)
+    assert "<header" in str(layout)
+    assert "<main" in str(layout)
+    assert "<footer" in str(layout)
 
     with layout as html:
         with html.header:
