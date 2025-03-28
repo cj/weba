@@ -1332,7 +1332,7 @@ def test_component_with_comment_tag():
 
         def render(self):
             sidebar_nav = self.sidebar_nav.copy()
-            list_item = cast(Tag, sidebar_nav.comment_one(".list_item"))
+            list_item = cast("Tag", sidebar_nav.comment_one(".list_item"))
             list_item.string = "Hello"
             self.append(sidebar_nav)
 

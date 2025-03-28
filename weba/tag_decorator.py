@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Generic, TypeVar
+from typing import TYPE_CHECKING, Generic, TypeVar, cast
 
 from .errors import ComponentTagNotFoundError
 
@@ -35,7 +35,7 @@ class TagDecorator(Generic[T]):
         getattr(instance, self.method.__name__).replace_with(value)
         instance._cached_tags[self.__name__] = value  # pyright: ignore[reportPrivateUsage]
 
-    def __get__(self, instance: T, owner: type[T]):
+    def __get__(self, instance: T, owner: type[T]) -> Tag:
         # Return cached result if it exists
         if response := instance._cached_tags.get(self.__name__):  # pyright: ignore[reportPrivateUsage]
             return response
@@ -62,7 +62,7 @@ class TagDecorator(Generic[T]):
 
         # Call the decorated method
         argcount = self.method.__code__.co_argcount  # type: ignore[attr-defined]
-        method_result = self.method(instance, tag) if argcount == 2 else self.method(instance)  # pyright: ignore[reportArgumentType, reportCallIssue]
+        method_result = cast("Tag | None", self.method(instance, tag) if argcount == 2 else self.method(instance))  # pyright: ignore[reportArgumentType, reportCallIssue]
 
         # If method returns a value directly without needing the tag, use that
         if method_result is not None:
