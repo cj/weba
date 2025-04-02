@@ -2661,7 +2661,7 @@ requires-dist = [
 dev = [
     { name = "aider-chat", specifier = ">=0.70.0" },
     { name = "reload", specifier = ">=0.9" },
-    { name = "sourcery", specifier = ">=1.26.0" },
+    { name = "sourcery", specifier = ">=1.35.0" },
     { name = "tox-uv", specifier = ">=1.11.3" },
 ]
 docs = [
