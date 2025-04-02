@@ -193,11 +193,11 @@ class Component(ABC, Tag, metaclass=ComponentMeta):
         cache_size = cls.get_cache_size()
 
         if hasattr(cls, "src"):
-            src = cls.src
+            src = cls.src  # pyright: ignore[reportAttributeAccessIssue, reportUnknownMemberType, reportUnknownVariableType]
 
             if isinstance(src, Tag):
-                return lru_cache(maxsize=cache_size)(copy)(src), None  # Tags are already parsed, no need to cache
-            elif callable(src):
+                return copy(src), None  # Tags are already parsed, no need to cache
+            elif callable(src):  # pyright: ignore[reportUnknownArgumentType]
                 with no_tag_context():
                     src = lru_cache(maxsize=cache_size)(src)()
 
@@ -333,6 +333,8 @@ class Component(ABC, Tag, metaclass=ComponentMeta):
         self.attrs = response.attrs
 
     def __str__(self) -> str:
+        # Use ternary expression for determining string conten
         string = "".join(str(child) for child in self.children) if self.name == "fragment" else super().__str__()
 
+        # Add doctype if presen
         return f"{self._doctype}\n{string}" if self._doctype else string

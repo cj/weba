@@ -115,44 +115,69 @@ class Ui:
 
         return tag
 
+    def _process_attribute_key(self, key: str) -> str:
+        """Process attribute key by converting underscores to dashes."""
+        return key.rstrip("_").replace("_", "-")
+
+    def _process_class_attribute(self, value: Any) -> str:
+        """Process class attribute values.
+
+        Args:
+            value: A list or tuple of class names
+
+        Returns:
+            A space-separated string of class names
+        """
+        # Try to iterate the values without making assumptions about the type
+        try:
+            # Use list comprehension to filter and convert valid values to strings
+            result = " ".join(str(item) for item in value if isinstance(item, str | int | float))
+        except Exception:
+            # Fall back to string conversion if iteration fails
+            result = str(value)
+
+        return result
+
+    def _process_attribute_value(self, key: str, value: Any) -> tuple[bool, Any]:
+        """Process attribute value based on its type and key name.
+
+        Returns:
+            Tuple of (include_attribute, processed_value)
+        """
+        # Handle class attribute specially
+        if key == "class" and isinstance(value, list | tuple):
+            return True, self._process_class_attribute(value)
+
+        # Handle boolean attributes
+        if isinstance(value, bool):
+            # Use conditional expression instead of if-else
+            return (True, "") if value else (False, None)
+
+        return True, value
+
     def __getattr__(self, tag_name: str) -> Callable[..., Tag]:
         def create_tag(*args: Any, **kwargs: str | int | float | Sequence[Any]) -> Tag:
-            # Convert underscore attributes to dashes
+            # Convert attributes
             converted_kwargs: dict[str, Any] = {}
 
             for key, value in kwargs.items():
-                key = key.rstrip("_").replace("_", "-")
+                processed_key = self._process_attribute_key(key)
+                include, processed_value = self._process_attribute_value(processed_key, value)
 
-                if key == "class":
-                    if isinstance(value, list | tuple):
-                        value = " ".join(str(v) for v in value if isinstance(v, str | int | float))
-                else:
-                    # Handle boolean attributes
-                    if isinstance(value, bool) and value:
-                        value = None
+                if include:
+                    converted_kwargs[processed_key] = processed_value
 
-                converted_kwargs[key] = value
-
-            # Create a BeautifulSoupTag directly
-            base_tag = BeautifulSoupTag(
-                name=tag_name,
-                attrs=converted_kwargs,
-            )
-
-            # Wrap it into our Tag class
+            # Create and process tag
+            base_tag = BeautifulSoupTag(name=tag_name, attrs=converted_kwargs)
             tag_obj = Tag.from_existing_bs4tag(base_tag)
 
-            # Handle content
-            if args:
-                arg = args[0]
+            # Handle content from args
+            if args and (arg := args[0]) is not None:
+                tag_obj.string = "" if isinstance(arg, Tag) else str(arg)
                 if isinstance(arg, Tag):
                     tag_obj.append(arg)
-                elif arg is None:
-                    tag_obj.string = ""
-                else:
-                    tag_obj.string = str(arg)
 
-            # If there's a current parent, append this tag to it
+            # Append to parent if in context
             if parent := current_tag_context.get():
                 parent.append(tag_obj)
 
