@@ -903,3 +903,29 @@ def test_ui_json_dumps_value():
     json_object = json.dumps(raw_object)
     html = ui.div(hx_vals=json_object)
     assert str(html) == '<div hx-vals=\'{"foo": "bar", "baz": [1, "2", 3], "nested": {"moo": "cow"}}\'></div>'
+
+
+def test_raw_with_soup_strainer():
+    from bs4 import SoupStrainer
+
+    from weba.ui import ui
+
+    # Only parse div tags
+    parse_only = SoupStrainer("div")
+    html = "<div>Test1</div><span>Test2</span><div>Test3</div>"
+
+    # Parse with SoupStrainer
+    result = ui.raw(html, parse_only=parse_only)
+
+    # Test that we have 2 divs in the result
+    div_elements = result.find_all("div")
+    assert len(div_elements) == 2
+
+    # The first div should have text Test1
+    assert div_elements[0].string == "Test1"
+
+    # The second div should have text Test3
+    assert div_elements[1].string == "Test3"
+
+    # The span should not be present
+    assert result.find("span") is None

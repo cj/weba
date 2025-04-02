@@ -2,7 +2,10 @@
 from __future__ import annotations
 
 import asyncio
-from typing import TYPE_CHECKING, cast
+from typing import TYPE_CHECKING, ClassVar, cast
+
+if TYPE_CHECKING:
+    from bs4 import SoupStrainer
 
 import pytest
 
@@ -1090,6 +1093,87 @@ def test_component_replace_root():
     assert str(component) == '<section class="container"></section>'
 
 
+def test_component_with_soup_strainer():
+    """Test that src_strainer works to limit parsing to specific tags."""
+    from bs4 import SoupStrainer
+
+    class ComponentWithStrainer(Component):
+        src = """
+        <div id="root">
+            <header>This is a header</header>
+            <main>
+                <p>First paragraph</p>
+                <p>Second paragraph</p>
+            </main>
+            <footer>This is a footer</footer>
+        </div>
+        """
+        src_strainer = SoupStrainer(["main", "footer"])
+
+    component = ComponentWithStrainer()
+
+    # The main tag should be found
+    assert component.find("main") is not None
+    # The footer tag should be found
+    assert component.find("footer") is not None
+    # The header tag should NOT be found because of the strainer
+    assert component.find("header") is None
+
+
+def test_component_with_string_strainer():
+    """Test that src_strainer can accept a string selector."""
+
+    class ComponentWithStringStrainer(Component):
+        src = """
+        <div id="root">
+            <header>This is a header</header>
+            <main>
+                <p>First paragraph</p>
+                <p>Second paragraph</p>
+            </main>
+            <footer>This is a footer</footer>
+        </div>
+        """
+        src_strainer: ClassVar[SoupStrainer | str | list[str] | None] = "main"
+
+    component = ComponentWithStringStrainer()
+
+    # Component itself should be the main tag
+    assert component.name == "main"
+    # Should have paragraph children
+    assert component.find("p") is not None
+    # The header tag should NOT be found because of the strainer
+    assert component.find("header") is None
+    # The footer tag should NOT be found because of the strainer
+    assert component.find("footer") is None
+
+
+def test_component_with_list_strainer():
+    """Test that src_strainer can accept a list of string selectors."""
+
+    class ComponentWithListStrainer(Component):
+        src = """
+        <div id="root">
+            <header>This is a header</header>
+            <main>
+                <p>First paragraph</p>
+                <p>Second paragraph</p>
+            </main>
+            <footer>This is a footer</footer>
+        </div>
+        """
+        src_strainer: ClassVar[SoupStrainer | str | list[str] | None] = ["main", "footer"]
+
+    component = ComponentWithListStrainer()
+
+    # The main tag should be found
+    assert component.find("main") is not None
+    # The footer tag should be found
+    assert component.find("footer") is not None
+    # The header tag should NOT be found because of the strainer
+    assert component.find("header") is None
+
+
 def test_component_tag_root_replacement():
     """Test that root_tag option replaces the component's root tag."""
 
@@ -1103,6 +1187,39 @@ def test_component_tag_root_replacement():
     component = RootTagComponent()
 
     assert str(component) == '<section class="container"></section>'
+
+
+def test_auto_src_strainer_from_tags():
+    """Test that src_strainer is automatically generated from @tag decorators."""
+
+    class ComponentWithTagDecorators(Component):
+        src = """
+        <div id="root">
+            <header>This is a header</header>
+            <main>
+                <p>First paragraph</p>
+                <p>Second paragraph</p>
+            </main>
+            <footer>This is a footer</footer>
+        </div>
+        """
+
+        @tag("main")
+        def main_content(self):
+            return ui.main("Modified main content")
+
+        @tag("footer")
+        def footer_content(self):
+            return ui.footer("Modified footer content")
+
+    component = ComponentWithTagDecorators()
+
+    # The main tag should be found
+    assert component.find("main") is not None
+    # The footer tag should be found
+    assert component.find("footer") is not None
+    # The header tag should NOT be found because of the auto-generated strainer
+    assert component.find("header") is None
 
 
 def test_component_tag_root_replacement_with_nested():
