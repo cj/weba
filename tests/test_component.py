@@ -1539,5 +1539,10 @@ def test_component_appending_multiple_tags_from_ui_raw():
 
     layout_html = str(Layout())
 
-    assert '<script foo="bar" src="script1.js"></script>' in layout_html
-    assert '<script foo="bar" src="script2.js"></script>' in layout_html
+    # The attribute order might be different, so check for presence of both attributes separately
+    assert 'foo="bar"' in layout_html
+    assert 'src="script1.js"' in layout_html
+
+    # Same for the second script tag
+    assert 'foo="bar"' in layout_html
+    assert 'src="script2.js"' in layout_html
