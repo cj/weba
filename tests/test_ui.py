@@ -896,3 +896,10 @@ def test_ui_raw_with_bytes():
     tag = ui.raw(utf8_bytes)
     assert tag.name == "p"
     assert "☃" in str(tag)
+
+
+def test_ui_json_dumps_value():
+    raw_object = {"foo": "bar", "baz": [1, "2", 3], "nested": {"moo": "cow"}}
+    json_object = json.dumps(raw_object)
+    html = ui.div(hx_vals=json_object)
+    assert str(html) == '<div hx-vals=\'{"foo": "bar", "baz": [1, "2", 3], "nested": {"moo": "cow"}}\'></div>'

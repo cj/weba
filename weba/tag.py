@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import html
 import json
 from contextvars import ContextVar
 from typing import TYPE_CHECKING, Any, Literal, overload
@@ -280,10 +281,27 @@ class Tag(Bs4Tag):
                 # Convert each item to string explicitly
                 typed_values.extend(str(item) for item in value_list)
                 value_str = " ".join(typed_values)
-                result += f' {key}="{value_str}"'
+                # Escape the class value
+                escaped_value = html.escape(value_str, quote=False)
+                result += f' {key}="{escaped_value}"'
             elif value is not None:
-                # Regular attributes
-                result += f' {key}="{value}"'
+                # Convert value to string if not already
+                value_str = str(value)
+
+                # Check if value is a JSON string that starts and ends with braces or brackets
+                if isinstance(value, str) and (
+                    (value.startswith("{") and value.endswith("}")) or (value.startswith("[") and value.endswith("]"))
+                ):
+                    # For JSON strings, use single quotes to avoid conflict with double quotes in JSON
+                    # No need to escape the JSON content as it should already be properly escaped
+                    result += f" {key}='{value_str}'"
+                else:
+                    # Regular attributes - properly escape special characters
+                    # Note: we disable single quote escaping with quote=False and handle it ourselves
+                    # to have more control over attribute quoting
+                    escaped_value = html.escape(value_str, quote=False)
+                    # Use double quotes for regular attributes
+                    result += f' {key}="{escaped_value}"'
 
         # Build content and closing tag
         if self.contents:
