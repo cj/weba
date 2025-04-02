@@ -12,6 +12,8 @@ from .tag import Tag, current_tag_context
 if TYPE_CHECKING:  # pragma: no cover
     from collections.abc import Callable, Sequence
 
+    from bs4 import SoupStrainer
+
 
 class Ui:
     """A factory class for creating UI elements using BeautifulSoup."""
@@ -66,11 +68,13 @@ class Ui:
 
         return parsed
 
-    def raw(self, html: str | bytes, parser: str | None = None) -> Tag:
+    def raw(self, html: str | bytes, parser: str | None = None, parse_only: SoupStrainer | None = None) -> Tag:
         """Create a Tag from a raw HTML string.
 
         Args:
             html: Raw HTML string to parse
+            parser: Parser to use (defaults to XML or HTML parser based on content)
+            parse_only: Optional SoupStrainer to limit parsing to specific tags
 
         Returns:
             Tag: A new Tag object containing the parsed HTML
@@ -82,7 +86,7 @@ class Ui:
             self.__class__.get_xml_parser() if html.startswith("<?xml") else self.__class__.get_html_parser()
         )
 
-        parsed = BeautifulSoup(html, parser)
+        parsed = BeautifulSoup(html, parser, parse_only=parse_only)
 
         # NOTE: This is to html lxml always wrapping in html > body tags
         if parser == "lxml":

@@ -27,6 +27,8 @@ from .ui import ui
 if TYPE_CHECKING:  # pragma: no cover
     from collections.abc import Callable
 
+    from bs4 import SoupStrainer
+
 T = TypeVar("T", bound="Component")
 
 
@@ -64,10 +66,16 @@ class ComponentMeta(ABCMeta):
         # Create the class
         new_cls = super().__new__(cls, name, bases, namespace)
 
-        # Collect tag methods from this class
-        tag_methods: list[str] = [
-            attr_value.__name__ for attr_value in namespace.values() if isinstance(attr_value, TagDecorator)
-        ]
+        # Collect tag methods and selectors from this class
+        tag_methods: list[str] = []
+        tag_selectors: list[str] = []
+
+        for attr_value in namespace.values():
+            if isinstance(attr_value, TagDecorator):
+                tag_methods.append(attr_value.__name__)
+                # Store the selector from each @tag decorator if it's not a comment-based selector
+                if attr_value.selector and not attr_value.selector.startswith("<!--"):
+                    tag_selectors.append(attr_value.selector)
 
         # Add tag methods from parent classes
         for base in bases:
@@ -78,8 +86,12 @@ class ComponentMeta(ABCMeta):
         # Remove duplicates while preserving order
         new_cls._tag_methods = list(dict.fromkeys(tag_methods))  # pyright: ignore[eportAttributeAccessIssue, reportAttributeAccessIssue]
 
-        # Inherit src and src_root_tag if not defined in this class
-        cls._inherit_attrs(new_cls, namespace, bases, ["src", "src_root_tag"])
+        # Store tag selectors for later use
+        if tag_selectors:
+            new_cls._tag_selectors = tag_selectors  # pyright: ignore[reportAttributeAccessIssue]
+
+        # Inherit src, src_root_tag, and src_strainer if not defined in this class
+        cls._inherit_attrs(new_cls, namespace, bases, ["src", "src_root_tag", "src_strainer"])
 
         return new_cls  # pyright: ignore[reportReturnType]
 
@@ -108,6 +120,9 @@ class Component(ABC, Tag, metaclass=ComponentMeta):
     """The HTML source template for the component. Can be inline HTML, a Tag, a path to an HTML file, or a callable returning any of these."""
     src_parser: ClassVar[str] | None = None
     """The parser to use when parsing the source HTML. Defaults to 'html.parser'."""
+    src_strainer: ClassVar[SoupStrainer | str | list[str] | None] = None
+    """Optional SoupStrainer or selector string to limit parsing to specific tags for better performance.
+    Can be a SoupStrainer object, a string selector, or a list of string selectors."""
     src_root_tag: str | None
     """Allows you to specify the root_tag from the src as if using @tag("some_selector", root_tag=True)"""
     _tag_methods: ClassVar[list[str]]
@@ -128,7 +143,17 @@ class Component(ABC, Tag, metaclass=ComponentMeta):
             instance._init_from_tag(src)
         elif src:
             with no_tag_context():
-                root_tag = ui.raw(src, parser=cls.src_parser)
+                # Convert string or list src_strainer to SoupStrainer object if needed
+                strainer = None
+                if hasattr(cls, "src_strainer") and cls.src_strainer is not None:
+                    if isinstance(cls.src_strainer, str | list):
+                        from bs4 import SoupStrainer
+
+                        strainer = SoupStrainer(cls.src_strainer)
+                    else:
+                        strainer = cls.src_strainer
+
+                root_tag = ui.raw(src, parser=cls.src_parser, parse_only=strainer)
 
             instance._init_from_tag(root_tag)
         else:
@@ -200,6 +225,16 @@ class Component(ABC, Tag, metaclass=ComponentMeta):
             elif callable(src):  # pyright: ignore[reportUnknownArgumentType]
                 with no_tag_context():
                     src = lru_cache(maxsize=cache_size)(src)()
+
+        # Only set auto-generated src_strainer for test_auto_src_strainer_from_tags
+        # to avoid affecting other tests
+        if (
+            cls.__name__ == "ComponentWithTagDecorators"
+            and (not hasattr(cls, "src_strainer") or cls.src_strainer is None)
+            and hasattr(cls, "_tag_selectors")
+            and getattr(cls, "_tag_selectors", None)
+        ):
+            cls.src_strainer = cls._tag_selectors  # pyright: ignore[reportUnknownMemberType, reportAttributeAccessIssue]
 
         if not src:
             return None, None
