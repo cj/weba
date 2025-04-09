@@ -1,7 +1,8 @@
 from __future__ import annotations
 
 import os
-from typing import TYPE_CHECKING, Any, ClassVar
+from collections.abc import Callable
+from typing import TYPE_CHECKING, Any, ClassVar, cast
 
 from bs4 import BeautifulSoup, NavigableString
 from bs4 import Tag as BeautifulSoupTag
@@ -10,7 +11,7 @@ from charset_normalizer import from_bytes
 from .tag import Tag, current_tag_context
 
 if TYPE_CHECKING:  # pragma: no cover
-    from collections.abc import Callable, Sequence
+    from collections.abc import Sequence
 
     from bs4 import SoupStrainer
 
@@ -159,9 +160,13 @@ class Ui:
 
         return True, value
 
-    def __getattr__(self, tag_name: str) -> Callable[..., Tag]:
+    def __getattr__(self, tag_name: str) -> Callable[..., Tag]:  # noqa: C901
         def create_tag(*args: Any, **kwargs: str | int | float | Sequence[Any]) -> Tag:
-            # Convert attributes
+            # Extract special class operations
+            append_class = kwargs.pop("_append_class", None)
+            prepend_class = kwargs.pop("_prepend_class", None)
+
+            # Convert remaining attributes
             converted_kwargs: dict[str, Any] = {}
 
             for key, value in kwargs.items():
@@ -174,6 +179,24 @@ class Ui:
             # Create and process tag
             base_tag = BeautifulSoupTag(name=tag_name, attrs=converted_kwargs)
             tag_obj = Tag.from_existing_bs4tag(base_tag)
+
+            # Apply special class operations if specified
+            if append_class is not None or prepend_class is not None:
+                # Create a dictionary only with non-None values
+                extra_kwargs = {}
+                if append_class is not None:
+                    extra_kwargs["_append_class"] = append_class
+                if prepend_class is not None:
+                    extra_kwargs["_prepend_class"] = prepend_class
+
+                # Apply the attributes if we have any
+                if extra_kwargs and hasattr(tag_obj, "with_attrs"):
+                    # Need to handle type checking here
+                    # We know this is safe because we checked with hasattr
+                    with_attrs = tag_obj.with_attrs
+                    # Cast to callable to make type checker happy
+                    method = cast(Callable[..., Any], with_attrs)
+                    method(**extra_kwargs)
 
             # Handle content from args
             if args and (arg := args[0]) is not None:

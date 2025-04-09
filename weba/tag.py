@@ -3,7 +3,7 @@ from __future__ import annotations
 import html
 import json
 from contextvars import ContextVar
-from typing import TYPE_CHECKING, Any, Literal, overload
+from typing import TYPE_CHECKING, Any, Literal, Self, overload
 
 from bs4 import Comment, NavigableString
 from bs4 import Tag as Bs4Tag
@@ -36,6 +36,29 @@ class Tag(Bs4Tag):
                 new_tag.append(NavigableString(str(c)))
 
         return new_tag
+
+    def __call__(self, **kwargs: Any) -> Self:
+        """Support calling a tag with attributes to use with_attrs under the hood.
+
+        This allows using html.header(_class="foo") instead of html.header.with_attrs(_class="foo").
+
+        Also supports special class operations:
+        - _append_class: Append classes to existing class list
+        - _prepend_class: Prepend classes to existing class list
+
+        Args:
+            **kwargs: Keyword arguments to set as attributes on the tag.
+                      Use _attr name for Python reserved words (e.g., _class for "class").
+
+        Returns:
+            self: Returns self after applying attributes for context manager use.
+
+        Example:
+            with html.header(_class="header", _append_class="sticky"):
+                ui.h1("Page Title")
+        """
+        # Delegate to with_attrs to ensure consistent behavior
+        return self.with_attrs(**kwargs)
 
     def __init__(
         self,
@@ -117,6 +140,64 @@ class Tag(Bs4Tag):
 
     def __exit__(self, *args: Any) -> None:
         current_tag_context.reset(self._token)  # pyright: ignore[reportArgumentType]
+
+    def with_attrs(self, **kwargs: Any) -> Self:
+        """Apply attributes to the tag and return self for use in a with statement.
+
+        This method is useful for adding attributes to a tag before using it in a with statement.
+        It handles Python reserved words by allowing attributes to be prefixed with an underscore.
+
+        Special attributes:
+        - _append_class: Append classes to existing class list
+        - _prepend_class: Prepend classes to existing class list
+
+        Args:
+            **kwargs: Keyword arguments to set as attributes on the tag.
+                      Use _attr name for Python reserved words (e.g., _class for "class").
+
+        Returns:
+            self: Returns self for method chaining and context manager use.
+
+        Example:
+            with tag.with_attrs(class_="container", id="main"):
+                ui.h1("Hello, World!")
+
+            # Or with Python reserved words:
+            with tag.with_attrs(_class="container", _for="form1"):
+                ui.h1("Hello, World!")
+
+            # Append classes:
+            with tag.with_attrs(_append_class="text-lg"):
+                ui.h1("Hello, World!")
+        """
+        # Handle special class operations first
+        append_class = kwargs.pop("_append_class", None)
+        prepend_class = kwargs.pop("_prepend_class", None)
+
+        # Process regular attributes
+        for key, value in kwargs.items():
+            if key.startswith("_"):
+                key = key[1:]
+            self[key] = value
+
+        # Handle class operations after normal attributes
+        # This ensures _class is processed before append/prepend
+        if append_class is not None:
+            current_classes = self["class"]
+            # Convert append_class to a list if it's a string
+            append_classes = append_class.split() if isinstance(append_class, str) else list(append_class)
+            # Extend the current classes with new ones
+            current_classes.extend(append_classes)
+
+        if prepend_class is not None:
+            current_classes = self["class"]
+            # Convert prepend_class to a list if it's a string
+            prepend_classes = prepend_class.split() if isinstance(prepend_class, str) else list(prepend_class)
+            # Prepend new classes to current ones
+            for cls in reversed(prepend_classes):
+                current_classes.insert(0, cls)
+
+        return self
 
     @overload  # pragma: no cover # NOTE: We have tests that cover this case
     def __getitem__(self, key: Literal["class"]) -> list[str]:
