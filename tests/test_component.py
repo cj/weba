@@ -445,6 +445,196 @@ def test_component_with_layout():  # sourcery skip: extract-duplicate-method
     assert "<footer><span>contact us</span></footer>" in html_str
 
 
+def test_component_with_layout_and_attributes():
+    class Layout(Component):
+        src = "./layout.html"
+
+        @tag("header")
+        def header(self):
+            pass
+
+        @tag("main")
+        def main(self):
+            pass
+
+        @tag("footer")
+        def footer(self):
+            pass
+
+    layout = Layout()
+
+    with layout as html:
+        # First method: Direct attribute assignment
+        header = html.header
+        header["class"] = "site-header"
+        header["id"] = "top-header"
+
+        with header:
+            ui.nav("navbar")
+
+        # Same approach for main
+        main = html.main
+        main["class"] = "site-main"
+        main["id"] = "content"
+
+        with main:
+            ui.h1("Hello, World!")
+
+        # And for footer
+        footer = html.footer
+        footer["class"] = "site-footer"
+        footer["id"] = "bottom-footer"
+
+        with footer:
+            ui.span("contact us")
+
+    html_str = str(html)
+
+    assert '<header class="site-header" id="top-header"><nav>navbar</nav></header>' in html_str
+    assert '<main class="site-main" id="content"><h1>Hello, World!</h1></main>' in html_str
+    assert '<footer class="site-footer" id="bottom-footer"><span>contact us</span></footer>' in html_str
+
+
+def test_component_with_layout_and_attribute_params():
+    class Layout(Component):
+        src = "./layout.html"
+
+        @tag("header")
+        def header(self):
+            pass
+
+        @tag("main")
+        def main(self):
+            pass
+
+        @tag("footer")
+        def footer(self):
+            pass
+
+    layout = Layout()
+
+    with layout as html:
+        # Use the with_attrs method to apply attributes
+        with html.header.with_attrs(_class="site-header", id="top-header"):  # pyright: ignore[reportOptionalCall, reportGeneralTypeIssues]
+            ui.nav("navbar")
+
+        with html.main.with_attrs(_class="site-main", id="content"):  # pyright: ignore[reportOptionalCall, reportGeneralTypeIssues]
+            ui.h1("Hello, World!")
+
+        with html.footer.with_attrs(_class="site-footer", id="bottom-footer"):  # pyright: ignore[reportOptionalCall, reportGeneralTypeIssues]
+            ui.span("contact us")
+
+    html_str = str(html)
+
+    assert '<header class="site-header" id="top-header"><nav>navbar</nav></header>' in html_str
+    assert '<main class="site-main" id="content"><h1>Hello, World!</h1></main>' in html_str
+    assert '<footer class="site-footer" id="bottom-footer"><span>contact us</span></footer>' in html_str
+
+
+def test_component_with_layout_and_attribute_with_chaining():
+    class Layout(Component):
+        src = "./layout.html"
+
+        @tag("header")
+        def header(self):
+            pass
+
+        @tag("main")
+        def main(self):
+            pass
+
+        @tag("footer")
+        def footer(self):
+            pass
+
+    with Layout() as html:
+        # Use the with_attrs method with chaining - add attributes and immediately use in context
+        with html.header(_class="site-header", id="top-header"):  # pyright: ignore[reportOptionalCall, reportGeneralTypeIssues]
+            ui.nav("navbar")
+
+        # Test with separated approach to show both styles work
+        # 1. Create tag with attributes
+        main_with_attrs = html.main.with_attrs(_class="site-main", id="content", data_testid="main-content")  # pyright: ignore[reportOptionalCall]
+        # 2. Use in context
+        with main_with_attrs:  # pyright: ignore[reportGeneralTypeIssues]
+            ui.h1("Hello, World!")
+
+        # Additional attributes can be set directly
+        footer = html.footer
+        footer["class"] = "site-footer"
+        footer["id"] = "bottom-footer"
+        footer["data-testid"] = "footer"
+
+        with footer:
+            ui.span("contact us")
+
+    html_str = str(html)
+
+    assert '<header class="site-header" id="top-header"><nav>navbar</nav></header>' in html_str
+    assert '<main class="site-main" id="content" data_testid="main-content"><h1>Hello, World!</h1></main>' in html_str
+    assert (
+        '<footer class="site-footer" id="bottom-footer" data-testid="footer"><span>contact us</span></footer>'
+        in html_str
+    )
+
+
+def test_component_with_class_append_prepend():
+    """Test using class append and prepend functionality with components."""
+
+    class ClassAppendPrependLayout(Component):
+        src = "./layout_append_prepend.html"
+
+        @tag("header")
+        def header(self):
+            pass
+
+        @tag("main")
+        def main(self):
+            pass
+
+        @tag("footer")
+        def footer(self):
+            pass
+
+    with ClassAppendPrependLayout() as layout:
+        # The header already has a base class="header" in the HTML
+        # Test appending classes to existing ones in the HTML
+        with layout.header(_append_class="sticky top-0"):
+            ui.h1("Page Title")
+
+        # Test both call styles for prepending classes
+        # 1. Direct method call with _prepend_class
+        with layout.main.with_attrs(_class="content", _prepend_class="flex container"):
+            ui.p("Content goes here")
+
+        # 2. Property access and call style
+        footer = layout.footer
+        # Add a base class first
+        footer.with_attrs(_class="footer")
+        # Both append and prepend classes in one call
+        footer(_append_class="mt-4 pb-2", _prepend_class="grid gap-4")
+        # Use in context
+        with footer:  # pyright: ignore[reportGeneralTypeIssues]
+            ui.p("Footer content")
+
+    # Verify the classes were applied in the correct order
+    header_str = str(layout.header)
+    main_str = str(layout.main)
+    footer_str = str(layout.footer)
+
+    # Check header: initial "header" class + appended "sticky top-0"
+    assert 'class="header sticky top-0"' in header_str
+    assert "<h1>Page Title</h1>" in header_str
+
+    # Check main: prepended "flex container" + "content"
+    assert 'class="flex container content"' in main_str
+    assert "<p>Content goes here</p>" in main_str
+
+    # Check footer: prepended "grid gap-4" + "footer" + appended "mt-4 pb-2"
+    assert 'class="grid gap-4 footer mt-4 pb-2"' in footer_str
+    assert "<p>Footer content</p>" in footer_str
+
+
 def test_component_with_layout_append_to_body():  # sourcery skip: extract-duplicate-method
     append_text = "<span>one</span><span>two</span>"
 
