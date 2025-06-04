@@ -1853,3 +1853,83 @@ def test_component_appending_multiple_tags_from_ui_raw():
     # Same for the second script tag
     assert 'foo="bar"' in layout_html
     assert 'src="script2.js"' in layout_html
+
+
+def test_component_form_input():
+    class FormComponent(Component):
+        src = "./form.html"
+
+        @tag("input")
+        def input_tag(self):
+            pass
+
+        def render(self):
+            self.input_tag["name"] = self.input_name
+
+        @property
+        def input_name(self):
+            order_id = 123456
+            return f'orders["{order_id}"][loan_number]'
+
+    form = FormComponent()
+    html = str(form)
+
+    assert form.input_name in html
+
+
+class TestMemoryManagement:
+    """Test memory management features."""
+
+    def test_default_cache_size(self):
+        """Test that default cache size is set to 256."""
+        # Clear the cached value
+        import os
+
+        from weba.component import ComponentMeta
+
+        ComponentMeta._cache_size = None  # pyright: ignore[reportPrivateUsage]
+        # Temporarily unset the env var
+        old_value = os.environ.pop("WEBA_LRU_CACHE_SIZE", None)
+        try:
+            cache_size = ComponentMeta.get_cache_size()
+            assert cache_size == 256, "Default cache size should be 256"
+        finally:
+            # sourcery skip: no-conditionals-in-tests
+            if old_value is not None:
+                os.environ["WEBA_LRU_CACHE_SIZE"] = old_value
+
+            ComponentMeta._cache_size = None  # pyright: ignore[reportPrivateUsage] # Reset for other tests
+
+    # def test_instance_cache_clearing(self):
+    #     """Test that instance cache can be cleared."""
+    #
+    #     class TestComponent(Component):
+    #         src = "<div><span>Test</span></div>"
+    #
+    #         @tag("span")
+    #         def some_tag(self):
+    #             self["class"] = "cached"
+    #
+    #     component = TestComponent()
+    #     # Access the tag to populate cache
+    #     _ = component.some_tag
+    #     assert len(component._cached_tags) > 0, "Cache should contain tags"  # pyright: ignore[reportPrivateUsage]
+    #
+    #     # Clear the cache
+    #     component.clear_cache()
+    #     assert len(component._cached_tags) == 0, "Cache should be empty after clearing"  # pyright: ignore[reportPrivateUsage]
+
+    def test_tag_context_cleanup(self):
+        """Test that tag context is properly cleaned up."""
+        from weba.tag import current_tag_context
+
+        # Ensure we start with no context
+        assert current_tag_context.get() is None
+
+        tag = ui.div()
+        with tag:
+            # Inside context, current_tag_context should be set
+            assert current_tag_context.get() is tag
+
+        # After exiting context, it should be None again
+        assert current_tag_context.get() is None

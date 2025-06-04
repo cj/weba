@@ -54,7 +54,7 @@ class ComponentMeta(ABCMeta):
         """Get the LRU cache size from environment variable."""
         if cls._cache_size is None:
             size = os.getenv("WEBA_LRU_CACHE_SIZE")
-            cls._cache_size = int(size) if size else None
+            cls._cache_size = int(size) if size else 256  # Default to 256 instead of None
         return cls._cache_size
 
     _tag_methods: ClassVar[list[str]]
