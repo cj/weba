@@ -78,8 +78,7 @@ def test_tag_append_class_with_call_syntax():
     assert 'id="main"' in str(tag)
 
 
-# pyright: reportUnknownVariableType=false, reportGeneralTypeIssues=false, reportOptionalCall=false, reportUnknownMemberType=false, reportAttributeAccessIssue=false
-def test_component_with_class_manipulation():
+def test_tag_with_class_manipulation():
     """Test using special class manipulation in a component-like context."""
     # Start with a base component
     with ui.div().with_attrs(_class="component"):
@@ -99,3 +98,16 @@ def test_component_with_class_manipulation():
     assert "header sticky" in str(header)
     assert "flex content" in str(main)
     assert "grid footer mt-4" in str(footer)
+
+
+def test_tag_with_input_name():
+    name = 'orders["123456"][lender]'
+    html = ui.input(name=name)
+
+    assert name in str(html)
+
+    name = 'orders["123456"][lender]'
+    html = ui.input()
+    html["name"] = name
+
+    assert name in str(html)

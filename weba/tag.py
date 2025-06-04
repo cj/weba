@@ -37,6 +37,15 @@ class Tag(Bs4Tag):
 
         return new_tag
 
+    def decompose(self) -> None:
+        """Decompose this tag and ensure context is cleaned up."""
+        # Ensure we reset context if this tag has one
+        if hasattr(self, "_token") and self._token is not None:
+            current_tag_context.reset(self._token)
+            self._token = None
+        # Call parent decompose
+        super().decompose()
+
     def __call__(self, **kwargs: Any) -> Self:
         """Support calling a tag with attributes to use with_attrs under the hood.
 
@@ -139,7 +148,9 @@ class Tag(Bs4Tag):
         return self
 
     def __exit__(self, *args: Any) -> None:
-        current_tag_context.reset(self._token)  # pyright: ignore[reportArgumentType]
+        if self._token is not None:
+            current_tag_context.reset(self._token)  # pyright: ignore[reportArgumentType]
+            self._token = None
 
     def with_attrs(self, **kwargs: Any) -> Self:
         """Apply attributes to the tag and return self for use in a with statement.
@@ -357,7 +368,7 @@ class Tag(Bs4Tag):
             elif isinstance(value, list):
                 # Join lists with spaces (for classes)
                 # Use type annotations to help type checker
-                value_list: list[Any] = value
+                value_list: list[Any] = value  # pyright: ignore[reportUnknownVariableType]
                 typed_values: list[str] = []
                 # Convert each item to string explicitly
                 typed_values.extend(str(item) for item in value_list)
