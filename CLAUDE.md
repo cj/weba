@@ -20,7 +20,7 @@ make check
 The weba project uses the following environment variables for configuration:
 
 ```bash
-# Set LRU cache size (default is None/disabled)
+# Set LRU cache size (default is 256)
 export WEBA_LRU_CACHE_SIZE=256  # Set to desired cache size
 
 # HTML parser configuration
@@ -79,3 +79,70 @@ ruff check --fix weba/
 ```
 
 Remember to always maintain type safety according to the project conventions, and ensure all tests pass after making changes.
+
+## Memory Management
+
+The weba framework now includes memory management features to prevent memory leaks:
+
+### Component Memory Management
+
+Components maintain internal caches that should be cleared when no longer needed:
+
+```python
+# Clear instance-level cache for a specific component
+component.clear_cache()
+
+# Clear all class-level caches (affects all instances)
+Component.clear_class_cache()
+```
+
+### Best Practices for Memory Management
+
+1. **Set appropriate cache sizes**: The default LRU cache size is 256. Adjust based on your needs:
+
+   ```bash
+   export WEBA_LRU_CACHE_SIZE=512  # Larger cache for high-traffic apps
+   export WEBA_LRU_CACHE_SIZE=128  # Smaller cache for memory-constrained environments
+   ```
+
+2. **Clear component caches**: When done with long-lived components:
+
+   ```python
+   # After using a component extensively
+   component.clear_cache()
+
+   # When shutting down or resetting application state
+   Component.clear_class_cache()
+   ```
+
+3. **Decompose tag trees**: Explicitly decompose large tag structures when finished:
+
+   ```python
+   # This ensures proper cleanup of BeautifulSoup internals
+   large_tag_tree.decompose()
+   ```
+
+4. **Context management**: The framework automatically handles context cleanup, but ensure you:
+   - Always use components within proper context managers (with statements)
+   - Don't store references to tags outside their intended lifecycle
+
+### Memory Profiling
+
+To profile memory usage:
+
+```python
+import tracemalloc
+
+# Start tracing
+tracemalloc.start()
+
+# Your weba code here
+# ...
+
+# Get memory statistics
+current, peak = tracemalloc.get_traced_memory()
+print(f"Current memory usage: {current / 1024 / 1024:.2f} MB")
+print(f"Peak memory usage: {peak / 1024 / 1024:.2f} MB")
+
+tracemalloc.stop()
+```
