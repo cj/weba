@@ -111,3 +111,42 @@ def test_tag_with_input_name():
     html["name"] = name
 
     assert name in str(html)
+
+
+def test_multiple_root_tags():
+    raw_html = """
+    <div>foo</div>
+    <div>bar</div>
+    """
+
+    html = ui.raw(raw_html)
+
+    assert "<div>foo</div>" in str(html)
+    assert "<div>bar</div>" in str(html)
+
+
+def test_html_layout():
+    raw_html = """
+    <!doctype html>
+    <html lang="en">
+        <head>
+            <meta charset="UTF-8" />
+            <meta name="viewport" content="width=device-width, initial-scale=1" />
+            <title></title>
+        </head>
+        <body>
+            <header></header>
+            <main></main>
+            <footer></footer>
+        </body>
+    </html>
+    """
+
+    with ui.raw(raw_html) as html:
+        main_tag = html.find("main")
+        assert main_tag is not None
+        main_tag.append(ui.h1("Hello, World!"))
+
+    assert "<h1>Hello, World!</h1>" in str(html)
+    assert "<main><h1>Hello, World!</h1></main>" in str(html)
+    assert "<!doctype html>" in str(html)

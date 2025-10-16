@@ -237,7 +237,7 @@ class Tag(Bs4Tag):
             else:
                 # Create a clean copy with known type
                 # Use type annotations to help type checker
-                value_list: list[Any] = current_value
+                value_list: list[Any] = current_value  # pyright: ignore[reportUnknownVariableType]
                 current_value_typed: list[str] = []
                 # Convert each item to string explicitly
                 current_value_typed.extend(str(v) for v in value_list)
@@ -357,6 +357,11 @@ class Tag(Bs4Tag):
             # For fragments, just join the string representation of children
             return "".join(str(child) for child in self.contents)
 
+        # Check if this tag has a DOCTYPE declaration to prepend
+        doctype_prefix: str = ""
+        if hasattr(self, "_doctype") and self._doctype:
+            doctype_prefix = str(self._doctype) + "\n"
+
         # Build opening tag with attributes
         result = f"<{self.name}"
 
@@ -406,7 +411,7 @@ class Tag(Bs4Tag):
             # Empty tag - use standard HTML format
             result += f"></{self.name}>"
 
-        return result
+        return doctype_prefix + result
 
     # This method is no longer needed as __str__ handles comments
     # def output_ready(self, formatter="minimal"):

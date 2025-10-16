@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import os
+import re
 from collections.abc import Callable
 from typing import TYPE_CHECKING, Any, ClassVar, cast
 
@@ -83,6 +84,10 @@ class Ui:
         if isinstance(html, bytes):
             html = str(from_bytes(html).best())
 
+        # Extract DOCTYPE declaration if present
+        doctype_match = re.match(r"^\s*(<!doctype\s+[^>]+>)", html, re.IGNORECASE)
+        doctype = doctype_match[1] if doctype_match else None
+
         parser = parser or (
             self.__class__.get_xml_parser() if html.startswith("<?xml") else self.__class__.get_html_parser()
         )
@@ -114,6 +119,10 @@ class Ui:
 
             # Ensure fragment tag doesn't render
             tag.hidden = True
+
+        # Store the DOCTYPE on the tag if one was found
+        if doctype:
+            tag._doctype = doctype  # pyright: ignore[reportAttributeAccessIssue]
 
         if parent := current_tag_context.get():
             parent.append(tag)
