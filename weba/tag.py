@@ -338,24 +338,30 @@ class Tag(Bs4Tag):
         return self.__copy__()
 
     def __str__(self) -> str:
-        """Custom string representation that handles boolean attributes correctly."""
+        """Custom string representation that handles boolean attributes correctly.
+
+        Uses list building for O(n) performance instead of string concatenation.
+        """
         if self.name == "fragment":
             # For fragments, just join the string representation of children
             return "".join(str(child) for child in self.contents)
 
-        # Check if this tag has a DOCTYPE declaration to prepend
-        doctype_prefix: str = ""
-        if hasattr(self, "_doctype") and self._doctype:
-            doctype_prefix = str(self._doctype) + "\n"
+        # Build as list for O(n) performance instead of O(n²) string concatenation
+        parts: list[str] = []
 
-        # Build opening tag with attributes
-        result = f"<{self.name}"
+        # Add DOCTYPE declaration if present
+        if hasattr(self, "_doctype") and self._doctype:
+            parts.append(str(self._doctype))
+            parts.append("\n")
+
+        # Start opening tag
+        parts.append(f"<{self.name}")
 
         # Add attributes with special handling for "" (empty string) which represents boolean attributes
         for key, value in self.attrs.items():
             if value == "":
                 # Boolean attribute (just the name, no value)
-                result += f" {key}"
+                parts.append(f" {key}")
             elif isinstance(value, list):
                 # Join lists with spaces (for classes)
                 # Use type annotations to help type checker
@@ -366,7 +372,7 @@ class Tag(Bs4Tag):
                 value_str = " ".join(typed_values)
                 # Escape the class value
                 escaped_value = html.escape(value_str, quote=False)
-                result += f' {key}="{escaped_value}"'
+                parts.append(f' {key}="{escaped_value}"')
             elif value is not None:
                 # Convert value to string if not already
                 value_str = str(value)
@@ -377,24 +383,27 @@ class Tag(Bs4Tag):
                 ):
                     # For JSON strings, use single quotes to avoid conflict with double quotes in JSON
                     # No need to escape the JSON content as it should already be properly escaped
-                    result += f" {key}='{value_str}'"
+                    parts.append(f" {key}='{value_str}'")
                 else:
                     # Regular attributes - properly escape special characters
                     # Note: we disable single quote escaping with quote=False and handle it ourselves
                     # to have more control over attribute quoting
                     escaped_value = html.escape(value_str, quote=False)
                     # Use double quotes for regular attributes
-                    result += f' {key}="{escaped_value}"'
+                    parts.append(f' {key}="{escaped_value}"')
 
         # Build content and closing tag
         if self.contents:
-            result += ">"
+            parts.append(">")
             # Render all children, including comments correctly
             for child in self.contents:
-                result += f"<!--{child}-->" if isinstance(child, Comment) else str(child)
-            result += f"</{self.name}>"
+                if isinstance(child, Comment):
+                    parts.append(f"<!--{child}-->")
+                else:
+                    parts.append(str(child))
+            parts.append(f"</{self.name}>")
         else:
             # Empty tag - use standard HTML format
-            result += f"></{self.name}>"
+            parts.append(f"></{self.name}>")
 
-        return doctype_prefix + result
+        return "".join(parts)
