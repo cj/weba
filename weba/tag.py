@@ -224,11 +224,6 @@ class Tag(Bs4Tag):
         if key == "class":
             current_value = self.attrs.get("class")
 
-            # For test_ui_tag_attributes, there's a specific test case with value 42
-            if current_value == 42:
-                # Special case - return empty list as test requires
-                return []
-
             # Handle other class attribute value formats
             if isinstance(current_value, str):
                 current_value = current_value.split()
@@ -263,7 +258,6 @@ class Tag(Bs4Tag):
             # Handle non-boolean values normally
             self.attrs[key] = value
 
-    # def comment(self, selector: str) -> list[Tag | NavigableString | None]:
     def comment(self, selector: str) -> list[Tag | None]:
         """Find all tags or text nodes that follow comments matching the given selector.
 
@@ -296,13 +290,9 @@ class Tag(Bs4Tag):
             if isinstance(next_node, Tag):
                 # Convert to our Tag but preserve comments
                 results.append(next_node)
-            # elif isinstance(next_node, NavigableString) and (text := next_node.strip()):
-            #     # Return the NavigableString as-is
-            #     results.append(NavigableString(text))
 
         return results
 
-    # def comment_one(self, selector: str) -> Tag | NavigableString | None:
     def comment_one(self, selector: str) -> Tag | None:
         """Find the first tag or text node that follows a comment matching the given selector.
 
@@ -327,10 +317,6 @@ class Tag(Bs4Tag):
                 if isinstance(next_node, Tag):
                     # Return the tag without removing comments
                     return next_node
-
-                # if isinstance(next_node, NavigableString) and (text := next_node.strip()):
-                #     # Return NavigableString directly for consistency
-                #     return NavigableString(text)
 
                 next_node = next_node.next_sibling
 
@@ -412,13 +398,3 @@ class Tag(Bs4Tag):
             result += f"></{self.name}>"
 
         return doctype_prefix + result
-
-    # This method is no longer needed as __str__ handles comments
-    # def output_ready(self, formatter="minimal"):
-    #     """
-    #     Ensure that comments are rendered properly.
-    #     This is called during the string conversion process.
-    #     """
-    #     if isinstance(self.string, Comment):
-    #         return "<!--%s-->" % self.string
-    #     return super().output_ready(formatter)
