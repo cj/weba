@@ -82,19 +82,7 @@ Remember to always maintain type safety according to the project conventions, an
 
 ## Memory Management
 
-The weba framework now includes memory management features to prevent memory leaks:
-
-### Component Memory Management
-
-Components maintain internal caches that should be cleared when no longer needed:
-
-```python
-# Clear instance-level cache for a specific component
-component.clear_cache()
-
-# Clear all class-level caches (affects all instances)
-Component.clear_class_cache()
-```
+The weba framework includes memory management features to prevent memory leaks:
 
 ### Best Practices for Memory Management
 
@@ -105,24 +93,16 @@ Component.clear_class_cache()
    export WEBA_LRU_CACHE_SIZE=128  # Smaller cache for memory-constrained environments
    ```
 
-2. **Clear component caches**: When done with long-lived components:
+   This controls internal caching of component templates and parsed HTML files.
 
-   ```python
-   # After using a component extensively
-   component.clear_cache()
-
-   # When shutting down or resetting application state
-   Component.clear_class_cache()
-   ```
-
-3. **Decompose tag trees**: Explicitly decompose large tag structures when finished:
+2. **Decompose tag trees**: Explicitly decompose large tag structures when finished:
 
    ```python
    # This ensures proper cleanup of BeautifulSoup internals
    large_tag_tree.decompose()
    ```
 
-4. **Context management**: The framework automatically handles context cleanup, but ensure you:
+3. **Context management**: The framework automatically handles context cleanup, but ensure you:
    - Always use components within proper context managers (with statements)
    - Don't store references to tags outside their intended lifecycle
 
