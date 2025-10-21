@@ -32,10 +32,45 @@ class TagDecorator(Generic[T]):
         self.__name__ = method.__name__
 
     def __set__(self, instance: T, value: Tag):
+        """Set the tag value, replacing the old tag with the new one.
+
+        This descriptor method enables assignment syntax for component tags:
+            component.my_tag = new_tag
+
+        The old tag is replaced in the DOM tree and the cache is updated.
+
+        Args:
+            instance: The component instance owning this tag
+            value: The new Tag to replace the old one with
+        """
         getattr(instance, self.method.__name__).replace_with(value)
         instance._cached_tags[self.__name__] = value  # pyright: ignore[reportPrivateUsage]
 
     def __get__(self, instance: T, owner: type[T]) -> Tag:
+        """Get the tag, executing the decorated method if needed.
+
+        This descriptor implements the @tag decorator functionality. It:
+        1. Returns cached result if available
+        2. Finds the tag using the selector (CSS or comment-based)
+        3. Optionally clears or extracts the tag
+        4. Executes the decorated method with the found tag
+        5. Caches and returns the result
+
+        The selector can be:
+        - CSS selector: ".class" or "#id" or "div.container"
+        - Comment selector: "<!-- #my-tag -->" for comment-based targeting
+        - Empty string: uses the component instance itself
+
+        Args:
+            instance: The component instance to search within
+            owner: The component class type
+
+        Returns:
+            The found and processed Tag
+
+        Raises:
+            ComponentTagNotFoundError: If the selector doesn't match any tag
+        """
         # Return cached result if it exists
         if response := instance._cached_tags.get(self.__name__):  # pyright: ignore[reportPrivateUsage]
             return response
