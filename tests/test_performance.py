@@ -5,6 +5,8 @@ particularly the Tag.__str__() optimization that uses list building
 instead of string concatenation.
 """
 
+from __future__ import annotations
+
 import time
 
 import pytest
@@ -195,7 +197,7 @@ class TestTagStringPerformance:
         print(f"\nNested structure: {per_iteration:.4f}ms per iteration ({iterations} iterations in {elapsed:.4f}s)")
 
     @pytest.mark.parametrize("attr_count", [5, 10, 25, 50, 100])
-    def test_attribute_scaling(self, attr_count):
+    def test_attribute_scaling(self, attr_count: int):
         """Test that performance scales linearly with attribute count.
 
         With O(n) algorithm, doubling attributes should roughly double time.
@@ -203,7 +205,7 @@ class TestTagStringPerformance:
         iterations = 500
 
         # Create tag with specified number of attributes
-        def create_tag_with_attrs(count):
+        def create_tag_with_attrs(count: int):
             attrs = {f"data_attr_{i}": f"value_{i}" for i in range(count)}
             attrs["id"] = "test"
             attrs["class_"] = "container"
@@ -225,14 +227,13 @@ class TestTagStringPerformance:
         # Allow 10ms per 100 attributes (regression test for O(n) behavior)
         max_time = (attr_count / 100) * 10
         assert per_iteration < max_time, (
-            f"Attribute scaling: {attr_count} attributes took {per_iteration:.4f}ms, "
-            f"expected < {max_time:.2f}ms"
+            f"Attribute scaling: {attr_count} attributes took {per_iteration:.4f}ms, expected < {max_time:.2f}ms"
         )
 
         print(f"\n{attr_count} attributes: {per_iteration:.4f}ms per iteration")
 
     @pytest.mark.parametrize("child_count", [10, 25, 50, 100, 200])
-    def test_children_scaling(self, child_count):
+    def test_children_scaling(self, child_count: int):
         """Test that performance scales linearly with child count.
 
         With O(n) algorithm, doubling children should roughly double time.
@@ -240,7 +241,7 @@ class TestTagStringPerformance:
         iterations = 500
 
         # Create tag with specified number of children
-        def create_tag_with_children(count):
+        def create_tag_with_children(count: int):
             tag = ui.div(id="parent", class_="container")
             for i in range(count):
                 tag.append(ui.p(f"Child {i}", data_index=str(i)))
@@ -262,8 +263,7 @@ class TestTagStringPerformance:
         # Allow 10ms per 100 children (regression test for O(n) behavior)
         max_time = (child_count / 100) * 10
         assert per_iteration < max_time, (
-            f"Children scaling: {child_count} children took {per_iteration:.4f}ms, "
-            f"expected < {max_time:.2f}ms"
+            f"Children scaling: {child_count} children took {per_iteration:.4f}ms, expected < {max_time:.2f}ms"
         )
 
         print(f"\n{child_count} children: {per_iteration:.4f}ms per iteration")

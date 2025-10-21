@@ -337,7 +337,7 @@ class Tag(Bs4Tag):
         """
         return self.__copy__()
 
-    def __str__(self) -> str:
+    def __str__(self) -> str:  # noqa: C901
         """Custom string representation that handles boolean attributes correctly.
 
         Uses list building for O(n) performance instead of string concatenation.
